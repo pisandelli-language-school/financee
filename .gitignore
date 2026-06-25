@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Nuxt / build
+.nuxt/
+.output/
+.data/
+.nitro/
+.cache/
+dist/
+.vercel/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*service-account*.json
+classtime-*.json
+*.pem
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.fleet/
+.idea/
+
+# Prisma
+prisma/*.db
+/app/generated/prisma
