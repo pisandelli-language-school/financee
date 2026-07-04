@@ -8,6 +8,20 @@ definePageMeta({
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 
+// ⚡ Bolt LCP Optimization:
+// Preloading the main brand logo improves the Largest Contentful Paint (LCP) time.
+// By doing this, the browser fetches the critical above-the-fold image as early as possible.
+useHead({
+  link: [
+    {
+      rel: 'preload',
+      as: 'image',
+      href: logoUrl,
+      fetchpriority: 'high',
+    },
+  ],
+})
+
 const authError = ref('')
 const isSigningIn = ref(false)
 
@@ -46,7 +60,7 @@ main.login
   //- Brand panel
   section.login__brand
     .login__brand-inner
-      img.login__logo(:src="logoUrl" alt="Financee")
+      img.login__logo(:src="logoUrl" alt="Financee" fetchpriority="high")
       .login__brand-copy
         h1.login__headline Gestão financeira sem ruído.
         p.login__subhead O backoffice financeiro da escola — contratos, lançamentos e relatórios em um só lugar.
