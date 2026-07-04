@@ -46,6 +46,18 @@ export default defineNuxtConfig({
     types: false,
   },
 
+  routeRules: {
+    '/**': {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+      },
+    },
+  },
+
   vite: {
     optimizeDeps: {
       include: ['@supabase/supabase-js', '@nuxtjs/supabase > @supabase/ssr > cookie'],
