@@ -1,0 +1,3 @@
+## 2024-07-06 - Optimize Static Vue Components with v-once
+**Learning:** In Vue apps (specifically Nuxt 3/4), large static sections of the template that don't depend on reactive state but are sibling to reactive components (like forms) will be re-evaluated during every re-render. In the `login.vue` component, the large marketing brand panel was re-rendering every time the user typed or encountered an auth error.
+**Action:** Use the `v-once` directive on large, static wrapper elements (like sidebars, marketing panels, or footers) that never change after the initial render. This tells Vue's Virtual DOM diffing algorithm to completely skip that sub-tree on subsequent updates, yielding a measurable performance boost during reactive interactions.

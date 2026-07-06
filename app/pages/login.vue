@@ -43,8 +43,8 @@ async function handleGoogleSignIn() {
 
 <template lang="pug">
 main.login
-  //- Brand panel
-  section.login__brand
+  //- Brand panel (static content, skipped during re-renders for performance)
+  section.login__brand(v-once)
     .login__brand-inner
       img.login__logo(:src="logoUrl" alt="Financee")
       .login__brand-copy
