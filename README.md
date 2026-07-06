@@ -30,7 +30,7 @@ The product is designed to be the financial source of truth for the operation. T
 - `Reports, Dashboard, and Cash Flow`
 - `Auth, Users, Permissions, and Audit`
 - `Notifications, Alerts, and Automation`
-- `Jobs, Scheduling e Background Processing`
+- `Jobs, Scheduling, and Background Processing`
 - `Integration Architecture`
 
 ## Stack
@@ -38,7 +38,8 @@ The product is designed to be the financial source of truth for the operation. T
 - `Nuxt 4`
 - `Vue 3`
 - `Pinia`
-- `Supabase`
+- `Supabase Auth`
+- `MySQL`
 - `Prisma`
 - `pnpm`
 - `Pug`
@@ -64,8 +65,17 @@ pnpm typecheck
 pnpm test
 pnpm prisma:generate
 pnpm prisma:validate
+pnpm prisma:db:push
 pnpm prisma:migrate
 ```
+
+## Prisma workflow
+
+This repository uses `Supabase` for authentication and `MySQL` for application data. Prisma schema sync in development is based on `prisma db push`.
+
+- `DATABASE_URL`: MySQL connection used by both runtime and Prisma CLI commands
+- `pnpm prisma:migrate`: currently mapped to `prisma db push`
+- versioned SQL migrations are still kept in `prisma/migrations/` as architectural reference, but the active development workflow is schema-first with `db push`
 
 ## Product references
 

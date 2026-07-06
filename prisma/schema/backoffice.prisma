@@ -1,0 +1,131 @@
+model Category {
+  id            String      @id @default(cuid())
+  name          String
+  type          CategoryType
+  dreGroup      DREGroup?
+  parentId      String?
+  parent        Category?   @relation("CategoryToSub", fields: [parentId], references: [id], onDelete: SetNull)
+  subcategories Category[]  @relation("CategoryToSub")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([type])
+  @@index([parentId])
+  @@unique([name, type, parentId])
+}
+
+model Account {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  type         String
+  initialValue Decimal? @db.Decimal(14, 2)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CostCenter {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  bgColor   String?
+  textColor String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contact {
+  id                    String                       @id @default(cuid())
+  name                  String
+  tradeName             String?
+  document              String?
+  documentType          ContactDocumentType?
+  nature                ContactNature
+  roleAssignments       ContactRoleAssignment[]
+  birthDate             DateTime?                    @db.Date
+  municipalRegistration String?
+  email                 String?
+  phone                 String?
+  address               Address?
+  financialResponsible  ContactFinancialResponsible?
+  notes                 String?
+  isActive              Boolean                      @default(true)
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  @@index([nature])
+  @@index([document])
+  @@index([isActive])
+}
+
+model ContactRoleAssignment {
+  id        String      @id @default(cuid())
+  contactId String
+  role      ContactRole
+  contact   Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([contactId, role])
+  @@index([role])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  contactId  String   @unique
+  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  country    String   @default("BRASIL")
+  state      String?
+  city       String?
+  postalCode String?
+  street     String?
+  number     String?
+  complement String?
+  district   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ContactFinancialResponsible {
+  id        String   @id @default(cuid())
+  contactId String   @unique
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String?
+  role      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PaymentMethod {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NonBusinessDay {
+  id        String             @id @default(cuid())
+  title     String
+  type      NonBusinessDayType
+  month     Int?
+  day       Int?
+  rule      NonBusinessDayRule?
+  date      DateTime?          @db.Date
+  scope     NonBusinessDayScope?
+  notes     String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([type])
+  @@index([month, day])
+  @@index([date])
+}

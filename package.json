@@ -13,13 +13,14 @@
     "test": "vitest run",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:db:push": "prisma db push",
+    "prisma:migrate": "prisma db push"
   },
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.9",
     "@pinia/nuxt": "^0.11.3",
-    "@pisandelli/daredash": "0.0.1-beta-21",
-    "@prisma/adapter-pg": "^7.8.0",
+    "@pisandelli/daredash": "^0.0.26-beta",
+    "@prisma/adapter-mariadb": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@supabase/supabase-js": "^2.108.2",
     "@vee-validate/zod": "^4.15.1",
@@ -28,28 +29,30 @@
     "echarts": "^6.1.0",
     "exceljs": "^4.4.0",
     "googleapis": "^173.0.0",
+    "mysql2": "^3.22.5",
     "nuxt": "^4.4.8",
     "nuxt-echarts": "^1.0.1",
     "pdfmake": "^0.3.11",
-    "pg": "^8.22.0",
     "pinia": "^3.0.4",
     "pug": "^3.0.4",
     "resend": "^6.14.0",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0",
-    "zod": "^4.4.3"
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.114",
     "@iconify-json/svg-spinners": "^1.2.4",
     "@nuxt/eslint": "^1.16.0",
     "@nuxt/test-utils": "^4.0.3",
+    "@types/pug": "^2.0.10",
+    "@vue/language-plugin-pug": "^2.2.12",
     "dotenv": "^17.4.2",
-    "eslint": "^9.39.4",
+    "eslint": "^10.0.0",
     "happy-dom": "^20.10.6",
     "prisma": "^7.8.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.6",
+    "vitest": "^4.0.2",
     "vue-tsc": "^2.2.12"
   }
 }

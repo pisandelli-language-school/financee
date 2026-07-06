@@ -1,6 +1,6 @@
 // Global auth gate. Supabase built-in redirect is disabled (nuxt.config), so route
-// protection lives here. Authenticated data access is enforced server-side (RBAC + RLS);
-// this middleware only controls navigation.
+// protection lives here. Authenticated data access is enforced server-side via Prisma
+// and RBAC; this middleware only controls navigation.
 export default defineNuxtRouteMiddleware((to) => {
   const user = useSupabaseUser()
 

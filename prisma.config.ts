@@ -4,14 +4,12 @@ import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
 export default defineConfig({
-  schema: "prisma/schema.prisma",
+  schema: "prisma/schema",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    // Prisma CLI (migrate/db) uses a DIRECT connection (Supabase port 5432).
-    // The app runtime connects via @prisma/adapter-pg using the pooled DATABASE_URL.
-    // Falls back to DATABASE_URL for local single-URL setups.
-    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
+    url: process.env["DATABASE_URL"],
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });

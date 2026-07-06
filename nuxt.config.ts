@@ -14,29 +14,30 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxtjs/supabase',
     'nuxt-echarts',
-    [
-      '@pisandelli/daredash',
-      {
-        prefix: 'dd',
-        debug: false,
-      },
-    ],
+    '@pisandelli/daredash'
   ],
 
   eslint: {},
 
   typescript: {
     strict: true,
+    tsConfig: {
+      vueCompilerOptions: {
+        plugins: [
+          '@vue/language-plugin-pug',
+        ],
+      },
+    },
   },
 
   pinia: {
-    storesDirs: ['./app/stores/**'],
+    storesDirs: ['./app/stores/**', './stores/**'],
   },
 
   // Auth via Google Workspace (Supabase). Route protection is handled manually in
   // app/middleware/auth.global.ts (redirect: false). The browser Supabase client is used
-  // for auth/session only; data access is server-side via Prisma. Tables use RLS
-  // (deny-by-default).
+  // for auth/session only; application data lives in MySQL and is accessed server-side
+  // via Prisma, where RBAC is enforced.
   supabase: {
     redirect: false,
     redirectOptions: {
