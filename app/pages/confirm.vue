@@ -9,7 +9,14 @@ const route = useRoute()
 const errorMessage = computed(() => {
   const message = route.query.error_description ?? route.query.error
 
-  return typeof message === 'string' ? message : ''
+  if (message) {
+    // Log the actual error for debugging but don't expose it to the user
+    console.error('Authentication error:', message)
+    // Return a safe, generic error message to prevent content spoofing
+    return 'Ocorreu um erro durante a autenticação. Por favor, tente novamente.'
+  }
+
+  return ''
 })
 
 watch(user, () => {
