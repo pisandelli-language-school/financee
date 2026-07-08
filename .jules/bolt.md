@@ -1,0 +1,3 @@
+## 2024-07-08 - Optimize Global Middleware Performance
+**Learning:** In Nuxt, global route middleware runs on every route change. Allocating objects (like arrays) or doing O(N) searches inside the middleware function creates unnecessary GC pressure and slightly slows down navigation in hot paths.
+**Action:** Always move static arrays or sets outside of the global route middleware scope so they are only allocated once, and prefer `Set` lookups (`O(1)`) over `Array.includes` (`O(N)`) for frequently checked lists of paths.
