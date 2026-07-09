@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ContactFormValues } from '~/types/backoffice'
 import { contactSchema } from '~/validators/contact'
 
+vi.stubGlobal('createError', (payload: Record<string, unknown>) => payload)
+
 vi.mock('~~/server/utils/prisma', () => ({
   prisma: {
     tag: {
@@ -85,24 +87,30 @@ describe('Backoffice spec closure', () => {
   })
 
   it('requires e-mail and phone for individual contacts on the server payload normalization', () => {
-    expect(() => normalizeContactPayload(createBaseContact({
-      email: '',
-      phone: '',
-      document: '123.456.789-00',
-    }))).toThrowError(/e-mail|telefone/i)
+    expectErrorPayload(
+      () => normalizeContactPayload(createBaseContact({
+        email: '',
+        phone: '',
+        document: '123.456.789-00',
+      })),
+      { field: 'email', message: 'Informe o e-mail.' },
+    )
   })
 
   it('requires a financial responsible for company contacts on the server payload normalization', () => {
-    expect(() => normalizeContactPayload(createBaseContact({
-      nature: 'COMPANY',
-      document: '12.345.678/0001-90',
-      financialResponsible: {
-        name: '',
-        email: '',
-        phone: '',
-        role: '',
-      },
-    }))).toThrowError(/responsavel financeiro/i)
+    expectErrorPayload(
+      () => normalizeContactPayload(createBaseContact({
+        nature: 'COMPANY',
+        document: '12.345.678/0001-90',
+        financialResponsible: {
+          name: '',
+          email: '',
+          phone: '',
+          role: '',
+        },
+      })),
+      { field: 'financialResponsible', message: 'Pessoa juridica deve informar responsavel financeiro.' },
+    )
   })
 
   it('soft deletes tags instead of removing them physically', async () => {
@@ -111,6 +119,7 @@ describe('Backoffice spec closure', () => {
     expect(prisma.tag.update).toHaveBeenCalledWith({
       where: { id: 'tag_1' },
       data: {
+        isActive: false,
         deletedAt: expect.any(Date),
       },
     })
@@ -137,8 +146,21 @@ describe('Backoffice spec closure', () => {
     expect(prisma.category.update).toHaveBeenCalledWith({
       where: { id: 'cat_1' },
       data: {
+        isActive: false,
         deletedAt: expect.any(Date),
       },
     })
   })
 })
+
+function expectErrorPayload(action: () => unknown, expected: Record<string, unknown>) {
+  try {
+    action()
+    throw new Error('Expected action to throw')
+  } catch (error) {
+    expect(error).toMatchObject({
+      statusCode: 400,
+      data: expected,
+    })
+  }
+}

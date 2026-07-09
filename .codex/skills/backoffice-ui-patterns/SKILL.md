@@ -45,6 +45,10 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 25. Avoid repeating raw spacing values across pages. If the same gap appears in more than one screen, centralize it and express it with Daredash tokens.
 26. Do not create `<style module="fin">` by default. Add a local style block only when the page truly needs local styling that Daredash primitives or component props cannot already express.
 27. Do not add helper classes such as `fin.field` or `fin.search` unless they solve a concrete layout need. If the layout is already correct without them, omit the class entirely.
+28. Before calling a spec complete, run a formal closure review against the spec, the approved layout, the schema, the server rules, and the implemented UI.
+29. During closure review, verify that critical business rules are enforced on the server, not only in the form layer.
+30. Add focused automated tests for closure-review findings when the rule is critical, conditional, or easy to regress.
+31. End every closure review with an explicit verdict: `Implemented`, `Implemented with caveats`, `Not implemented`, or `Divergent from spec`.
 
 ## Workflow
 
@@ -68,6 +72,7 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 16. If a form uses `vee-validate` with non-trivial domain rules, keep the Vue component focused on rendering and field wiring while the schema and rule helpers live in `app/validators/*`.
 17. If a contact-oriented form needs masks or string formatting, reuse `app/utils/contactFormatters.ts` before creating new local helpers.
 18. If you touch multiple backoffice pages and find the same wrapper or spacing rule repeated, stop and evaluate whether it belongs in a shared backoffice component first. If the wrapper becomes a pass-through with no real behavior, prefer the simpler direct markup.
+19. At the end of a module/spec implementation, run the checklist in `docs/spec-closure-review.md` and treat it as the repeatable final-pass workflow.
 
 ## Toolbar Pattern
 
@@ -117,3 +122,4 @@ dd-cluster(end :class="fin.toolbar")
 
 Read [references/ui-patterns.md](references/ui-patterns.md) when you need concrete examples, do/don't guidance, or the current backoffice conventions snapshot.
 Read `https://raw.githubusercontent.com/pisandelli/daredash/refs/heads/main/llms.txt` before substantial Daredash-specific refactors.
+Read [docs/spec-closure-review.md](/home/pisandelli/workspaces/pisa/Financee-jun2026/financee/docs/spec-closure-review.md) when performing the end-of-spec review pass.

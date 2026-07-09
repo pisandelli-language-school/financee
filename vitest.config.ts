@@ -1,10 +1,15 @@
-// Financee Vitest config. Uses the Nuxt test environment so store/component tests get
-// Nuxt auto-imports (ref, computed, useAsyncData, ...) and the `@/` alias.
-// Requires (dev deps): @nuxt/test-utils, vitest@^3 (Nuxt 4 needs Vitest 3+), happy-dom.
-import { defineVitestConfig } from '@nuxt/test-utils/config'
+import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'vitest/config'
 
-export default defineVitestConfig({
+export default defineConfig({
+  resolve: {
+    alias: {
+      '~/': `${fileURLToPath(new URL('./app/', import.meta.url))}`,
+      '~~/': `${fileURLToPath(new URL('./', import.meta.url))}`,
+    },
+  },
   test: {
-    environment: 'nuxt',
+    environment: 'node',
+    include: ['test/**/*.spec.ts'],
   },
 })

@@ -837,6 +837,7 @@ export async function deleteCategory(id: string) {
   await prisma.category.update({
     where: { id },
     data: {
+      isActive: false,
       deletedAt: new Date(),
     },
   })
@@ -985,6 +986,7 @@ async function deleteSimpleSection<T extends 'account' | 'costCenter' | 'payment
     await prisma.account.update({
       where: { id },
       data: {
+        isActive: false,
         deletedAt: new Date(),
       },
     })
@@ -992,6 +994,7 @@ async function deleteSimpleSection<T extends 'account' | 'costCenter' | 'payment
     await prisma.costCenter.update({
       where: { id },
       data: {
+        isActive: false,
         deletedAt: new Date(),
       },
     })
@@ -999,6 +1002,7 @@ async function deleteSimpleSection<T extends 'account' | 'costCenter' | 'payment
     await prisma.paymentMethod.update({
       where: { id },
       data: {
+        isActive: false,
         deletedAt: new Date(),
       },
     })
@@ -1062,6 +1066,7 @@ export async function deleteTag(id: string) {
   await prisma.tag.update({
     where: { id },
     data: {
+      isActive: false,
       deletedAt: new Date(),
     },
   })
@@ -1236,6 +1241,7 @@ export async function deleteContact(id: string) {
   await prisma.contact.update({
     where: { id },
     data: {
+      isActive: false,
       deletedAt: new Date(),
     },
   })
@@ -1298,6 +1304,7 @@ export async function deleteNonBusinessDay(id: string) {
   await prisma.nonBusinessDay.update({
     where: { id },
     data: {
+      isActive: false,
       deletedAt: new Date(),
     },
   })
