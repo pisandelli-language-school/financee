@@ -41,7 +41,6 @@ nuxt-link(
   &:is(:hover, :focus) {
     border-color: v('color.primary');
     box-shadow: v('shadow.xl');
-    /* transform: translateY(-1px); */
     background: v('color.primary.50');
   }
 }
@@ -68,11 +67,6 @@ nuxt-link(
 .text {
   --dd-stack-compact-gap: v('space.xxs');
   min-inline-size: 0;
-}
-
-.title,
-.description {
-  margin: 0;
 }
 
 .title {
