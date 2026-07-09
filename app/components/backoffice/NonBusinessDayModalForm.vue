@@ -29,10 +29,7 @@ const ruleOptions = computed(() => [
   { label: 'Selecione', value: '' },
   ...nonBusinessDayRuleOptions.map((option) => ({ ...option })),
 ])
-const scopeOptions = computed(() => [
-  { label: 'Opcional', value: '' },
-  ...nonBusinessDayScopeOptions.map((option) => ({ ...option })),
-])
+const scopeOptions = computed(() => nonBusinessDayScopeOptions.map((option) => ({ ...option })))
 
 function updateField<K extends keyof NonBusinessDayFormValues>(field: K, value: NonBusinessDayFormValues[K]) {
   emit('update:modelValue', {
@@ -81,13 +78,23 @@ backoffice-modal-form-shell(
           :options="typeOptions"
           @update:model-value="updateType"
         )
-        dd-select(
-          :model-value="modelValue.scope"
-          label="Escopo"
-          placeholder="Opcional"
-          :options="scopeOptions"
-          @update:model-value="updateScope"
-        )
+        dd-stack(compact nogap)
+          dd-form-label Escopo
+          dd-cluster(compact)
+            dd-select(
+              :class="fin.selectField"
+              :model-value="modelValue.scope"
+              placeholder="Selecione"
+              :options="scopeOptions"
+              @update:model-value="updateScope"
+            )
+            dd-button(
+              v-if="modelValue.scope"
+              outline
+              tiny
+              type="button"
+              @click="updateScope('')"
+            ) Limpar
 
       dd-grid(v-if="isFixed")
         dd-input(
@@ -133,6 +140,10 @@ backoffice-modal-form-shell(
   --dd-modal-inline-size: min(42rem, calc(100vw - 2rem));
   --dd-modal-max-inline-size: min(42rem, calc(100vw - 2rem));
   max-block-size: 50rem;
+}
+
+.selectField {
+  flex: 1 1 auto;
 }
 
 </style>

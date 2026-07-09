@@ -26,7 +26,6 @@ const emit = defineEmits<{
 
 
 const parentOptions = computed(() => [
-  { label: 'Opcional', value: '' },
   ...(props.categories ?? [])
     .filter((category) => !category.parentId && category.id !== props.editingId)
     .map((category) => ({
@@ -36,10 +35,7 @@ const parentOptions = computed(() => [
 ])
 
 const typeOptions = computed(() => categoryTypeOptions.map((option) => ({ ...option })))
-const groupOptions = computed(() => [
-  { label: 'Opcional', value: '' },
-  ...dreGroupOptions.map((option) => ({ ...option })),
-])
+const groupOptions = computed(() => dreGroupOptions.map((option) => ({ ...option })))
 
 const {
   errors,
@@ -131,21 +127,41 @@ backoffice-modal-form-shell(
             :error-message="getError('type')"
             @update:model-value="updateType"
           )
-        dd-select(
-          :model-value="values.parentId"
-          label="Subcategoria de"
-          placeholder="Opcional"
-          :options="parentOptions"
-          @update:model-value="updateField('parentId', String($event))"
-        )
+        dd-stack(compact nogap)
+          dd-form-label Subcategoria de
+          dd-cluster(compact)
+            dd-select(
+              :class="fin.selectField"
+              :model-value="values.parentId"
+              placeholder="Selecione"
+              :options="parentOptions"
+              @update:model-value="updateField('parentId', String($event))"
+            )
+            dd-button(
+              v-if="values.parentId"
+              outline
+              tiny
+              type="button"
+              @click="updateField('parentId', '')"
+            ) Limpar
 
-      dd-select(
-        :model-value="values.dreGroup"
-        label="Grupo DRE"
-        placeholder="Opcional"
-        :options="groupOptions"
-        @update:model-value="updateDreGroup"
-      )
+      dd-stack(compact nogap)
+        dd-form-label Grupo DRE
+        dd-cluster(compact)
+          dd-select(
+            :class="fin.selectField"
+            :model-value="values.dreGroup"
+            placeholder="Selecione"
+            :options="groupOptions"
+            @update:model-value="updateDreGroup"
+          )
+          dd-button(
+            v-if="values.dreGroup"
+            outline
+            tiny
+            type="button"
+            @click="updateDreGroup('')"
+          ) Limpar
 </template>
 
 <style module="fin">
@@ -154,6 +170,10 @@ backoffice-modal-form-shell(
   --dd-modal-max-inline-size: min(42rem, calc(100vw - 2rem));
   --dd-card-body-padding: .3125rem;
   max-block-size: 50rem;
+}
+
+.selectField {
+  flex: 1 1 auto;
 }
 
 .requiredMark {
