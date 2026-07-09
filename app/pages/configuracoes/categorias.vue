@@ -77,6 +77,11 @@ async function handlePageChange(value: number) {
   await refreshList()
 }
 
+async function handlePageSizeChange(value: number) {
+  categoriesStore.setFilters({ page: 1, pageSize: value })
+  await refreshList()
+}
+
 async function openCreateModal() {
   editingRecord.value = null
   form.value = createEmptyCategoryForm()
@@ -179,6 +184,7 @@ dd-stack
     :total="categoriesStore.total"
     :page-size="categoriesStore.filters.pageSize"
     @update:page="handlePageChange"
+    @update:page-size="handlePageSizeChange"
   )
     template(#toolbar)
       dd-input(

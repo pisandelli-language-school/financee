@@ -7,6 +7,6 @@ export const useTagsStore = createCrudStore(
   () => ({
     search: '',
     page: 1,
-    pageSize: 5,
+    pageSize: 50,
   }),
 )

@@ -56,6 +56,13 @@ export const nonBusinessDayScopeOptions = [
   { label: 'Interno', value: 'INTERNAL' },
 ] as const
 
+export const backofficePageSizeOptions = [
+  { label: '50', value: 50 },
+  { label: '100', value: 100 },
+  { label: '200', value: 200 },
+  { label: 'Todos', value: 0 },
+] as const
+
 export type CategoryType = (typeof categoryTypeOptions)[number]['value']
 export type DREGroup = (typeof dreGroupOptions)[number]['value']
 export type AccountType = (typeof accountTypeOptions)[number]['value']

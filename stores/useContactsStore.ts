@@ -10,6 +10,6 @@ export const useContactsStore = createCrudStore(
     nature: '',
     role: '',
     page: 1,
-    pageSize: 5,
+    pageSize: 50,
   }),
 )

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { backofficePageSizeOptions } from '~/types/backoffice'
 import type { AppTableColumn } from '~/types/backoffice'
 
 const props = withDefaults(defineProps<{
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   (event: 'update:page', value: number): void
+  (event: 'update:pageSize', value: number): void
 }>()
 
 const slots = useSlots()
@@ -25,6 +27,41 @@ const slots = useSlots()
 const tableSlotNames = computed(() =>
   Object.keys(slots).filter(name => name !== 'toolbar' && name !== 'notice'),
 )
+
+const effectivePageSize = computed(() => (
+  props.pageSize > 0 ? props.pageSize : Math.max(props.total, 1)
+))
+
+const pageSizeMenuItems = computed(() => backofficePageSizeOptions.map(option => ({
+  value: option.value,
+  label: option.value === 0 ? 'Todos' : `${option.value} itens`,
+  icon: props.pageSize === option.value ? 'lucide:check' : undefined,
+})))
+
+const rangeLabel = computed(() => {
+  if (props.total === 0) {
+    return '0 de 0'
+  }
+
+  const start = ((props.page - 1) * effectivePageSize.value) + 1
+  const end = props.pageSize === 0
+    ? props.total
+    : Math.min(props.page * effectivePageSize.value, props.total)
+
+  return `${start}-${end} de ${props.total}`
+})
+
+function handlePageSizeSelect(value: number, event?: MouseEvent) {
+  emit('update:pageSize', value)
+
+  const popover = event?.currentTarget instanceof HTMLElement
+    ? event.currentTarget.closest('[popover]')
+    : null
+
+  if (popover instanceof HTMLElement && 'hidePopover' in popover) {
+    ;(popover as HTMLElement & { hidePopover: () => void }).hidePopover()
+  }
+}
 </script>
 
 <template lang="pug">
@@ -46,13 +83,37 @@ dd-card
         template(v-for="name in tableSlotNames" :key="name" #[name]="slotProps")
           slot(:name="name" v-bind="slotProps")
 
-      dd-cluster(end :class="fin.pagination")
+      dd-cluster(between :class="fin.pagination")
+        dd-cluster(compact :class="fin.pageSize")
+          span(:class="fin.rangeLabel") {{ rangeLabel }}
+          dd-popover(trigger="click" placement="top-end")
+            dd-button(
+              icon="lucide:ellipsis-vertical"
+              icon-only
+              ghost
+              small
+              :class="fin.pageSizeButton"
+              aria-label="Selecionar quantidade de registros por página"
+            )
+            template(#content)
+              dd-stack(nogap :class="fin.pageSizeMenu")
+                p(:class="fin.pageSizeHeading") Mostrar até
+                dd-stack(nogap)
+                  dd-button(
+                    v-for="item in pageSizeMenuItems"
+                    :key="item.value"
+                    ghost
+                    full
+                    :icon="item.icon"
+                    :class="fin.pageSizeOption"
+                    @click="handlePageSizeSelect(item.value, $event)"
+                  ) {{ item.label }}
         dd-pagination(
           compact
           small
           :model-value="props.page"
           :total="props.total"
-          :page-size="props.pageSize"
+          :page-size="effectivePageSize"
           @update:model-value="emit('update:page', $event)"
         )
 </template>
@@ -70,6 +131,40 @@ dd-card
 }
 
 .pagination {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: v('space.sm');
   margin-block-start: v('space.sm');
+}
+
+.pageSize {
+  align-items: center;
+  gap: v('space.xs');
+}
+
+.rangeLabel {
+  color: v('color.text.soft');
+  font-size: v('font-size.sm');
+}
+
+.pageSizeButton {
+  color: v('color.text.soft');
+}
+
+.pageSizeMenu {
+  min-inline-size: 11rem;
+}
+
+.pageSizeHeading {
+  border-block-end: 1px solid v('color.border.standard');
+  color: v('color.text.soft');
+  font-size: v('font-size.sm');
+  margin: 0;
+  padding-block-end: v('space.xs');
+  padding-inline: v('space.xs');
+}
+
+.pageSizeOption {
+  justify-content: flex-start;
 }
 </style>

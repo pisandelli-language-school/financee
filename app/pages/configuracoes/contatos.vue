@@ -63,6 +63,11 @@ async function handlePageChange(value: number) {
   await refreshList()
 }
 
+async function handlePageSizeChange(value: number) {
+  store.setFilters({ page: 1, pageSize: value })
+  await refreshList()
+}
+
 function openCreateModal() {
   editingRecord.value = null
   form.value = createEmptyContactForm()
@@ -136,6 +141,7 @@ dd-stack
     :total="store.total"
     :page-size="store.filters.pageSize"
     @update:page="handlePageChange"
+    @update:page-size="handlePageSizeChange"
   )
     template(#toolbar)
       dd-input(

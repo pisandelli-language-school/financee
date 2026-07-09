@@ -102,12 +102,28 @@ function parseDateOnly(value: unknown) {
 function parsePagination(event: H3Event): PaginationInput {
   const query = getQuery(event)
   const page = Math.max(1, Number(query.page ?? 1) || 1)
-  const pageSize = Math.max(1, Math.min(25, Number(query.pageSize ?? 5) || 5))
+  const rawPageSize = Number(query.pageSize ?? 50)
+  const pageSize = !Number.isFinite(rawPageSize)
+    ? 50
+    : rawPageSize <= 0
+      ? 0
+      : Math.max(1, Math.min(200, rawPageSize))
 
   return {
     page,
     pageSize,
     search: normalizeString(query.search),
+  }
+}
+
+function getPaginationWindow({ page, pageSize }: PaginationInput): { skip?: number; take?: number } {
+  if (pageSize === 0) {
+    return {}
+  }
+
+  return {
+    skip: (page - 1) * pageSize,
+    take: pageSize,
   }
 }
 
@@ -211,6 +227,14 @@ async function finalizePaginatedQuery<T>(
   pageSize: number,
 ) {
   const items = await itemsPromise
+
+  if (pageSize === 0) {
+    return {
+      items,
+      total: items.length,
+    }
+  }
+
   const skip = (page - 1) * pageSize
 
   if (items.length < pageSize) {
@@ -721,8 +745,7 @@ export async function listCategories(event: H3Event) {
         _count: { select: { subcategories: true } },
       },
       orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
-      skip: (pagination.page - 1) * pagination.pageSize,
-      take: pagination.pageSize,
+      ...getPaginationWindow(pagination),
     }),
     () => prisma.category.count({ where }),
     pagination.page,
@@ -805,8 +828,7 @@ async function listSimpleSection<T extends 'account' | 'costCenter' | 'paymentMe
   const query = {
     where,
     orderBy: [{ createdAt: 'desc' as const }, { name: 'asc' as const }],
-    skip: (pagination.page - 1) * pagination.pageSize,
-    take: pagination.pageSize,
+    ...getPaginationWindow(pagination),
   }
 
   const { items, total } = model === 'account'
@@ -953,8 +975,7 @@ export async function listTags(event: H3Event) {
     prisma.tag.findMany({
       where,
       orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
-      skip: (pagination.page - 1) * pagination.pageSize,
-      take: pagination.pageSize,
+      ...getPaginationWindow(pagination),
     }),
     () => prisma.tag.count({ where }),
     pagination.page,
@@ -1021,8 +1042,7 @@ export async function listContacts(event: H3Event) {
       where,
       include: contactInclude,
       orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
-      skip: (pagination.page - 1) * pagination.pageSize,
-      take: pagination.pageSize,
+      ...getPaginationWindow(pagination),
     }),
     () => prisma.contact.count({ where }),
     pagination.page,
@@ -1185,8 +1205,7 @@ export async function listNonBusinessDays(event: H3Event) {
     prisma.nonBusinessDay.findMany({
       where,
       orderBy: [{ createdAt: 'desc' }, { title: 'asc' }],
-      skip: (pagination.page - 1) * pagination.pageSize,
-      take: pagination.pageSize,
+      ...getPaginationWindow(pagination),
     }),
     () => prisma.nonBusinessDay.count({ where }),
     pagination.page,
