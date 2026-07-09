@@ -18,6 +18,7 @@ export function createEmptyCategoryForm(): CategoryFormValues {
     type: '',
     dreGroup: '',
     parentId: '',
+    isActive: true,
   }
 }
 
@@ -27,6 +28,7 @@ export function categoryToForm(record: CategoryRecord): CategoryFormValues {
     type: record.type,
     dreGroup: record.dreGroup ?? '',
     parentId: record.parentId ?? '',
+    isActive: record.isActive,
   }
 }
 
@@ -58,6 +60,7 @@ export function createEmptyTagForm(): TagFormValues {
     name: '',
     bgColor: '',
     textColor: '',
+    isActive: true,
   }
 }
 
@@ -66,6 +69,7 @@ export function tagToForm(record: TagRecord): TagFormValues {
     name: record.name,
     bgColor: record.bgColor ?? '',
     textColor: record.textColor ?? '',
+    isActive: record.isActive,
   }
 }
 
@@ -139,6 +143,7 @@ export function createEmptyNonBusinessDayForm(): NonBusinessDayFormValues {
     date: '',
     scope: '',
     notes: '',
+    isActive: true,
   }
 }
 
@@ -152,5 +157,6 @@ export function nonBusinessDayToForm(record: NonBusinessDayRecord): NonBusinessD
     date: record.date ?? '',
     scope: record.scope ?? '',
     notes: record.notes ?? '',
+    isActive: record.isActive,
   }
 }

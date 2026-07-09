@@ -133,6 +133,11 @@ backoffice-modal-form-shell(
         placeholder="Detalhes adicionais sobre o calendário."
         @update:model-value="updateField('notes', String($event))"
       )
+
+      dd-checkbox(
+        :model-value="modelValue.isActive"
+        @update:model-value="updateField('isActive', Boolean($event))"
+      ) Registro ativo
 </template>
 
 <style module="fin">

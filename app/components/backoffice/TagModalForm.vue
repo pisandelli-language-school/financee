@@ -105,6 +105,11 @@ backoffice-modal-form-shell(
     strong(:class="fin.label") Pré-visualização
     dd-badge(:color="modelValue.bgColor || defaultBackgroundColor")
       span(:style="{ color: modelValue.textColor || defaultTextColor }") {{ modelValue.name || 'Nova tag' }}
+
+  dd-checkbox(
+    :model-value="modelValue.isActive"
+    @update:model-value="updateField('isActive', Boolean($event))"
+  ) Tag ativa
 </template>
 
 <style module="fin">

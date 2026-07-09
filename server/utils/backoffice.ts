@@ -99,6 +99,13 @@ function parseDateOnly(value: unknown) {
   return Number.isNaN(parsed.valueOf()) ? null : parsed
 }
 
+function withNotDeleted<T extends Record<string, unknown>>(where: T) {
+  return {
+    ...where,
+    deletedAt: null,
+  }
+}
+
 function parsePagination(event: H3Event): PaginationInput {
   const query = getQuery(event)
   const page = Math.max(1, Number(query.page ?? 1) || 1)
@@ -258,6 +265,7 @@ function mapCategory(record: {
   type: CategoryType
   dreGroup: string | null
   parentId: string | null
+  isActive: boolean
   createdAt: Date
   updatedAt: Date
   parent: { name: string } | null
@@ -271,6 +279,7 @@ function mapCategory(record: {
     parentId: record.parentId,
     parentName: record.parent?.name ?? null,
     subcategoryCount: record._count.subcategories,
+    isActive: record.isActive,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   }
@@ -294,12 +303,13 @@ function mapSimpleRecord<T extends SimpleCatalogSource>(
   } as AccountRecord | CostCenterRecord | PaymentMethodRecord
 }
 
-function mapTag(record: { id: string; name: string; bgColor: string | null; textColor: string | null; createdAt: Date; updatedAt: Date }): TagRecord {
+function mapTag(record: { id: string; name: string; bgColor: string | null; textColor: string | null; isActive: boolean; createdAt: Date; updatedAt: Date }): TagRecord {
   return {
     id: record.id,
     name: record.name,
     bgColor: record.bgColor,
     textColor: record.textColor,
+    isActive: record.isActive,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   }
@@ -403,6 +413,7 @@ function mapNonBusinessDay(record: {
   date: Date | null
   scope: NonBusinessDayScope | null
   notes: string | null
+  isActive: boolean
   createdAt: Date
   updatedAt: Date
 }): NonBusinessDayRecord {
@@ -431,6 +442,7 @@ function mapNonBusinessDay(record: {
     scope: record.scope,
     notes: record.notes,
     description,
+    isActive: record.isActive,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   }
@@ -446,7 +458,7 @@ async function validateCategoryParent(parentId: string | null, type: CategoryTyp
     include: { parent: true },
   })
 
-  if (!parent) {
+  if (!parent || parent.deletedAt) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Categoria pai não encontrada.',
@@ -473,16 +485,16 @@ async function validateCategoryParent(parentId: string | null, type: CategoryTyp
 }
 
 async function assertUniqueTagName(name: string, currentId?: string) {
-  const existing = await prisma.tag.findFirst({
-    where: {
-      name: {
-        equals: name,
-      },
-      ...(currentId ? { NOT: { id: currentId } } : {}),
-    },
-  })
+  const existing = await prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+    SELECT id
+    FROM Tag
+    WHERE deletedAt IS NULL
+      AND BINARY name = ${name}
+      ${currentId ? Prisma.sql`AND id <> ${currentId}` : Prisma.empty}
+    LIMIT 1
+  `)
 
-  if (existing) {
+  if (existing.length > 0) {
     validationError('Ja existe uma tag com esse nome.', 'name')
   }
 }
@@ -498,6 +510,7 @@ async function assertUniqueCategory(
       name,
       type,
       parentId,
+      deletedAt: null,
       ...(currentId ? { NOT: { id: currentId } } : {}),
     },
     select: { id: true },
@@ -577,6 +590,8 @@ export function normalizeContactPayload(payload: ContactFormValues) {
   const nature = payload.nature as ContactNature
   const document = optionalString(payload.document)
   const birthDate = parseDateOnly(payload.birthDate)
+  const email = optionalString(payload.email)
+  const phone = optionalString(payload.phone)
   const financialResponsible = normalizeFinancialResponsible(payload.financialResponsible)
 
   if (nature === 'INDIVIDUAL' && !birthDate && !document) {
@@ -589,6 +604,14 @@ export function normalizeContactPayload(payload: ContactFormValues) {
 
   if (nature === 'COMPANY' && financialResponsible === null) {
     validationError('Pessoa juridica deve informar responsavel financeiro.', 'financialResponsible')
+  }
+
+  if ((nature === 'INDIVIDUAL' || nature === 'COMPANY') && !email) {
+    validationError('Informe o e-mail.', 'email')
+  }
+
+  if ((nature === 'INDIVIDUAL' || nature === 'COMPANY') && !phone) {
+    validationError('Informe o telefone.', 'phone')
   }
 
   if (nature === 'FOREIGN' && payload.documentType === 'CPF') {
@@ -616,8 +639,8 @@ export function normalizeContactPayload(payload: ContactFormValues) {
     roles,
     birthDate,
     municipalRegistration: optionalString(payload.municipalRegistration),
-    email: optionalString(payload.email),
-    phone: optionalString(payload.phone),
+    email,
+    phone,
     notes: optionalString(payload.notes),
     isActive: parseBoolean(payload.isActive, true),
     address: normalizeAddress(payload.address),
@@ -663,6 +686,7 @@ export function normalizeTagPayload(payload: TagFormValues) {
     name,
     bgColor: optionalString(payload.bgColor),
     textColor: optionalString(payload.textColor),
+    isActive: parseBoolean(payload.isActive, true),
   }
 }
 
@@ -682,6 +706,7 @@ export function normalizeCategoryPayload(payload: CategoryFormValues) {
     type: payload.type as CategoryType,
     dreGroup: payload.dreGroup || null,
     parentId: optionalString(payload.parentId),
+    isActive: parseBoolean(payload.isActive, true),
   }
 }
 
@@ -719,6 +744,7 @@ export function normalizeNonBusinessDayPayload(payload: NonBusinessDayFormValues
     date: type === 'CUSTOM' ? date : null,
     scope: (payload.scope || null) as NonBusinessDayScope | null,
     notes: optionalString(payload.notes),
+    isActive: parseBoolean(payload.isActive, true),
   }
 }
 
@@ -726,7 +752,7 @@ export async function listCategories(event: H3Event) {
   const pagination = parsePagination(event)
   const query = getQuery(event)
   const type = normalizeString(query.type) as CategoryFilters['type']
-  const where: Prisma.CategoryWhereInput = {
+  const where: Prisma.CategoryWhereInput = withNotDeleted({
     ...(pagination.search
       ? {
           name: {
@@ -735,7 +761,7 @@ export async function listCategories(event: H3Event) {
         }
       : {}),
     ...(type ? { type: type as CategoryType } : {}),
-  }
+  })
 
   const { items, total } = await finalizePaginatedQuery(
     prisma.category.findMany({
@@ -798,7 +824,7 @@ export async function updateCategory(event: H3Event, id: string) {
 
 export async function deleteCategory(id: string) {
   const children = await prisma.category.count({
-    where: { parentId: id },
+    where: withNotDeleted({ parentId: id }),
   })
 
   if (children > 0) {
@@ -808,7 +834,12 @@ export async function deleteCategory(id: string) {
     )
   }
 
-  await prisma.category.delete({ where: { id } })
+  await prisma.category.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+    },
+  })
   return { ok: true }
 }
 
@@ -817,13 +848,13 @@ async function listSimpleSection<T extends 'account' | 'costCenter' | 'paymentMe
   event: H3Event,
 ) {
   const pagination = parsePagination(event)
-  const where = pagination.search
+  const where = withNotDeleted(pagination.search
     ? {
         name: {
           contains: pagination.search,
         },
       }
-    : {}
+    : {})
 
   const query = {
     where,
@@ -951,11 +982,26 @@ async function deleteSimpleSection<T extends 'account' | 'costCenter' | 'payment
   id: string,
 ) {
   if (model === 'account') {
-    await prisma.account.delete({ where: { id } })
+    await prisma.account.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    })
   } else if (model === 'costCenter') {
-    await prisma.costCenter.delete({ where: { id } })
+    await prisma.costCenter.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    })
   } else {
-    await prisma.paymentMethod.delete({ where: { id } })
+    await prisma.paymentMethod.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    })
   }
 
   return { ok: true }
@@ -963,13 +1009,13 @@ async function deleteSimpleSection<T extends 'account' | 'costCenter' | 'payment
 
 export async function listTags(event: H3Event) {
   const pagination = parsePagination(event)
-  const where = pagination.search
+  const where = withNotDeleted(pagination.search
     ? {
         name: {
           contains: pagination.search,
         },
       }
-    : {}
+    : {})
 
   const { items, total } = await finalizePaginatedQuery(
     prisma.tag.findMany({
@@ -1013,7 +1059,12 @@ export async function updateTag(event: H3Event, id: string) {
 }
 
 export async function deleteTag(id: string) {
-  await prisma.tag.delete({ where: { id } })
+  await prisma.tag.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+    },
+  })
   return { ok: true }
 }
 
@@ -1022,7 +1073,7 @@ export async function listContacts(event: H3Event) {
   const query = getQuery(event)
   const role = normalizeString(query.role) as ContactFilters['role']
   const nature = normalizeString(query.nature) as ContactFilters['nature']
-  const where: Prisma.ContactWhereInput = {
+  const where: Prisma.ContactWhereInput = withNotDeleted({
     ...(pagination.search
       ? {
           OR: [
@@ -1035,7 +1086,7 @@ export async function listContacts(event: H3Event) {
       : {}),
     ...(nature ? { nature: nature as ContactNature } : {}),
     ...(role ? { roleAssignments: { some: { role: role as ContactRole } } } : {}),
-  }
+  })
 
   const { items, total } = await finalizePaginatedQuery(
     prisma.contact.findMany({
@@ -1058,7 +1109,7 @@ export async function getContact(id: string) {
     include: contactInclude,
   })
 
-  if (!record) {
+  if (!record || record.deletedAt) {
     throw createError({ statusCode: 404, statusMessage: 'Contato não encontrado.' })
   }
 
@@ -1182,7 +1233,12 @@ export async function updateContact(event: H3Event, id: string) {
 }
 
 export async function deleteContact(id: string) {
-  await prisma.contact.delete({ where: { id } })
+  await prisma.contact.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+    },
+  })
   return { ok: true }
 }
 
@@ -1190,7 +1246,7 @@ export async function listNonBusinessDays(event: H3Event) {
   const pagination = parsePagination(event)
   const query = getQuery(event)
   const type = normalizeString(query.type) as NonBusinessDayFilters['type']
-  const where: Prisma.NonBusinessDayWhereInput = {
+  const where: Prisma.NonBusinessDayWhereInput = withNotDeleted({
     ...(pagination.search
       ? {
           title: {
@@ -1199,7 +1255,7 @@ export async function listNonBusinessDays(event: H3Event) {
         }
       : {}),
     ...(type ? { type: type as NonBusinessDayType } : {}),
-  }
+  })
 
   const { items, total } = await finalizePaginatedQuery(
     prisma.nonBusinessDay.findMany({
@@ -1239,7 +1295,12 @@ export async function updateNonBusinessDay(event: H3Event, id: string) {
 }
 
 export async function deleteNonBusinessDay(id: string) {
-  await prisma.nonBusinessDay.delete({ where: { id } })
+  await prisma.nonBusinessDay.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+    },
+  })
   return { ok: true }
 }
 

@@ -31,6 +31,7 @@ const columns: AppTableColumn[] = [
   { key: 'type', title: 'Tipo', width: '160px' },
   { key: 'description', title: 'Cadastro' },
   { key: 'scope', title: 'Escopo', width: '140px' },
+  { key: 'status', title: 'Status', width: '120px' },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 
@@ -171,6 +172,9 @@ dd-stack
     template(#cell-scope="{ row }")
       span {{ row.scope ? scopeLabels.get(row.scope) || row.scope : '-' }}
 
+    template(#cell-status="{ row }")
+      dd-badge(:success="row.isActive" :warning="!row.isActive") {{ row.isActive ? 'Ativo' : 'Inativo' }}
+
     template(#cell-actions="{ row }")
       backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")
 
@@ -196,7 +200,7 @@ dd-stack
   backoffice-delete-modal(
     :open="deleteOpen"
     :title="deleteTarget?.title || 'Dia não útil'"
-    description="Deseja excluir este dia não útil?"
+    description="Deseja excluir este dia não útil? O registro será ocultado dos fluxos ativos."
     @update:open="deleteOpen = $event"
     @confirm="confirmDelete"
   )

@@ -162,6 +162,11 @@ backoffice-modal-form-shell(
             type="button"
             @click="updateDreGroup('')"
           ) Limpar
+
+      dd-checkbox(
+        :model-value="values.isActive"
+        @update:model-value="updateField('isActive', Boolean($event))"
+      ) Categoria ativa
 </template>
 
 <style module="fin">

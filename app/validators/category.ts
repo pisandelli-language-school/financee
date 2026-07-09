@@ -14,6 +14,7 @@ const categorySchema = z.object({
   type: z.string(),
   dreGroup: z.string(),
   parentId: z.string(),
+  isActive: z.boolean(),
 }).superRefine((value, ctx) => {
   if (!value.type) {
     ctx.addIssue({

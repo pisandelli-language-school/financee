@@ -17,6 +17,7 @@ const requestError = ref('')
 
 const columns: AppTableColumn[] = [
   { key: 'tag', title: 'Tag' },
+  { key: 'status', title: 'Status', width: '120px' },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 
@@ -132,6 +133,9 @@ dd-stack
       dd-badge(:color="row.bgColor || '#F1F5F9'")
         span(:style="{ color: row.textColor || '#151A30' }") {{ row.name }}
 
+    template(#cell-status="{ row }")
+      dd-badge(:success="row.isActive" :warning="!row.isActive") {{ row.isActive ? 'Ativa' : 'Inativa' }}
+
     template(#cell-actions="{ row }")
       backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")
 
@@ -155,7 +159,7 @@ dd-stack
   backoffice-delete-modal(
     :open="deleteOpen"
     :title="deleteTarget?.name || 'Tag'"
-    description="Deseja excluir esta tag?"
+    description="Deseja excluir esta tag? O registro será ocultado dos fluxos ativos."
     @update:open="deleteOpen = $event"
     @confirm="confirmDelete"
   )

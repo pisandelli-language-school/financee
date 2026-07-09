@@ -102,10 +102,6 @@ function validateForeignRules(value: ContactFormValues, ctx: ContactValidationCo
   if (value.nature !== 'FOREIGN') {
     return
   }
-
-  if (value.document.trim().length < 3) {
-    addIssue(ctx, ['document'], 'Informe o documento principal.')
-  }
 }
 
 function validatePhoneRules(value: ContactFormValues, ctx: ContactValidationContext) {
@@ -129,7 +125,7 @@ function validatePostalCodeRules(value: ContactFormValues, ctx: ContactValidatio
   }
 }
 
-const contactSchema = z.object({
+export const contactSchema = z.object({
   name: z.string().trim().min(1, 'Nome do contato é obrigatório.'),
   tradeName: z.string(),
   document: z.string(),

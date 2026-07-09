@@ -21,12 +21,13 @@ const modalOpen = ref(false)
 const deleteOpen = ref(false)
 const deleteTarget = ref<CategoryRecord | null>(null)
 const requestError = ref('')
-const deleteDescription = ref('Deseja remover esta categoria? Esta ação não pode ser desfeita.')
+const deleteDescription = ref('Deseja excluir esta categoria? O registro será ocultado dos fluxos ativos.')
 
 const columns: AppTableColumn[] = [
   { key: 'name', title: 'Categoria' },
   { key: 'type', title: 'Tipo', width: '180px' },
   { key: 'subcategory', title: 'Subcategoria de' },
+  { key: 'status', title: 'Status', width: '120px' },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 
@@ -125,7 +126,7 @@ async function handleSave() {
 
 function askDelete(record: CategoryRecord) {
   deleteTarget.value = record
-  deleteDescription.value = 'Deseja remover esta categoria? Esta ação não pode ser desfeita.'
+  deleteDescription.value = 'Deseja excluir esta categoria? O registro será ocultado dos fluxos ativos.'
   deleteOpen.value = true
 }
 
@@ -214,6 +215,9 @@ dd-stack
 
     template(#cell-subcategory="{ row }")
       span {{ row.parentName || '-' }}
+
+    template(#cell-status="{ row }")
+      dd-badge(:success="row.isActive" :warning="!row.isActive") {{ row.isActive ? 'Ativa' : 'Inativa' }}
 
     template(#cell-actions="{ row }")
       backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")

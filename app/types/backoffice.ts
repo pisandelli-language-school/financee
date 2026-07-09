@@ -112,6 +112,7 @@ export interface CategoryRecord extends BaseRecord {
   parentId: string | null
   parentName: string | null
   subcategoryCount: number
+  isActive: boolean
 }
 
 export interface AccountRecord extends BaseRecord {
@@ -130,6 +131,7 @@ export interface TagRecord extends BaseRecord {
   name: string
   bgColor: string | null
   textColor: string | null
+  isActive: boolean
 }
 
 export interface PaymentMethodRecord extends BaseRecord {
@@ -182,6 +184,7 @@ export interface NonBusinessDayRecord extends BaseRecord {
   scope: NonBusinessDayScope | null
   notes: string | null
   description: string
+  isActive: boolean
 }
 
 export interface CategoryFormValues {
@@ -189,6 +192,7 @@ export interface CategoryFormValues {
   type: CategoryType | ''
   dreGroup: DREGroup | ''
   parentId: string
+  isActive: boolean
 }
 
 export interface SimpleCatalogFormValues {
@@ -202,6 +206,7 @@ export interface TagFormValues {
   name: string
   bgColor: string
   textColor: string
+  isActive: boolean
 }
 
 export interface ContactFormValues {
@@ -230,6 +235,7 @@ export interface NonBusinessDayFormValues {
   date: string
   scope: NonBusinessDayScope | ''
   notes: string
+  isActive: boolean
 }
 
 export interface ConfigCard {
