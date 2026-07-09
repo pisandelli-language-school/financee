@@ -19,7 +19,7 @@ The product is designed to be the financial source of truth for the operation. T
 - The system is not a traditional school product: it does not model classes, semesters, or academic calendars in the core.
 - `Settings` is a root navigation module, with no artificial grouping such as `Finance -> Settings`.
 - Monetary values must use `Decimal(14,2)`; `Float` in money flows is a defect.
-- Due date adjustments always move forward in the calendar, respecting weekends and configured non-business days.
+- Due date adjustments always move forward in the calendar, respecting Sundays and configured non-business days.
 - The MVP is single-tenant and does not include full CRM features, Brazilian electronic invoicing, or partial payments.
 
 ## Modules defined in the specs
@@ -30,7 +30,7 @@ The product is designed to be the financial source of truth for the operation. T
 - `Reports, Dashboard, and Cash Flow`
 - `Auth, Users, Permissions, and Audit`
 - `Notifications, Alerts, and Automation`
-- `Jobs, Scheduling e Background Processing`
+- `Jobs, Scheduling, and Background Processing`
 - `Integration Architecture`
 
 ## Stack
@@ -38,7 +38,8 @@ The product is designed to be the financial source of truth for the operation. T
 - `Nuxt 4`
 - `Vue 3`
 - `Pinia`
-- `Supabase`
+- `Supabase Auth`
+- `MySQL`
 - `Prisma`
 - `pnpm`
 - `Pug`
@@ -64,8 +65,17 @@ pnpm typecheck
 pnpm test
 pnpm prisma:generate
 pnpm prisma:validate
+pnpm prisma:db:push
 pnpm prisma:migrate
 ```
+
+## Prisma workflow
+
+This repository uses `Supabase` for authentication and `MySQL` for application data. Prisma schema sync in development is based on `prisma db push`.
+
+- `DATABASE_URL`: MySQL connection used by both runtime and Prisma CLI commands
+- `pnpm prisma:migrate`: currently mapped to `prisma db push`
+- versioned SQL migrations are still kept in `prisma/migrations/` as architectural reference, but the active development workflow is schema-first with `db push`
 
 ## Product references
 

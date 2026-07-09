@@ -1,0 +1,49 @@
+enum CategoryType {
+  INCOME
+  EXPENSE
+  OTHER
+}
+
+enum DREGroup {
+  OPERATING_REVENUE
+  OPERATING_EXPENSE
+  FINANCIAL_RESULT
+  NON_OPERATING
+}
+
+enum ContactRole {
+  CLIENT
+  SUPPLIER
+  OTHER
+}
+
+enum ContactNature {
+  INDIVIDUAL
+  COMPANY
+  FOREIGN
+}
+
+enum ContactDocumentType {
+  CPF
+  CNPJ
+  FOREIGN_DOCUMENT
+}
+
+enum NonBusinessDayType {
+  FIXED
+  CALCULATED
+  CUSTOM
+}
+
+enum NonBusinessDayRule {
+  EASTER_MINUS_47
+  EASTER_MINUS_2
+  EASTER_PLUS_60
+}
+
+enum NonBusinessDayScope {
+  NATIONAL
+  STATE
+  CITY
+  INTERNAL
+}

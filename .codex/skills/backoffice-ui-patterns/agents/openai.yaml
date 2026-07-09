@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backoffice UI Patterns"
+  short_description: "Financee backoffice UI conventions"
+  default_prompt: "Use $backoffice-ui-patterns to update this Financee backoffice screen with the project UI conventions."
