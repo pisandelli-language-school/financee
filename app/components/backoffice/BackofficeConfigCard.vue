@@ -5,7 +5,6 @@ defineProps<{
   card: ConfigCard
 }>()
 
-const fin = useCssModule('fin')
 </script>
 
 <template lang="pug">

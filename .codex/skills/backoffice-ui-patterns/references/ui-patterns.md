@@ -10,7 +10,8 @@ This reference applies to Financee backoffice pages and shared admin components,
 ## Naming
 
 - Prefer CSS Modules with `module="fin"`
-- Use `const fin = useCssModule('fin')` in `<script setup>`
+- With `<style module="fin">`, use `fin.*` directly in the template and avoid `useCssModule('fin')` unless script logic actually needs access to the module map
+- Do not add a `module="fin"` block unless the file really needs local styles
 - Prefer short semantic names like `page`, `toolbar`, `field`, `search`, `action`, `pagination`, `subcopy`
 - Do not introduce BEM names such as `toolbar__filters` or `page-header__actions`
 
@@ -21,6 +22,7 @@ This reference applies to Financee backoffice pages and shared admin components,
 - If removing a wrapper keeps alignment intact, remove it
 - Prefer Daredash primitives like `dd-grid` before writing custom `display: grid`
 - Do not add CSS for layout if the same result is already available through Daredash component props or primitives
+- If removing a local class keeps the layout correct, remove the class and the style rule instead of preserving it “just in case”
 - When custom CSS is still necessary, keep it narrow and complementary to the design system rather than replacing it
 
 ## List Pages
@@ -48,6 +50,7 @@ Toolbar expectations:
 - Search and filters stay close to the create action
 - Primary action lives in the same toolbar row when possible
 - Width behavior should come from per-field module classes, not extra wrapper clusters
+- But if the default field sizing is already adequate, prefer no extra class over a redundant `fin.field`
 
 ## Copy
 

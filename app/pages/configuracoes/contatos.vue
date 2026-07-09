@@ -15,7 +15,6 @@ const deleteOpen = ref(false)
 const editingRecord = ref<ContactRecord | null>(null)
 const deleteTarget = ref<ContactRecord | null>(null)
 const requestError = ref('')
-const fin = useCssModule('fin')
 
 const columns: AppTableColumn[] = [
   { key: 'name', title: 'Nome' },
@@ -120,7 +119,7 @@ async function confirmDelete() {
 </script>
 
 <template lang="pug">
-dd-stack(spaced :class="fin.page")
+dd-stack
   backoffice-page-header(
     :breadcrumb="getBreadcrumb('contatos')"
     :title="meta.title"
@@ -209,16 +208,8 @@ dd-stack(spaced :class="fin.page")
 </template>
 
 <style module="fin">
-.page {
-  gap: 24px;
-}
-
-.field {
-  flex: 1 1 180px;
-}
-
 .subcopy {
-  color: #73768c;
-  font-size: 12px;
+  color: v('color.text.soft');
+  font-size: v('font-size.xs');
 }
 </style>

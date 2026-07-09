@@ -3,7 +3,6 @@ const { getBreadcrumb, getSectionMeta } = useBackofficeSections()
 const { backofficeCards } = useBackofficeNavigation()
 
 const meta = getSectionMeta('configuracoes')
-const fin = useCssModule('fin')
 </script>
 
 <template lang="pug">

@@ -14,7 +14,6 @@ const props = defineProps<{
   errorMessage?: string
 }>()
 
-const fin = useCssModule('fin')
 
 const emit = defineEmits<{
   (event: 'update:open', value: boolean): void

@@ -20,7 +20,6 @@ const emit = defineEmits<{
   (event: 'save'): void
 }>()
 
-const fin = useCssModule('fin')
 const typeOptions = computed(() => accountTypeOptions.map((option) => ({ ...option })))
 
 const {

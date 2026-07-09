@@ -17,7 +17,6 @@ const emit = defineEmits<{
   (event: 'save'): void
 }>()
 
-const fin = useCssModule('fin')
 
 const {
   values,

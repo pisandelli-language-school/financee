@@ -14,7 +14,6 @@ const emit = defineEmits<{
   (event: 'save'): void
 }>()
 
-const fin = useCssModule('fin')
 const {
   public: {
     daredash: { prefix = 'dd' } = {},

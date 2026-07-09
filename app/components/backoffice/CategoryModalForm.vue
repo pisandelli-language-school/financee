@@ -24,7 +24,6 @@ const emit = defineEmits<{
   (event: 'save'): void
 }>()
 
-const fin = useCssModule('fin')
 
 const parentOptions = computed(() => [
   { label: 'Opcional', value: '' },

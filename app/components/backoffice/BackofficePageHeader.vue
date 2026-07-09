@@ -17,7 +17,6 @@ defineEmits<{
   (event: 'action'): void
 }>()
 
-const fin = useCssModule('fin')
 </script>
 
 <template lang="pug">

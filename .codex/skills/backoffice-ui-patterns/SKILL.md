@@ -20,8 +20,8 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 
 1. Use CSS Modules, not BEM.
 2. Prefer `module="fin"` for local styles unless a stronger local reason exists.
-3. In `<script setup>`, expose classes with `const fin = useCssModule('fin')`.
-4. In templates, bind module classes with `:class="fin.name"` instead of literal scoped class names.
+3. When using `<style module="fin">`, do not add `useCssModule('fin')` in `<script setup>` unless script logic truly needs it.
+4. In templates, bind module classes directly with `:class="fin.name"` because `module="fin"` already exposes `fin` to the template scope.
 5. Prefer `Pug` templates in Vue SFCs for this project. When editing or creating backoffice components and pages, keep template syntax aligned with the established `lang="pug"` convention unless there is a strong technical reason not to.
 6. Prefer lean layout trees. Start with one `dd-cluster` or `dd-stack` and only nest another layout component if it adds real structure.
 7. On list pages, prefer a toolbar-first card: search, filters, and primary action as siblings in the same cluster when possible.
@@ -41,12 +41,17 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 21. Align TypeScript contracts with actual usage. If the UI assumes a property is always present, reflect that in the type instead of relying on defensive branching.
 22. When form validation starts accumulating conditional business rules, move the schema and rule helpers out of the component into `app/validators/*` rather than leaving large `if` trees inside the Vue file.
 23. Reusable contact masks and formatters such as phone, CPF, CNPJ, document, and CEP should live in `app/utils/contactFormatters.ts` instead of being redefined inside components.
+24. Keep repeated layout and style patterns DRY. If multiple pages share the same outer stack, spacing rule, toolbar shell, or panel structure, prefer a shared component or higher-level wrapper only when it adds real behavior or removes meaningful duplication.
+25. Avoid repeating raw spacing values across pages. If the same gap appears in more than one screen, centralize it and express it with Daredash tokens.
+26. Do not create `<style module="fin">` by default. Add a local style block only when the page truly needs local styling that Daredash primitives or component props cannot already express.
+27. Do not add helper classes such as `fin.field` or `fin.search` unless they solve a concrete layout need. If the layout is already correct without them, omit the class entirely.
 
 ## Workflow
 
 1. Read the target page/component and identify unnecessary wrappers, class naming drift, and toolbar inconsistencies.
 2. Preserve or convert Vue templates to `lang="pug"` when working in backoffice files, unless a concrete technical constraint prevents it.
 3. Convert local styles to `module="fin"` and replace template class usage accordingly.
+3.1. If, after simplification, no local styles are needed, remove the `<style module="fin">` block and any related `fin.*` bindings instead of keeping an empty styling layer.
 4. Prefer Daredash primitives such as `dd-grid`, `dd-stack`, and `dd-cluster` before introducing custom layout CSS.
 5. Collapse layout wrappers where a single `dd-cluster` or `dd-stack` can express the same intent.
 6. If the screen is a CRUD list page, start from `BackofficeListPanel` and customize it via `toolbar`, `notice`, and table slots.
@@ -55,12 +60,14 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 9. Make the toolbar the top control surface inside the card.
 10. Reuse the project's current interaction patterns for pagination, empty states, row actions, and primary create actions.
 11. Replace raw spacing, radius, typography, shadow, and color values with existing Daredash tokens whenever a matching token already exists.
+11.1. Re-check whether every local class still earns its place after layout cleanup; remove classes that only restate the default behavior of the component.
 12. If a shared component is starting to encode one feature's special-case layout or fields, stop and decide whether it should become a shell plus domain-specific implementations.
 13. Review visible strings for natural pt-BR spelling and accentuation.
 14. Before a substantial Daredash-specific refactor, consult `https://raw.githubusercontent.com/pisandelli/daredash/refs/heads/main/llms.txt`.
 15. Run typecheck after structural edits.
 16. If a form uses `vee-validate` with non-trivial domain rules, keep the Vue component focused on rendering and field wiring while the schema and rule helpers live in `app/validators/*`.
 17. If a contact-oriented form needs masks or string formatting, reuse `app/utils/contactFormatters.ts` before creating new local helpers.
+18. If you touch multiple backoffice pages and find the same wrapper or spacing rule repeated, stop and evaluate whether it belongs in a shared backoffice component first. If the wrapper becomes a pass-through with no real behavior, prefer the simpler direct markup.
 
 ## Toolbar Pattern
 
@@ -72,10 +79,6 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 ## CSS Module Pattern
 
 ```vue
-<script setup lang="ts">
-const fin = useCssModule('fin')
-</script>
-
 <template lang="pug">
 dd-cluster(end :class="fin.toolbar")
   dd-input(:class="fin.search")
@@ -108,6 +111,7 @@ dd-cluster(end :class="fin.toolbar")
 - A shared modal shell is a good abstraction when multiple forms share the same open/close, title, alert, and footer behavior.
 - A domain form should stay domain-owned once its field composition, validation, or layout starts diverging from the other forms.
 - Prefer removing dead branches and optional behavior when the current product contract is simpler than the component API suggests.
+- Shared page-level shells such as standard CRUD chrome should be centralized once they repeat across screens, but avoid extracting pass-through wrappers that do not carry meaningful behavior or constraints.
 
 ## References
 

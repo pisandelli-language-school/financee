@@ -22,7 +22,6 @@ const deleteOpen = ref(false)
 const deleteTarget = ref<CategoryRecord | null>(null)
 const requestError = ref('')
 const deleteDescription = ref('Deseja remover esta categoria? Esta ação não pode ser desfeita.')
-const fin = useCssModule('fin')
 
 const columns: AppTableColumn[] = [
   { key: 'name', title: 'Categoria' },
@@ -163,7 +162,7 @@ watch(
 </script>
 
 <template lang="pug">
-dd-stack(:class="fin.page")
+dd-stack
   backoffice-page-header(
     :breadcrumb="getBreadcrumb('categorias')"
     :title="meta.title"
@@ -183,14 +182,12 @@ dd-stack(:class="fin.page")
   )
     template(#toolbar)
       dd-input(
-        :class="fin.field"
         :model-value="categoriesStore.filters.search"
         icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
       )
       dd-select(
-        :class="fin.field"
         :model-value="categoriesStore.filters.type"
         :options="typeFilterOptions"
         placeholder="Todos os tipos"
@@ -244,13 +241,3 @@ dd-stack(:class="fin.page")
     @confirm="confirmDelete"
   )
 </template>
-
-<style module="fin">
-.page {
-  gap: 24px;
-}
-
-.field {
-  flex: 0 1 256px;
-}
-</style>

@@ -26,7 +26,6 @@ const emit = defineEmits<{
   (event: 'save', value: ContactFormValues): void
 }>()
 
-const fin = useCssModule('fin')
 
 const natureOptions = computed(() => contactNatureOptions.map((option) => ({ ...option })))
 const roleOptions = computed(() => contactRoleOptions.map((option) => ({ ...option })))

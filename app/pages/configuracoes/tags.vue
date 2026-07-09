@@ -14,7 +14,6 @@ const deleteOpen = ref(false)
 const editingRecord = ref<TagRecord | null>(null)
 const deleteTarget = ref<TagRecord | null>(null)
 const requestError = ref('')
-const fin = useCssModule('fin')
 
 const columns: AppTableColumn[] = [
   { key: 'tag', title: 'Tag' },
@@ -96,7 +95,7 @@ async function confirmDelete() {
 </script>
 
 <template lang="pug">
-dd-stack(spaced :class="fin.page")
+dd-stack
   backoffice-page-header(
     :breadcrumb="getBreadcrumb('tags')"
     :title="meta.title"
@@ -116,7 +115,6 @@ dd-stack(spaced :class="fin.page")
   )
     template(#toolbar)
       dd-input(
-        :class="fin.search"
         :model-value="store.filters.search"
         icon="lucide:search"
         placeholder="Buscar..."
@@ -156,13 +154,3 @@ dd-stack(spaced :class="fin.page")
     @confirm="confirmDelete"
   )
 </template>
-
-<style module="fin">
-.page {
-  gap: 24px;
-}
-
-.search {
-  flex: 1 1 260px;
-}
-</style>

@@ -9,7 +9,6 @@ defineEmits<{
   (event: 'delete'): void
 }>()
 
-const fin = useCssModule('fin')
 </script>
 
 <template lang="pug">
