@@ -1,0 +1,3 @@
+## 2025-07-09 - Global route protection optimization
+**Learning:** In Nuxt middleware, assigning a constant array for route lookups inside the middleware function creates a new allocation and garbage collection operation on every route transition. An $O(n)$ array lookup via `includes()` on these transitions, while minimal on small arrays, provides an opportunity for straightforward optimization.
+**Action:** Extract static lists to an external O(1) `Set` cache outside the middleware execution context. Use early returns in middleware to skip evaluating unnecessary conditionals and reactive state dependencies when we already have enough information to redirect or proceed.
