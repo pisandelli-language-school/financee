@@ -11,6 +11,14 @@ export const dreGroupOptions = [
   { label: 'Não operacional', value: 'NON_OPERATING' },
 ] as const
 
+export const accountTypeOptions = [
+  { label: 'Conta Corrente', value: 'Conta Corrente', description: 'Conta bancária' },
+  { label: 'Conta Poupança', value: 'Conta Poupança', description: 'Rendimentos automáticos' },
+  { label: 'Investimento', value: 'Investimento', description: 'Corretora ou aplicações' },
+  { label: 'Carteira Digital', value: 'Carteira Digital', description: 'PicPay, Mercado Pago, etc.' },
+  { label: 'Outros', value: 'Outros', description: 'Caixinha, cofre, etc.' },
+] as const
+
 export const contactRoleOptions = [
   { label: 'Cliente', value: 'CLIENT' },
   { label: 'Fornecedor', value: 'SUPPLIER' },
@@ -50,6 +58,7 @@ export const nonBusinessDayScopeOptions = [
 
 export type CategoryType = (typeof categoryTypeOptions)[number]['value']
 export type DREGroup = (typeof dreGroupOptions)[number]['value']
+export type AccountType = (typeof accountTypeOptions)[number]['value']
 export type ContactRole = (typeof contactRoleOptions)[number]['value']
 export type ContactNature = (typeof contactNatureOptions)[number]['value']
 export type ContactDocumentType = (typeof documentTypeOptions)[number]['value']
@@ -170,7 +179,7 @@ export interface NonBusinessDayRecord extends BaseRecord {
 
 export interface CategoryFormValues {
   name: string
-  type: CategoryType
+  type: CategoryType | ''
   dreGroup: DREGroup | ''
   parentId: string
 }
@@ -219,7 +228,7 @@ export interface NonBusinessDayFormValues {
 export interface ConfigCard {
   title: string
   description: string
-  to?: string
+  to: string
   icon: string
   disabled?: boolean
   badge?: string

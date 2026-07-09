@@ -15,7 +15,7 @@ import type {
 export function createEmptyCategoryForm(): CategoryFormValues {
   return {
     name: '',
-    type: 'INCOME',
+    type: '',
     dreGroup: '',
     parentId: '',
   }

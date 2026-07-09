@@ -35,12 +35,7 @@ dd-modal(
 </template>
 
 <style scoped>
-h3,
 .delete-description {
-  margin: 0;
-}
-
-.delete-description {
-  color: #73768c;
+  color: v('color.gray');
 }
 </style>

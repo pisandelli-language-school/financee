@@ -13,42 +13,32 @@ const fin = useCssModule('fin')
 </script>
 
 <template lang="pug">
-dd-cluster(end compact :class="fin.actions")
-  button(
+dd-cluster(end :class="fin.actions")
+  dd-button(
+    ghost
+    tiny
+    icon-only
     type="button"
+    icon="lucide:pencil"
+    primary
     :aria-label="editLabel ?? 'Editar'"
-    :class="fin.action"
     @click="$emit('edit')"
   )
-    icon(name="lucide:pencil")
-  button(
+  dd-button(
+    ghost
+    tiny
+    icon-only
     type="button"
+    icon="lucide:trash-2"
+    danger
     :aria-label="deleteLabel ?? 'Excluir'"
-    :class="fin.action"
     @click="$emit('delete')"
   )
-    icon(name="lucide:trash-2")
 </template>
 
 <style module="fin">
-.action {
-  width: 28px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #73768c;
-  cursor: pointer;
-}
-
 .actions {
+  --dd-cluster-gap: v('space.xs');
   flex-wrap: nowrap;
-}
-
-.action:hover {
-  background: #f7f8fc;
-  color: #151a30;
 }
 </style>

@@ -9,7 +9,7 @@ const { showToast } = useToaster()
 
 const meta = getSectionMeta('centros-custo')
 const form = ref<SimpleCatalogFormValues>(createEmptySimpleForm())
-const drawerOpen = ref(false)
+const modalOpen = ref(false)
 const deleteOpen = ref(false)
 const editingRecord = ref<CostCenterRecord | null>(null)
 const deleteTarget = ref<CostCenterRecord | null>(null)
@@ -41,18 +41,18 @@ async function handlePageChange(value: number) {
   await refreshList()
 }
 
-function openCreateDrawer() {
+function openCreateModal() {
   editingRecord.value = null
   form.value = createEmptySimpleForm()
   requestError.value = ''
-  drawerOpen.value = true
+  modalOpen.value = true
 }
 
-function openEditDrawer(record: CostCenterRecord) {
+function openEditModal(record: CostCenterRecord) {
   editingRecord.value = record
   form.value = simpleRecordToForm(record)
   requestError.value = ''
-  drawerOpen.value = true
+  modalOpen.value = true
 }
 
 async function handleSave() {
@@ -67,7 +67,7 @@ async function handleSave() {
       showToast('Centro de custo criado com sucesso.', { title: 'Centros de custo', type: 'success' })
     }
 
-    drawerOpen.value = false
+    modalOpen.value = false
   } catch (error) {
     requestError.value = getErrorMessage(error, 'Não foi possível salvar o centro de custo.')
   }
@@ -123,13 +123,13 @@ dd-stack(spaced :class="fin.page")
         placeholder="Buscar..."
         @update:model-value="handleSearch"
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateDrawer") Novo centro
+      dd-button(primary icon="lucide:plus" @click="openCreateModal") Novo centro
 
     template(#cell-status="{ row }")
       dd-badge(:success="row.isActive" :warning="!row.isActive") {{ row.isActive ? 'Ativo' : 'Inativo' }}
 
     template(#cell-actions="{ row }")
-      backoffice-row-actions(@edit="openEditDrawer(row)" @delete="askDelete(row)")
+      backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")
 
     template(#empty)
       backoffice-empty-state(
@@ -138,13 +138,13 @@ dd-stack(spaced :class="fin.page")
         message="Crie centros para melhorar a análise e a classificação financeira."
       )
 
-  backoffice-simple-entity-drawer-form(
-    :open="drawerOpen"
+  backoffice-simple-entity-modal-form(
+    :open="modalOpen"
     :title="editingRecord ? 'Editar centro de custo' : 'Novo centro de custo'"
     :model-value="form"
     :loading="store.loading"
     :error-message="requestError"
-    @update:open="drawerOpen = $event"
+    @update:open="modalOpen = $event"
     @update:model-value="form = $event"
     @save="handleSave"
   )

@@ -4,7 +4,7 @@ import type {
   NonBusinessDayFormValues,
   NonBusinessDayRecord,
 } from '~/types/backoffice'
-import { nonBusinessDayTypeOptions } from '~/types/backoffice'
+import { nonBusinessDayScopeOptions, nonBusinessDayTypeOptions } from '~/types/backoffice'
 import { useNonBusinessDaysStore } from '~~/stores/useNonBusinessDaysStore'
 
 const store = useNonBusinessDaysStore()
@@ -14,7 +14,7 @@ const { showToast } = useToaster()
 
 const meta = getSectionMeta('dias-nao-uteis')
 const form = ref<NonBusinessDayFormValues>(createEmptyNonBusinessDayForm())
-const drawerOpen = ref(false)
+const modalOpen = ref(false)
 const deleteOpen = ref(false)
 const editingRecord = ref<NonBusinessDayRecord | null>(null)
 const deleteTarget = ref<NonBusinessDayRecord | null>(null)
@@ -25,6 +25,7 @@ const typeFilterOptions = [
   { label: 'Todos os tipos', value: '' },
   ...nonBusinessDayTypeOptions,
 ]
+const scopeLabels = new Map(nonBusinessDayScopeOptions.map((option) => [option.value, option.label]))
 
 const columns: AppTableColumn[] = [
   { key: 'title', title: 'Título' },
@@ -58,18 +59,18 @@ async function handlePageChange(value: number) {
   await refreshList()
 }
 
-function openCreateDrawer() {
+function openCreateModal() {
   editingRecord.value = null
   form.value = createEmptyNonBusinessDayForm()
   requestError.value = ''
-  drawerOpen.value = true
+  modalOpen.value = true
 }
 
-function openEditDrawer(record: NonBusinessDayRecord) {
+function openEditModal(record: NonBusinessDayRecord) {
   editingRecord.value = record
   form.value = nonBusinessDayToForm(record)
   requestError.value = ''
-  drawerOpen.value = true
+  modalOpen.value = true
 }
 
 async function handleSave() {
@@ -84,7 +85,7 @@ async function handleSave() {
       showToast('Dia não útil criado com sucesso.', { title: 'Dias não úteis', type: 'success' })
     }
 
-    drawerOpen.value = false
+    modalOpen.value = false
   } catch (error) {
     requestError.value = getErrorMessage(error, 'Não foi possível salvar o dia não útil.')
   }
@@ -135,10 +136,10 @@ dd-stack(spaced :class="fin.page")
     template(#notice)
       dd-alert(
         info
-        title="Sábados e domingos"
+        title="Domingos automáticos"
         :closable="false"
         icon
-      ) Sábados e domingos são considerados automaticamente. Cadastre apenas feriados fixos anuais, calculados ou exceções requeridas.
+      ) Domingos são considerados automaticamente. Cadastre feriados fixos anuais, calculados e exceções específicas, incluindo sábados quando necessário.
 
     template(#toolbar)
       dd-input(
@@ -155,7 +156,7 @@ dd-stack(spaced :class="fin.page")
         placeholder="Todos os tipos"
         @update:model-value="handleTypeFilter"
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateDrawer") Novo dia não útil
+      dd-button(primary icon="lucide:plus" @click="openCreateModal") Novo dia não útil
 
     template(#cell-type="{ row }")
       dd-badge(v-if="row.type === 'FIXED'" success) Fixo anual
@@ -163,10 +164,10 @@ dd-stack(spaced :class="fin.page")
       dd-badge(v-else info) Personalizado
 
     template(#cell-scope="{ row }")
-      span {{ row.scope || '-' }}
+      span {{ row.scope ? scopeLabels.get(row.scope) || row.scope : '-' }}
 
     template(#cell-actions="{ row }")
-      backoffice-row-actions(@edit="openEditDrawer(row)" @delete="askDelete(row)")
+      backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")
 
     template(#empty)
       backoffice-empty-state(
@@ -175,13 +176,14 @@ dd-stack(spaced :class="fin.page")
         message="Cadastre feriados fixos, datas calculadas e exceções operacionais."
       )
 
-  backoffice-non-business-day-drawer-form(
-    v-if="drawerOpen"
-    :open="drawerOpen"
+  backoffice-non-business-day-modal-form(
+    v-if="modalOpen"
+    :open="modalOpen"
+    :title="editingRecord ? 'Editar dia não útil' : 'Novo dia não útil'"
     :model-value="form"
     :loading="store.loading"
     :error-message="requestError"
-    @update:open="drawerOpen = $event"
+    @update:open="modalOpen = $event"
     @update:model-value="form = $event"
     @save="handleSave"
   )

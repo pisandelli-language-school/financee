@@ -601,16 +601,28 @@ export function normalizeContactPayload(payload: ContactFormValues) {
   }
 }
 
-function normalizeSimplePayload(payload: SimpleCatalogFormValues) {
+function normalizeSimplePayload(
+  payload: SimpleCatalogFormValues,
+  options: {
+    requireType?: boolean
+    entityLabel?: string
+  } = {},
+) {
   const name = normalizeString(payload.name)
 
   if (!name) {
     validationError('Nome e obrigatorio.', 'name')
   }
 
+  const type = optionalString(payload.type)
+
+  if (options.requireType && !type) {
+    validationError(`Tipo${options.entityLabel ? ` da ${options.entityLabel}` : ''} é obrigatório.`, 'type')
+  }
+
   return {
     name,
-    type: optionalString(payload.type),
+    type,
     initialValue: parseNullableNumber(payload.initialValue),
     isActive: parseBoolean(payload.isActive, true),
   }
@@ -635,6 +647,10 @@ export function normalizeCategoryPayload(payload: CategoryFormValues) {
 
   if (!name) {
     validationError('Nome da categoria e obrigatorio.', 'name')
+  }
+
+  if (!payload.type) {
+    validationError('Tipo da categoria é obrigatório.', 'type')
   }
 
   return {
@@ -826,7 +842,12 @@ async function createSimpleSection<T extends 'account' | 'costCenter' | 'payment
   model: T,
   event: H3Event,
 ) {
-  const payload = normalizeSimplePayload(await readBody<SimpleCatalogFormValues>(event))
+  const payload = normalizeSimplePayload(
+    await readBody<SimpleCatalogFormValues>(event),
+    model === 'account'
+      ? { requireType: true, entityLabel: 'conta' }
+      : {},
+  )
 
   try {
     const record = model === 'account'
@@ -863,7 +884,12 @@ async function updateSimpleSection<T extends 'account' | 'costCenter' | 'payment
   id: string,
   event: H3Event,
 ) {
-  const payload = normalizeSimplePayload(await readBody<SimpleCatalogFormValues>(event))
+  const payload = normalizeSimplePayload(
+    await readBody<SimpleCatalogFormValues>(event),
+    model === 'account'
+      ? { requireType: true, entityLabel: 'conta' }
+      : {},
+  )
 
   try {
     const record = model === 'account'

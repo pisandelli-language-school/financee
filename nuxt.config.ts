@@ -6,7 +6,6 @@
 // Layer imports use Nuxt's native alias `@/` (→ srcDir `app/`).
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
 
   modules: [
     '@nuxt/eslint',
@@ -49,7 +48,12 @@ export default defineNuxtConfig({
 
   vite: {
     optimizeDeps: {
-      include: ['@supabase/supabase-js', '@nuxtjs/supabase > @supabase/ssr > cookie'],
+      include: [
+        '@nuxtjs/supabase > @supabase/ssr > cookie', // CJS
+        '@supabase/supabase-js',
+        '@vee-validate/zod',
+        'zod',
+      ],
     },
   },
 })

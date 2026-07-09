@@ -28,48 +28,40 @@ const tableSlotNames = computed(() =>
 )
 </script>
 
-<template>
-  <dd-card>
-    <dd-stack compact>
-      <slot name="notice" />
+<template lang="pug">
+dd-card
+  dd-stack(compact)
+    slot(name="notice")
 
-      <dd-cluster end :class="fin.toolbar">
-        <slot name="toolbar" />
-      </dd-cluster>
+    dd-cluster(end :class="fin.toolbar")
+      slot(name="toolbar")
 
-      <dd-table
-        :columns="props.columns"
-        :data="props.data"
-        :loading="props.loading"
-        :is-invalid="props.isInvalid"
-        :error-message="props.errorMessage"
-      >
-        <template
-          v-for="name in tableSlotNames"
-          :key="name"
-          #[name]="slotProps"
-        >
-          <slot :name="name" v-bind="slotProps" />
-        </template>
-      </dd-table>
+    dd-table(
+      :columns="props.columns"
+      :data="props.data"
+      :loading="props.loading"
+      :is-invalid="props.isInvalid"
+      :error-message="props.errorMessage"
+    )
+      template(v-for="name in tableSlotNames" :key="name" #[name]="slotProps")
+        slot(:name="name" v-bind="slotProps")
 
-      <dd-cluster end :class="fin.pagination">
-        <dd-pagination
-          :model-value="props.page"
-          :total="props.total"
-          :page-size="props.pageSize"
-          @update:model-value="emit('update:page', $event)"
-        />
-      </dd-cluster>
-    </dd-stack>
-  </dd-card>
+    dd-cluster(end :class="fin.pagination")
+      dd-pagination(
+        compact
+        small
+        :model-value="props.page"
+        :total="props.total"
+        :page-size="props.pageSize"
+        @update:model-value="emit('update:page', $event)"
+      )
 </template>
 
 <style module="fin">
 .toolbar {
-  gap: 12px;
-  align-items: start;
+  align-items: flex-start;
   flex-wrap: wrap;
+  gap: v('space.sm');
 }
 
 /* TODO: Workaround for a Daredash input bug. Remove when fixed. */
@@ -78,6 +70,6 @@ const tableSlotNames = computed(() =>
 }
 
 .pagination {
-  margin-top: 12px;
+  margin-block-start: v('space.sm');
 }
 </style>

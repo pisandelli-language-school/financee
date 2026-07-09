@@ -17,7 +17,7 @@ const meta = getSectionMeta('categorias')
 const form = ref<CategoryFormValues>(createEmptyCategoryForm())
 const parentOptions = ref<CategoryRecord[]>([])
 const editingRecord = ref<CategoryRecord | null>(null)
-const drawerOpen = ref(false)
+const modalOpen = ref(false)
 const deleteOpen = ref(false)
 const deleteTarget = ref<CategoryRecord | null>(null)
 const requestError = ref('')
@@ -78,20 +78,20 @@ async function handlePageChange(value: number) {
   await refreshList()
 }
 
-async function openCreateDrawer() {
+async function openCreateModal() {
   editingRecord.value = null
   form.value = createEmptyCategoryForm()
   requestError.value = ''
   await fetchParentOptions()
-  drawerOpen.value = true
+  modalOpen.value = true
 }
 
-async function openEditDrawer(record: CategoryRecord) {
+async function openEditModal(record: CategoryRecord) {
   editingRecord.value = record
   form.value = categoryToForm(record)
   requestError.value = ''
   await fetchParentOptions()
-  drawerOpen.value = true
+  modalOpen.value = true
 }
 
 async function handleSave() {
@@ -112,7 +112,7 @@ async function handleSave() {
       })
     }
 
-    drawerOpen.value = false
+    modalOpen.value = false
     await fetchParentOptions()
   } catch (error) {
     requestError.value = getErrorMessage(error, 'Não foi possível salvar a categoria.')
@@ -155,7 +155,7 @@ async function confirmDelete() {
 watch(
   () => form.value.type,
   async () => {
-    if (drawerOpen.value) {
+    if (modalOpen.value) {
       await fetchParentOptions()
     }
   },
@@ -196,7 +196,7 @@ dd-stack(:class="fin.page")
         placeholder="Todos os tipos"
         @update:model-value="handleTypeFilter"
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateDrawer") Nova categoria
+      dd-button(primary icon="lucide:plus" @click="openCreateModal") Nova categoria
 
     template(#cell-type="{ row }")
       dd-badge(
@@ -213,7 +213,7 @@ dd-stack(:class="fin.page")
       span {{ row.parentName || '-' }}
 
     template(#cell-actions="{ row }")
-      backoffice-row-actions(@edit="openEditDrawer(row)" @delete="askDelete(row)")
+      backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")
 
     template(#empty)
       backoffice-empty-state(
@@ -222,15 +222,16 @@ dd-stack(:class="fin.page")
         message="Ajuste os filtros ou cadastre uma nova categoria."
       )
 
-  backoffice-category-drawer-form(
-    v-if="drawerOpen"
-    :open="drawerOpen"
+  backoffice-category-modal-form(
+    v-if="modalOpen"
+    :open="modalOpen"
+    :title="editingRecord ? 'Editar categoria' : 'Nova categoria'"
     :model-value="form"
     :categories="parentOptions"
     :editing-id="editingRecord?.id ?? null"
     :loading="categoriesStore.loading"
     :error-message="requestError"
-    @update:open="drawerOpen = $event"
+    @update:open="modalOpen = $event"
     @update:model-value="form = $event"
     @save="handleSave"
   )

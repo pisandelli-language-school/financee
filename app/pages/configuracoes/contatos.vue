@@ -64,14 +64,14 @@ async function handlePageChange(value: number) {
   await refreshList()
 }
 
-function openCreateDrawer() {
+function openCreateModal() {
   editingRecord.value = null
   form.value = createEmptyContactForm()
   requestError.value = ''
   modalOpen.value = true
 }
 
-function openEditDrawer(record: ContactRecord) {
+function openEditModal(record: ContactRecord) {
   editingRecord.value = record
   form.value = contactToForm(record)
   requestError.value = ''
@@ -160,7 +160,7 @@ dd-stack(spaced :class="fin.page")
         placeholder="Todas as naturezas"
         @update:model-value="handleNatureFilter"
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateDrawer") Novo contato
+      dd-button(primary icon="lucide:plus" @click="openCreateModal") Novo contato
 
     template(#cell-roles="{ row }")
       dd-cluster(compact)
@@ -179,7 +179,7 @@ dd-stack(spaced :class="fin.page")
         span(:class="fin.subcopy") {{ row.phone || row.document || '-' }}
 
     template(#cell-actions="{ row }")
-      backoffice-row-actions(@edit="openEditDrawer(row)" @delete="askDelete(row)")
+      backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")
 
     template(#empty)
       backoffice-empty-state(

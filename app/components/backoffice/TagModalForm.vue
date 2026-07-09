@@ -1,26 +1,6 @@
 <script setup lang="ts">
 import type { TagFormValues } from '~/types/backoffice'
 
-const colorPalette = [
-  '#DCEAFE',
-  '#E0F2FE',
-  '#DCFCE7',
-  '#FEF3C7',
-  '#FCE7F3',
-  '#F3E8FF',
-  '#F1F5F9',
-] as const
-
-const textPalette = [
-  '#0A51CF',
-  '#0369A1',
-  '#166534',
-  '#92400E',
-  '#BE185D',
-  '#6D28D9',
-  '#151A30',
-] as const
-
 const props = defineProps<{
   open: boolean
   modelValue: TagFormValues
@@ -34,108 +14,136 @@ const emit = defineEmits<{
   (event: 'save'): void
 }>()
 
+const fin = useCssModule('fin')
+const {
+  public: {
+    daredash: { prefix = 'dd' } = {},
+  },
+} = useRuntimeConfig()
+
+const paletteFamilies = ['secondary', 'primary', 'info', 'accent', 'warning', 'danger'] as const
+const palette = paletteFamilies.map((family) => ({
+  family,
+  background: cssToken(prefix, family, 300),
+  foreground: cssToken(prefix, family, 700),
+}))
+const defaultBackgroundColor = cssToken(prefix, 'secondary', 200)
+const defaultTextColor = cssToken(prefix, 'secondary', 700)
+
 function updateField<K extends keyof TagFormValues>(field: K, value: TagFormValues[K]) {
   emit('update:modelValue', {
     ...props.modelValue,
     [field]: value,
   })
 }
+
+function selectBackgroundColor(background: string, foreground: string) {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    bgColor: background,
+    textColor: foreground,
+  })
+}
+
+function cssToken(prefix: string, family: string, weight: number) {
+  return `var(--${prefix}-color-${family}-${weight})`
+}
 </script>
 
 <template lang="pug">
-dd-modal(
+backoffice-modal-form-shell(
   :open="open"
   title="Nova tag"
+  :loading="loading"
+  :error-message="errorMessage"
+  error-title="Tag"
+  save-label="Salvar tag"
   @update:open="$emit('update:open', $event)"
+  @submit="$emit('save')"
 )
+  dd-input(
+    :model-value="modelValue.name"
+    label="Nome da tag"
+    placeholder="Ex.: urgente"
+    @update:model-value="updateField('name', String($event))"
+  )
+
   dd-stack(compact)
-    dd-alert(
-      v-if="errorMessage"
-      danger
-      title="Tag"
-      :closable="false"
-      icon
-    ) {{ errorMessage }}
+    strong(:class="fin.label") Cor
+    dd-cluster(:class="fin.colors")
+      button(
+        v-for="option in palette"
+        :key="option.family"
+        type="button"
+        :class="[fin.swatch, { [fin.swatchActive]: modelValue.bgColor === option.background }]"
+        :style="{ backgroundColor: option.background }"
+        @click="selectBackgroundColor(option.background, option.foreground)"
+      )
+      button(
+        type="button"
+        :class="[fin.swatch, fin.clearSwatch]"
+        @click="updateField('bgColor', '')"
+      ) Limpar
 
-    dd-input(
-      :model-value="modelValue.name"
-      label="Nome da tag"
-      placeholder="Ex.: urgente"
-      @update:model-value="updateField('name', String($event))"
-    )
+  dd-stack(compact)
+    strong(:class="fin.label") Cor do texto
+    dd-cluster(:class="fin.colors")
+      button(
+        v-for="option in palette"
+        :key="option.family"
+        type="button"
+        :class="[fin.swatch, { [fin.swatchActive]: modelValue.textColor === option.foreground }]"
+        :style="{ backgroundColor: option.foreground }"
+        @click="updateField('textColor', option.foreground)"
+      )
+      button(
+        type="button"
+        :class="[fin.swatch, fin.clearSwatch]"
+        @click="updateField('textColor', '')"
+      ) Padrão
 
-    dd-stack(compact)
-      strong.modal-label Cor
-      dd-cluster.compact-colors
-        button.color-swatch(
-          v-for="color in colorPalette"
-          :key="color"
-          type="button"
-          :class="{ 'color-swatch--active': modelValue.bgColor === color }"
-          :style="{ backgroundColor: color }"
-          @click="updateField('bgColor', color)"
-        )
-        button.color-swatch.color-swatch--clear(
-          type="button"
-          @click="updateField('bgColor', '')"
-        ) Limpar
-
-    dd-stack(compact)
-      strong.modal-label Cor do texto
-      dd-cluster.compact-colors
-        button.color-swatch(
-          v-for="color in textPalette"
-          :key="color"
-          type="button"
-          :class="{ 'color-swatch--active': modelValue.textColor === color }"
-          :style="{ backgroundColor: color }"
-          @click="updateField('textColor', color)"
-        )
-        button.color-swatch.color-swatch--clear(
-          type="button"
-          @click="updateField('textColor', '')"
-        ) Padrão
-
-    dd-stack(compact)
-      strong.modal-label Pré-visualização
-      dd-badge(:color="modelValue.bgColor || '#F1F5F9'")
-        span(:style="{ color: modelValue.textColor || '#151A30' }") {{ modelValue.name || 'Nova tag' }}
-
-  template(#footer)
-    dd-cluster(end)
-      dd-button(outline @click="$emit('update:open', false)") Cancelar
-      dd-button(primary :disabled="loading" icon="lucide:save" @click="$emit('save')") Salvar tag
+  dd-stack(compact)
+    strong(:class="fin.label") Pré-visualização
+    dd-badge(:color="modelValue.bgColor || defaultBackgroundColor")
+      span(:style="{ color: modelValue.textColor || defaultTextColor }") {{ modelValue.name || 'Nova tag' }}
 </template>
 
-<style scoped>
-.modal-label {
+<style module="fin">
+.label {
   margin: 0;
-  font-size: 13px;
+  font-size: v('font-size.sm');
 }
 
-.compact-colors {
-  gap: 8px;
+.colors {
+  gap: v('space.sm');
 }
 
-.color-swatch {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  border: 2px solid transparent;
+.swatch {
+  aspect-ratio: 1 / 1;
+  block-size: 1.75rem;
+  border: v('border-width.sm') solid color-mix(in srgb, v('color.text.default') 8%, transparent);
+  border-radius: v('border-radius.full');
   cursor: pointer;
+  inline-size: 1.75rem;
   padding: 0;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
 
-.color-swatch--active {
-  border-color: #151a30;
+.swatch:hover {
+  transform: translateY(-1px);
 }
 
-.color-swatch--clear {
-  width: auto;
-  height: 24px;
-  padding: 0 10px;
-  border-color: #e3e4e8;
-  background: #ffffff;
-  color: #73768c;
+.swatchActive {
+  border-color: v('color.text.default');
+  box-shadow: 0 0 0 2px color-mix(in srgb, v('color.primary') 18%, transparent);
+}
+
+.clearSwatch {
+  aspect-ratio: auto;
+  background: v('color.white');
+  border-color: v('color.border.default');
+  color: v('color.text.muted');
+  inline-size: auto;
+  padding-inline: v('space.sm');
 }
 </style>

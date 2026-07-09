@@ -40,6 +40,7 @@ async function handleSignOut() {
 
 <template lang="pug">
 dd-layout.app-shell
+  nuxt-loading-indicator(:height="3" color="#0a51cf" :throttle="0")
   header.app-topbar(data-header)
     dd-cluster.app-topbar__inner(between)
       nuxt-link.app-brand(to="/configuracoes" aria-label="Financee")

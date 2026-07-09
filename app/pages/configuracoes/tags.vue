@@ -18,7 +18,6 @@ const fin = useCssModule('fin')
 
 const columns: AppTableColumn[] = [
   { key: 'tag', title: 'Tag' },
-  { key: 'colors', title: 'Cores', width: '180px' },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 
@@ -128,9 +127,6 @@ dd-stack(spaced :class="fin.page")
     template(#cell-tag="{ row }")
       dd-badge(:color="row.bgColor || '#F1F5F9'")
         span(:style="{ color: row.textColor || '#151A30' }") {{ row.name }}
-
-    template(#cell-colors="{ row }")
-      span {{ row.bgColor || 'Sem fundo' }} · {{ row.textColor || 'Texto padrão' }}
 
     template(#cell-actions="{ row }")
       backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")

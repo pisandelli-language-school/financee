@@ -19,7 +19,7 @@ The product is designed to be the financial source of truth for the operation. T
 - The system is not a traditional school product: it does not model classes, semesters, or academic calendars in the core.
 - `Settings` is a root navigation module, with no artificial grouping such as `Finance -> Settings`.
 - Monetary values must use `Decimal(14,2)`; `Float` in money flows is a defect.
-- Due date adjustments always move forward in the calendar, respecting weekends and configured non-business days.
+- Due date adjustments always move forward in the calendar, respecting Sundays and configured non-business days.
 - The MVP is single-tenant and does not include full CRM features, Brazilian electronic invoicing, or partial payments.
 
 ## Modules defined in the specs
