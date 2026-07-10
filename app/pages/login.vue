@@ -8,6 +8,17 @@ definePageMeta({
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 
+useHead({
+  link: [
+    {
+      rel: 'preload',
+      as: 'image',
+      href: logoUrl,
+      fetchpriority: 'high',
+    },
+  ],
+})
+
 const authError = ref('')
 const isSigningIn = ref(false)
 
@@ -44,9 +55,9 @@ async function handleGoogleSignIn() {
 <template lang="pug">
 main.login
   //- Brand panel
-  section.login__brand
+  section.login__brand(v-once)
     .login__brand-inner
-      img.login__logo(:src="logoUrl" alt="Financee")
+      img.login__logo(:src="logoUrl" alt="Financee" fetchpriority="high")
       .login__brand-copy
         h1.login__headline Gestão financeira sem ruído.
         p.login__subhead O backoffice financeiro da escola — contratos, lançamentos e relatórios em um só lugar.
