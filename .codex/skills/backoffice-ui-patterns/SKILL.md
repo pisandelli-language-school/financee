@@ -49,6 +49,12 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 29. During closure review, verify that critical business rules are enforced on the server, not only in the form layer.
 30. Add focused automated tests for closure-review findings when the rule is critical, conditional, or easy to regress.
 31. End every closure review with an explicit verdict: `Implemented`, `Implemented with caveats`, `Not implemented`, or `Divergent from spec`.
+32. In app-level layout work, prefer composing the documented Daredash primitives such as `dd-layout`, `dd-sidebar`, `dd-box`, `dd-stack`, and `dd-menu` directly instead of recreating layout behavior with extra wrappers and custom CSS.
+33. When customizing a Daredash layout primitive, change the exposed CSS variables or supported props first. Do not fight the component with parallel width, spacing, or positioning rules unless the primitive truly cannot express the need.
+34. If a Daredash component exposes controlled state and also has internal behavior, keep both paths aligned. Avoid external toggles that mutate only app state while bypassing the component's own API.
+35. For collapse and expand interactions, animate the property that actually changes the layout. Do not add broad transitions blindly; target the real driver such as `flex-basis`, `inline-size`, or tokenized padding.
+36. Be careful with selector cleverness in CSS Modules. If a state class should affect the root component, prefer a plain class like `.collapsedState` over fragile selectors such as `:first-child` that may miss the rendered DOM structure.
+37. Prefer feeding submenu structure into `dd-menu` through its `children` contract instead of rendering parallel navigation trees outside the component.
 
 ## Workflow
 
@@ -73,6 +79,9 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 17. If a contact-oriented form needs masks or string formatting, reuse `app/utils/contactFormatters.ts` before creating new local helpers.
 18. If you touch multiple backoffice pages and find the same wrapper or spacing rule repeated, stop and evaluate whether it belongs in a shared backoffice component first. If the wrapper becomes a pass-through with no real behavior, prefer the simpler direct markup.
 19. At the end of a module/spec implementation, run the checklist in `docs/spec-closure-review.md` and treat it as the repeatable final-pass workflow.
+20. In layout refactors, inspect the rendered contract of Daredash primitives before styling around them. Verify which element owns width, collapse state, scrolling, and spacing before writing CSS.
+21. If a custom button controls a Daredash widget such as `dd-menu`, prefer calling the widget's exposed methods or using its official `v-model` flow rather than duplicating its behavior outside.
+22. When a layout bug appears asymmetric, compare the opening path and the closing path separately. Smooth close and rough open usually means the transition is attached to the wrong property or only one state path is being synchronized.
 
 ## Toolbar Pattern
 
@@ -117,6 +126,13 @@ dd-cluster(end :class="fin.toolbar")
 - A domain form should stay domain-owned once its field composition, validation, or layout starts diverging from the other forms.
 - Prefer removing dead branches and optional behavior when the current product contract is simpler than the component API suggests.
 - Shared page-level shells such as standard CRUD chrome should be centralized once they repeat across screens, but avoid extracting pass-through wrappers that do not carry meaningful behavior or constraints.
+
+## Layout Lessons
+
+- App layout refactors should stay close to the Daredash docs, especially for `dd-layout`, `dd-sidebar`, and `dd-menu`.
+- Sidebar width should be treated as a layout token or CSS variable concern, not as an ad hoc hard-coded width on child elements.
+- Menu collapse is not only visual. Treat it as interaction state with route persistence and reopening behavior in mind.
+- Before declaring a collapse bug fixed, test four flows: collapse, expand, navigate while collapsed, and reopen after navigation.
 
 ## References
 
