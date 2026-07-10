@@ -233,25 +233,18 @@ async function finalizePaginatedQuery<T>(
   page: number,
   pageSize: number,
 ) {
-  const items = await itemsPromise
-
   if (pageSize === 0) {
+    const items = await itemsPromise
     return {
       items,
       total: items.length,
     }
   }
 
-  const skip = (page - 1) * pageSize
-
-  if (items.length < pageSize) {
-    return {
-      items,
-      total: skip + items.length,
-    }
-  }
-
-  const total = await countPromiseFactory()
+  const [items, total] = await Promise.all([
+    itemsPromise,
+    countPromiseFactory(),
+  ])
 
   return {
     items,
