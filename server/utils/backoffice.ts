@@ -62,6 +62,10 @@ function normalizeString(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 function optionalString(value: unknown) {
   const normalized = normalizeString(value)
   return normalized ? normalized : null
@@ -576,6 +580,10 @@ function normalizeFinancialResponsible(
     validationError('Responsável financeiro precisa de nome e email.', 'financialResponsible')
   }
 
+  if (normalized.email && !isValidEmail(normalized.email)) {
+    validationError('Email do responsável financeiro inválido.', 'financialResponsible.email')
+  }
+
   return normalized
 }
 
@@ -612,6 +620,10 @@ export function normalizeContactPayload(payload: ContactFormValues) {
 
   if ((nature === 'INDIVIDUAL' || nature === 'COMPANY') && !phone) {
     validationError('Informe o telefone.', 'phone')
+  }
+
+  if (email && !isValidEmail(email)) {
+    validationError('Email inválido.', 'email')
   }
 
   if (nature === 'FOREIGN' && payload.documentType === 'CPF') {
