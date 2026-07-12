@@ -67,61 +67,60 @@ export const backofficeCards: ConfigCard[] = [
   },
 ]
 
-const configurationChildren: AppMenuItem[] = [
-  {
-    key: 'configuracoes-categorias',
-    label: 'Categorias',
-    icon: 'lucide:folders',
-    action: { type: 'link', to: '/configuracoes/categorias' },
-  },
-  {
-    key: 'configuracoes-contas-carteiras',
-    label: 'Contas e carteiras',
-    icon: 'lucide:wallet',
-    action: { type: 'link', to: '/configuracoes/contas-carteiras' },
-  },
-  {
-    key: 'configuracoes-centros-custo',
-    label: 'Centros de custo',
-    icon: 'lucide:briefcase-business',
-    action: { type: 'link', to: '/configuracoes/centros-custo' },
-  },
-  {
-    key: 'configuracoes-tags',
-    label: 'Tags',
-    icon: 'lucide:tags',
-    action: { type: 'link', to: '/configuracoes/tags' },
-  },
-  {
-    key: 'configuracoes-formas-pagamento',
-    label: 'Formas de pagamento',
-    icon: 'lucide:credit-card',
-    action: { type: 'link', to: '/configuracoes/formas-pagamento' },
-  },
-  {
-    key: 'configuracoes-contatos',
-    label: 'Contatos',
-    icon: 'lucide:contact-round',
-    action: { type: 'link', to: '/configuracoes/contatos' },
-  },
-  {
-    key: 'configuracoes-dias-nao-uteis',
-    label: 'Dias não úteis',
-    icon: 'lucide:calendar-off',
-    action: { type: 'link', to: '/configuracoes/dias-nao-uteis' },
-  },
-]
-
 export function useBackofficeNavigation() {
   const route = useRoute()
   const isInSettings = computed(() => route.path.startsWith('/configuracoes'))
-  const activeMenuKey = computed(() => {
-    if (route.path === '/configuracoes') {
-      return 'configuracoes'
-    }
-
-    return route.path.replace(/\//g, '-').replace(/^-/, '')
-  })
+  const configurationChildren = computed<AppMenuItem[]>(() => [
+    {
+      key: 'configuracoes-categorias',
+      label: 'Categorias',
+      icon: 'lucide:folders',
+      active: route.path === '/configuracoes/categorias',
+      action: { type: 'link', to: '/configuracoes/categorias' },
+    },
+    {
+      key: 'configuracoes-contas-carteiras',
+      label: 'Contas e carteiras',
+      icon: 'lucide:wallet',
+      active: route.path === '/configuracoes/contas-carteiras',
+      action: { type: 'link', to: '/configuracoes/contas-carteiras' },
+    },
+    {
+      key: 'configuracoes-centros-custo',
+      label: 'Centros de custo',
+      icon: 'lucide:briefcase-business',
+      active: route.path === '/configuracoes/centros-custo',
+      action: { type: 'link', to: '/configuracoes/centros-custo' },
+    },
+    {
+      key: 'configuracoes-tags',
+      label: 'Tags',
+      icon: 'lucide:tags',
+      active: route.path === '/configuracoes/tags',
+      action: { type: 'link', to: '/configuracoes/tags' },
+    },
+    {
+      key: 'configuracoes-formas-pagamento',
+      label: 'Formas de pagamento',
+      icon: 'lucide:credit-card',
+      active: route.path === '/configuracoes/formas-pagamento',
+      action: { type: 'link', to: '/configuracoes/formas-pagamento' },
+    },
+    {
+      key: 'configuracoes-contatos',
+      label: 'Contatos',
+      icon: 'lucide:contact-round',
+      active: route.path === '/configuracoes/contatos',
+      action: { type: 'link', to: '/configuracoes/contatos' },
+    },
+    {
+      key: 'configuracoes-dias-nao-uteis',
+      label: 'Dias não úteis',
+      icon: 'lucide:calendar-off',
+      active: route.path === '/configuracoes/dias-nao-uteis',
+      action: { type: 'link', to: '/configuracoes/dias-nao-uteis' },
+    },
+  ])
 
   const primaryMenuItems = computed<AppMenuItem[]>(() => [
     {
@@ -153,6 +152,7 @@ export function useBackofficeNavigation() {
       label: 'Configurações',
       icon: 'lucide:settings-2',
       active: isInSettings.value,
+      children: configurationChildren.value,
       action: { type: 'link', to: '/configuracoes' },
     },
   ])
@@ -160,8 +160,5 @@ export function useBackofficeNavigation() {
   return {
     backofficeCards,
     primaryMenuItems,
-    settingsMenuItems: configurationChildren,
-    activeMenuKey,
-    isInSettings,
   }
 }
