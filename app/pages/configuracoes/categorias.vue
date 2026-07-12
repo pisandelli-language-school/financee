@@ -57,12 +57,16 @@ async function refreshList() {
   await categoriesStore.fetch()
 }
 
-async function handleSearch(value: string | number) {
+const debouncedRefresh = useDebounceFn(() => {
+  refreshList()
+}, 300)
+
+function handleSearch(value: string | number) {
   categoriesStore.setFilters({
     search: String(value),
     page: 1,
   })
-  await refreshList()
+  debouncedRefresh()
 }
 
 async function handleTypeFilter(value: unknown) {
