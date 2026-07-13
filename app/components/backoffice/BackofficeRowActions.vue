@@ -5,8 +5,7 @@ defineProps<{
 }>()
 
 defineEmits<{
-  (event: 'edit'): void
-  (event: 'delete'): void
+  (event: 'edit' | 'delete'): void
 }>()
 
 </script>

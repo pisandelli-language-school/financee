@@ -57,12 +57,15 @@ async function refreshList() {
   await categoriesStore.fetch()
 }
 
+// Debounce search to prevent excessive API requests
+const debouncedRefreshList = useDebounceFn(refreshList, 300)
+
 async function handleSearch(value: string | number) {
   categoriesStore.setFilters({
     search: String(value),
     page: 1,
   })
-  await refreshList()
+  await debouncedRefreshList()
 }
 
 async function handleTypeFilter(value: unknown) {
