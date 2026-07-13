@@ -15,8 +15,8 @@ importers:
         specifier: ^0.11.3
         version: 0.11.3(magicast@0.5.3)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.38(typescript@5.9.3)))
       '@pisandelli/daredash':
-        specifier: ^0.0.27-beta
-        version: 0.0.27-beta(6f91a94d74d52c5a4360df9f0e835ebc)
+        specifier: ^0.0.28-beta
+        version: 0.0.28-beta(6f91a94d74d52c5a4360df9f0e835ebc)
       '@prisma/adapter-mariadb':
         specifier: ^7.8.0
         version: 7.8.0
@@ -75,6 +75,9 @@ importers:
         specifier: ^3.24.0
         version: 3.25.76
     devDependencies:
+      '@iconify-json/heroicons':
+        specifier: ^1.2.3
+        version: 1.2.3
       '@iconify-json/lucide':
         specifier: ^1.2.114
         version: 1.2.114
@@ -1621,8 +1624,8 @@ packages:
     peerDependencies:
       pinia: ^3.0.4
 
-  '@pisandelli/daredash@0.0.27-beta':
-    resolution: {integrity: sha512-pFtdrfZvCLboKbtxrNP4VNWiEMlDOQ6xlyevWiET6nvsxmACIZT/T8gf69mQE48WNUwk/ishpu9Jm7o84XczKg==}
+  '@pisandelli/daredash@0.0.28-beta':
+    resolution: {integrity: sha512-i23BiyzgM6+o6ZK3e2ZxbhbVRRnYoGbu8gCNtowrXnfdfIUkDGU5T8ts+4XHN5ITKFhSC5/hT0mim6etFqqMtg==}
     peerDependencies:
       nuxt: ^4.3.0
 
@@ -7507,7 +7510,7 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@pisandelli/daredash@0.0.27-beta(6f91a94d74d52c5a4360df9f0e835ebc)':
+  '@pisandelli/daredash@0.0.28-beta(6f91a94d74d52c5a4360df9f0e835ebc)':
     dependencies:
       '@iconify-json/heroicons': 1.2.3
       '@iconify-json/heroicons-solid': 1.2.1

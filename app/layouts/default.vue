@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import logoUrl from '~/assets/images/logo-opt.svg?url'
+import { AuthModule } from '~/api/auth'
+import type { CurrentAuthPayload } from '~/types/auth'
 
 const quickLinks = [
   { label: 'Política de dados', to: '#' },
@@ -9,6 +11,9 @@ const quickLinks = [
 
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
+const route = useRoute()
+const currentAuth = useState<CurrentAuthPayload | null>('auth:current-user', () => null)
+const currentAuthLoading = useState('auth:current-user-loading', () => false)
 const {
   primaryMenuItems,
 } = useBackofficeNavigation()
@@ -22,8 +27,54 @@ const menuRef = ref<{
 
 const userName = computed(() => user.value?.email?.split('@')[0] ?? 'Perfil')
 
+const deniedCodes = new Set([
+  'TEACHER_BLOCKED',
+  'UNKNOWN_WORKSPACE_ROLE',
+  'INTERNAL_ROLE_REQUIRED',
+  'USER_INACTIVE',
+  'DIRECTORY_LOOKUP_FAILED',
+])
+
+watch(user, async () => {
+  if (!user.value) {
+    currentAuth.value = null
+    currentAuthLoading.value = false
+    return
+  }
+
+  currentAuthLoading.value = true
+
+  try {
+    currentAuth.value = await AuthModule.getCurrentUser()
+  } catch (error) {
+    currentAuth.value = null
+
+    const statusCode = getStatusCode(error)
+    const errorCode = getErrorCode(error)
+
+    if (statusCode === 401) {
+      await supabase.auth.signOut()
+
+      if (route.path !== '/login') {
+        await navigateTo('/login')
+      }
+
+      return
+    }
+
+    if (statusCode === 403 && errorCode && deniedCodes.has(errorCode)) {
+      if (route.path !== '/acesso-negado') {
+        await navigateTo('/acesso-negado')
+      }
+    }
+  } finally {
+    currentAuthLoading.value = false
+  }
+}, { immediate: true })
+
 async function handleSignOut() {
   await supabase.auth.signOut()
+  currentAuth.value = null
   await navigateTo('/')
 }
 
@@ -34,6 +85,36 @@ function toggleSidebar() {
   }
 
   collapsed.value = !collapsed.value
+}
+
+function getStatusCode(error: unknown) {
+  if (!error || typeof error !== 'object') {
+    return null
+  }
+
+  if ('statusCode' in error && typeof error.statusCode === 'number') {
+    return error.statusCode
+  }
+
+  if ('status' in error && typeof error.status === 'number') {
+    return error.status
+  }
+
+  return null
+}
+
+function getErrorCode(error: unknown) {
+  if (!error || typeof error !== 'object' || !('data' in error)) {
+    return ''
+  }
+
+  const data = error.data
+
+  if (!data || typeof data !== 'object' || !('code' in data) || typeof data.code !== 'string') {
+    return ''
+  }
+
+  return data.code
 }
 </script>
 
@@ -79,14 +160,30 @@ dd-layout
     dd-sidebar(fill :class="[fin.sidebarLayout, collapsed && fin.bodyCollapsed]")
       aside(:class='fin.aside')
         dd-stack(split-after="1" :class="fin.sidebarFlow")
-          dd-menu(
-            ref="menuRef"
-            :class="fin.menu"
-            :items="primaryMenuItems"
-            collapsible
-            :collapsed="collapsed"
-            @update:collapsed="collapsed = $event"
-          )
+          dd-stack(compact)
+            dd-menu(
+              ref="menuRef"
+              :class="fin.menu"
+              :items="primaryMenuItems"
+              collapsible
+              :collapsed="collapsed"
+              @update:collapsed="collapsed = $event"
+            )
+            dd-stack(
+              v-if="currentAuthLoading && user"
+              compact
+              :class="fin.menuSkeleton"
+            )
+              dd-cluster(v-for="item in 3" :key="item" compact :class="fin.menuSkeletonRow")
+                dd-skeleton(
+                  v-if="collapsed"
+                  circle
+                  width="1.5rem"
+                  height="1.5rem"
+                )
+                template(v-else)
+                  dd-skeleton(circle width="1.5rem" height="1.5rem")
+                  dd-skeleton(height="1rem" width="8rem" radius="999px")
           dd-center
             dd-button(
               ghost
@@ -170,6 +267,15 @@ dd-layout
 
 .menu {
   --dd-menu-submenu-padding-inline-start: v('space.xs');
+}
+
+.menuSkeleton {
+  padding-block-start: v('space.xs');
+}
+
+.menuSkeletonRow {
+  align-items: center;
+  min-block-size: 2rem;
 }
 
 /* TODO: Remove when Daredash restores submenu spacing by default. */

@@ -69,7 +69,10 @@ export const backofficeCards: ConfigCard[] = [
 
 export function useBackofficeNavigation() {
   const route = useRoute()
+  const currentAuth = useState('auth:current-user', () => null as null | { permissions: string[] })
   const isInSettings = computed(() => route.path.startsWith('/configuracoes'))
+  const permissions = computed(() => currentAuth.value?.permissions ?? [])
+  const can = (permissionKey: string) => permissions.value.includes(permissionKey)
   const configurationChildren = computed<AppMenuItem[]>(() => [
     {
       key: 'configuracoes-categorias',
@@ -120,6 +123,33 @@ export function useBackofficeNavigation() {
       active: route.path === '/configuracoes/dias-nao-uteis',
       action: { type: 'link', to: '/configuracoes/dias-nao-uteis' },
     },
+    ...(can('usuarios.manage')
+      ? [{
+          key: 'configuracoes-usuarios',
+          label: 'Usuários',
+          icon: 'lucide:users',
+          active: route.path === '/configuracoes/usuarios',
+          action: { type: 'link' as const, to: '/configuracoes/usuarios' },
+        }]
+      : []),
+    ...(can('permissoes.manage')
+      ? [{
+          key: 'configuracoes-permissoes',
+          label: 'Permissões',
+          icon: 'lucide:key-round',
+          active: route.path === '/configuracoes/permissoes',
+          action: { type: 'link' as const, to: '/configuracoes/permissoes' },
+        }]
+      : []),
+    ...(can('auditoria.view')
+      ? [{
+          key: 'configuracoes-auditoria',
+          label: 'Auditoria',
+          icon: 'lucide:shield-check',
+          active: route.path === '/configuracoes/auditoria',
+          action: { type: 'link' as const, to: '/configuracoes/auditoria' },
+        }]
+      : []),
   ])
 
   const primaryMenuItems = computed<AppMenuItem[]>(() => [
@@ -158,7 +188,33 @@ export function useBackofficeNavigation() {
   ])
 
   return {
-    backofficeCards,
+    backofficeCards: computed(() => [
+      ...backofficeCards,
+      ...(can('usuarios.manage')
+        ? [{
+            title: 'Usuários',
+            description: 'Gerencie papéis internos, status e acesso operacional.',
+            to: '/configuracoes/usuarios',
+            icon: 'lucide:users',
+          }]
+        : []),
+      ...(can('permissoes.manage')
+        ? [{
+            title: 'Permissões',
+            description: 'Ajuste a matriz de acesso dos papéis internos do sistema.',
+            to: '/configuracoes/permissoes',
+            icon: 'lucide:key-round',
+          }]
+        : []),
+      ...(can('auditoria.view')
+        ? [{
+            title: 'Auditoria',
+            description: 'Consulte eventos críticos, mudanças e rastros operacionais.',
+            to: '/configuracoes/auditoria',
+            icon: 'lucide:shield-check',
+          }]
+        : []),
+    ]),
     primaryMenuItems,
   }
 }

@@ -19,7 +19,7 @@
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.9",
     "@pinia/nuxt": "^0.11.3",
-    "@pisandelli/daredash": "^0.0.27-beta",
+    "@pisandelli/daredash": "^0.0.28-beta",
     "@prisma/adapter-mariadb": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@supabase/supabase-js": "^2.108.2",
@@ -41,6 +41,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/lucide": "^1.2.114",
     "@iconify-json/svg-spinners": "^1.2.4",
     "@nuxt/eslint": "^1.16.0",

@@ -47,3 +47,9 @@ enum NonBusinessDayScope {
   CITY
   INTERNAL
 }
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}

@@ -80,11 +80,18 @@ export function createCrudStore<TRecord extends { id: string }, TPayload, TFilte
         const response = await module.list(filters.value)
         data.value = response.items
         total.value = response.total
-        filters.value = {
-          ...filters.value,
-          page: response.page,
-          pageSize: response.pageSize,
+
+        if (
+          filters.value.page !== response.page
+          || filters.value.pageSize !== response.pageSize
+        ) {
+          filters.value = {
+            ...filters.value,
+            page: response.page,
+            pageSize: response.pageSize,
+          }
         }
+
         return response
       } catch (caughtError) {
         error.value = toSerializableError(caughtError)
@@ -121,10 +128,16 @@ export function createCrudStore<TRecord extends { id: string }, TPayload, TFilte
     }
 
     function setFilters(nextFilters: Partial<TFilters>) {
-      filters.value = {
+      const merged = {
         ...filters.value,
         ...nextFilters,
       }
+
+      if (JSON.stringify(merged) === JSON.stringify(filters.value)) {
+        return
+      }
+
+      filters.value = merged
     }
 
     function resetFilters() {

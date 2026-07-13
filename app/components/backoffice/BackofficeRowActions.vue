@@ -1,12 +1,18 @@
 <script setup lang="ts">
-defineProps<{
+withDefaults(defineProps<{
   editLabel?: string
   deleteLabel?: string
-}>()
+  showEdit?: boolean
+  showDelete?: boolean
+}>(), {
+  editLabel: undefined,
+  deleteLabel: undefined,
+  showEdit: true,
+  showDelete: true,
+})
 
 defineEmits<{
-  (event: 'edit'): void
-  (event: 'delete'): void
+  (event: 'edit' | 'delete'): void
 }>()
 
 </script>
@@ -14,6 +20,7 @@ defineEmits<{
 <template lang="pug">
 dd-cluster(end :class="fin.actions")
   dd-button(
+    v-if="showEdit"
     ghost
     tiny
     icon-only
@@ -24,6 +31,7 @@ dd-cluster(end :class="fin.actions")
     @click="$emit('edit')"
   )
   dd-button(
+    v-if="showDelete"
     ghost
     tiny
     icon-only
