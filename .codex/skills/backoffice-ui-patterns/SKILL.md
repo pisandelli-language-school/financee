@@ -55,6 +55,14 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 35. For collapse and expand interactions, animate the property that actually changes the layout. Do not add broad transitions blindly; target the real driver such as `flex-basis`, `inline-size`, or tokenized padding.
 36. Be careful with selector cleverness in CSS Modules. If a state class should affect the root component, prefer a plain class like `.collapsedState` over fragile selectors such as `:first-child` that may miss the rendered DOM structure.
 37. Prefer feeding submenu structure into `dd-menu` through its `children` contract instead of rendering parallel navigation trees outside the component.
+38. When a screen depends on small, stable reference data such as roles, permission catalogs, or user preferences, prefer a lightweight client cache or prefetch instead of repeated refetches on every interaction.
+39. If you cache auth-adjacent data on the client, pair it with explicit invalidation on sign-out and on mutations that change the current user's effective access or preferences.
+40. For async modal flows, prefer opening the modal immediately and rendering a clear in-modal loading state instead of delaying the open transition until every dependency has loaded.
+41. If loading placeholders are needed for gated navigation or cards, keep the skeleton in the same structural footprint as the final component to avoid layout jumps.
+42. When progressive authorization reveals extra navigation items after bootstrap, prefer keeping the base IA stable and appending/loading the gated items in place instead of reflowing the entire grid or menu.
+43. Persist user preferences through a dedicated store and a narrow server contract. Start with the smallest real preference, hydrate it from the authenticated user payload, and expand only when a new preference has clear product value.
+44. In auth and RBAC flows, prefer reusing an already trusted identity-mapping strategy from a sibling product or proven implementation rather than inventing a parallel mapping with slightly different rules.
+45. When a spec's service list is broader than the agreed MVP, document the accepted scope decision in the spec or closure review instead of letting the code silently diverge from the written contract.
 
 ## Workflow
 
@@ -82,6 +90,10 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 20. In layout refactors, inspect the rendered contract of Daredash primitives before styling around them. Verify which element owns width, collapse state, scrolling, and spacing before writing CSS.
 21. If a custom button controls a Daredash widget such as `dd-menu`, prefer calling the widget's exposed methods or using its official `v-model` flow rather than duplicating its behavior outside.
 22. When a layout bug appears asymmetric, compare the opening path and the closing path separately. Smooth close and rough open usually means the transition is attached to the wrong property or only one state path is being synchronized.
+23. For modals that depend on auxiliary data, decide deliberately between prefetch and inline loading: prefetch when the dataset is small and reused often, inline loading when freshness matters more than instant open.
+24. For protected pages and app shells, keep the authenticated payload as the source of truth for permissions and preferences, and mirror that contract in the frontend types instead of inferring fields ad hoc.
+25. When adding client cache around auth or admin data, cache only data with low volatility and short dependency chains. Keep lists with active filters server-driven unless there is a concrete performance reason to do more.
+26. During closure review, explicitly separate implemented investigation capability from future “smart” or aggregated flows. A searchable list plus per-entry detail may satisfy the current spec intent even if a richer timeline is postponed.
 
 ## Toolbar Pattern
 
@@ -133,6 +145,20 @@ dd-cluster(end :class="fin.toolbar")
 - Sidebar width should be treated as a layout token or CSS variable concern, not as an ad hoc hard-coded width on child elements.
 - Menu collapse is not only visual. Treat it as interaction state with route persistence and reopening behavior in mind.
 - Before declaring a collapse bug fixed, test four flows: collapse, expand, navigate while collapsed, and reopen after navigation.
+
+## Async UI Lessons
+
+- Open the shell first, load the heavy or auxiliary content second, and keep the loading feedback inside the final interaction surface.
+- Prefer native `dd-skeleton` and `dd-loading` before inventing custom loaders.
+- A skeleton should mimic the final information architecture closely enough that the user does not perceive a second layout pass when data arrives.
+- If a list or dashboard mixes always-visible cards with permission-gated cards, avoid pushing the whole grid around while access resolves; preserve the final placement as much as possible.
+
+## Auth and Preference Lessons
+
+- Authenticated UI contracts should expose both permissions and user preferences when the shell depends on them.
+- When the current user payload changes, keep the shared auth state, local preference store, and any client cache in sync together.
+- Preference persistence should feel like part of the shell, not a special-case API call scattered through random components.
+- Server-side permission changes that affect the current operator should invalidate the current-user cache, not only the edited record or list.
 
 ## References
 
