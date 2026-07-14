@@ -1,6 +1,7 @@
 import { systemRoleNames } from '~~/app/types/auth'
 import {
   buildPermissionCatalog,
+  getSystemRoleDescription,
   getSystemRolePermissions,
 } from '~~/server/utils/rbac-catalog'
 import { prisma } from '~~/server/utils/prisma'
@@ -53,9 +54,11 @@ async function seedRbac() {
       where: { name: roleName },
       update: {
         isSystem: true,
+        description: getSystemRoleDescription(roleName),
       },
       create: {
         name: roleName,
+        description: getSystemRoleDescription(roleName),
         isSystem: true,
       },
     })

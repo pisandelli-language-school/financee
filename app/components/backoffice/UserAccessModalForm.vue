@@ -61,7 +61,7 @@ const submit = handleSubmit((submittedValues) => {
 
 const workspaceRoleLabel = computed(() => {
   if (props.googleWorkspaceRole === 'ADMIN') {
-    return 'Admin'
+    return 'Administrador'
   }
 
   if (props.googleWorkspaceRole === 'MANAGER') {
@@ -73,6 +73,20 @@ const workspaceRoleLabel = computed(() => {
   }
 
   return 'Staff'
+})
+
+const financeeRoleLabel = computed(() => {
+  if (props.isWorkspaceAdmin) {
+    return workspaceRoleLabel.value
+  }
+
+  const selectedRole = props.roleOptions.find(role => role.value === values.internalRoleId)
+
+  if (selectedRole) {
+    return selectedRole.label
+  }
+
+  return 'Sem papel'
 })
 
 function updateField<K extends keyof UserAccessFormValues>(field: K, value: UserAccessFormValues[K]) {
@@ -104,23 +118,26 @@ backoffice-modal-form-shell(
     dd-stack(compact nogap)
       strong {{ userName }}
       span {{ userEmail }}
-    dd-cluster(compact)
-      dd-badge(info) Workspace: {{ workspaceRoleLabel }}
-      dd-badge(v-if="isWorkspaceAdmin" success) Admin do Workspace
+    template(v-if="loading")
+      dd-center
+        dd-loading(label="Carregando acesso...")
+    template(v-else)
+      dd-cluster(compact)
+        dd-badge(info) {{ financeeRoleLabel }}
 
-    dd-stack(compact nogap)
-      dd-form-label Papel interno
-      dd-select(
-        :model-value="values.internalRoleId"
-        placeholder="Selecione"
-        :options="roleOptions"
-        :is-invalid="Boolean(getError('internalRoleId'))"
-        :error-message="getError('internalRoleId')"
-        @update:model-value="updateField('internalRoleId', String($event ?? ''))"
-      )
+      dd-stack(compact nogap)
+        dd-form-label Papel interno
+        dd-select(
+          :model-value="values.internalRoleId"
+          placeholder="Selecione"
+          :options="roleOptions"
+          :is-invalid="Boolean(getError('internalRoleId'))"
+          :error-message="getError('internalRoleId')"
+          @update:model-value="updateField('internalRoleId', String($event ?? ''))"
+        )
 
-    dd-checkbox(
-      :model-value="values.isActive"
-      @update:model-value="updateField('isActive', Boolean($event))"
-    ) Usuário ativo
+      dd-checkbox(
+        :model-value="values.isActive"
+        @update:model-value="updateField('isActive', Boolean($event))"
+      ) Usuário ativo
 </template>

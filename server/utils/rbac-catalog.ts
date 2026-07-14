@@ -31,6 +31,17 @@ export function buildPermissionCatalog() {
   ]
 }
 
+export function getSystemRoleDescription(roleName: SystemRoleName) {
+  const descriptionMap: Record<SystemRoleName, string> = {
+    Admin: 'Acesso completo ao sistema.',
+    Gestor: 'Acesso gerencial com dashboards, relatórios e auditoria.',
+    Financeiro: 'Acesso operacional ao financeiro.',
+    Comercial: 'Acesso comercial e contratos.',
+  }
+
+  return descriptionMap[roleName]
+}
+
 export function getSystemRolePermissions(roleName: SystemRoleName) {
   const allPermissions = buildPermissionCatalog()
 

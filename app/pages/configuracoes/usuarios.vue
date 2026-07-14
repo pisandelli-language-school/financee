@@ -12,6 +12,7 @@ const { showToast } = useToaster()
 const meta = getSectionMeta('usuarios')
 const requestError = ref('')
 const modalOpen = ref(false)
+const modalLoading = ref(false)
 const editingUser = ref<AuthUserRecord | null>(null)
 const form = ref<UserAccessFormValues>({
   internalRoleId: '',
@@ -42,6 +43,10 @@ watch(() => [
   await usersStore.fetch()
 }, { immediate: true })
 
+onMounted(() => {
+  void fetchRoleOptions()
+})
+
 function handleSearch(value: string) {
   usersStore.setFilters({
     search: value,
@@ -50,6 +55,10 @@ function handleSearch(value: string) {
 }
 
 async function fetchRoleOptions() {
+  if (roleOptions.value.length) {
+    return
+  }
+
   const response = await AuthRolesModule.list({
     search: '',
     page: 1,
@@ -69,8 +78,14 @@ async function openEditModal(user: AuthUserRecord) {
     isActive: user.isActive,
   }
   requestError.value = ''
-  await fetchRoleOptions()
   modalOpen.value = true
+  modalLoading.value = true
+
+  try {
+    await fetchRoleOptions()
+  } finally {
+    modalLoading.value = false
+  }
 }
 
 async function handleSave() {
@@ -155,7 +170,7 @@ dd-stack
     :user-email="editingUser?.email ?? ''"
     :google-workspace-role="editingUser?.googleWorkspaceRole ?? 'STAFF'"
     :is-workspace-admin="Boolean(editingUser?.isWorkspaceAdmin)"
-    :loading="usersStore.loading"
+    :loading="modalLoading || usersStore.loading"
     :error-message="requestError"
     @update:open="modalOpen = $event"
     @update:model-value="form = $event"

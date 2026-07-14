@@ -18,25 +18,57 @@ const emit = defineEmits<{
 }>()
 
 const selectedPermissionKeys = ref<string[]>([...props.modelValue.permissionKeys])
-const moduleFilter = ref('')
 
-const moduleOptions = computed(() => [
-  { label: 'Todos os módulos', value: '' },
-  ...Array.from(new Set(props.permissions.map(permission => permission.module)))
-    .sort((left, right) => left.localeCompare(right))
-    .map(module => ({
-      label: formatModuleLabel(module),
-      value: module,
-    })),
-])
+const moduleLabelMap: Record<string, string> = {
+  auditoria: 'Auditoria',
+  automacoes: 'Automações',
+  categorias: 'Categorias',
+  contas: 'Contas',
+  contatos: 'Contatos',
+  contratos: 'Contratos',
+  'centros-custo': 'Centros de custo',
+  dashboard: 'Dashboard',
+  'dias-nao-uteis': 'Dias não úteis',
+  'formas-pagamento': 'Formas de pagamento',
+  integracoes: 'Integrações',
+  jobs: 'Jobs',
+  lancamentos: 'Lançamentos',
+  notificacoes: 'Notificações',
+  permissoes: 'Permissões',
+  relatorios: 'Relatórios',
+  tags: 'Tags',
+  usuarios: 'Usuários',
+}
 
-const filteredPermissions = computed(() => props.permissions.filter((permission) => {
-  if (!moduleFilter.value) {
-    return true
-  }
+const groupedPermissions = computed(() => {
+  const groups = props.permissions.reduce((accumulator, permission) => {
+    const group = accumulator.get(permission.module) ?? {
+      module: permission.module,
+      label: formatModuleLabel(permission.module),
+      permissions: [] as PermissionCatalogRecord[],
+    }
 
-  return permission.module === moduleFilter.value
-}))
+    group.permissions.push(permission)
+    accumulator.set(permission.module, group)
+    return accumulator
+  }, new Map<string, {
+    module: string
+    label: string
+    permissions: PermissionCatalogRecord[]
+  }>())
+
+  return Array.from(groups.values())
+    .sort((left, right) => left.label.localeCompare(right.label))
+    .map(group => ({
+      ...group,
+      permissions: [...group.permissions].sort((left, right) =>
+        formatPermissionLabel(left).localeCompare(formatPermissionLabel(right)),
+      ),
+      selectedCount: group.permissions.filter(permission =>
+        selectedPermissionKeys.value.includes(permission.key),
+      ).length,
+    }))
+})
 
 watch(
   () => [props.open, props.modelValue.permissionKeys] as const,
@@ -46,7 +78,6 @@ watch(
     }
 
     selectedPermissionKeys.value = [...permissionKeys]
-    moduleFilter.value = ''
   },
   { deep: true },
 )
@@ -71,10 +102,7 @@ function submit() {
 }
 
 function formatModuleLabel(moduleName: string) {
-  return moduleName
-    .split('-')
-    .join(' ')
-    .replace(/\b\w/g, char => char.toUpperCase())
+  return moduleLabelMap[moduleName] ?? moduleName
 }
 
 function formatPermissionLabel(permission: PermissionCatalogRecord) {
@@ -83,7 +111,7 @@ function formatPermissionLabel(permission: PermissionCatalogRecord) {
     create: 'Criar',
     update: 'Editar',
     delete: 'Excluir',
-    pay: 'Marcar pagamento',
+    pay: 'Marcar como pago',
     cancel: 'Cancelar',
     generate: 'Gerar',
     renew: 'Renovar',
@@ -92,7 +120,24 @@ function formatPermissionLabel(permission: PermissionCatalogRecord) {
     run: 'Executar',
   }
 
-  return actionMap[permission.action] ?? permission.key
+  const permissionLabelMap: Record<string, string> = {
+    'auditoria.view': 'Visualizar auditoria',
+    'automacoes.manage': 'Gerenciar automações',
+    'contratos.generate': 'Gerar lançamentos',
+    'contratos.renew': 'Renovar contrato',
+    'dashboard.view': 'Visualizar dashboard',
+    'integracoes.manage': 'Gerenciar integrações',
+    'jobs.run': 'Executar job',
+    'jobs.view': 'Visualizar jobs',
+    'lancamentos.cancel': 'Cancelar lançamento',
+    'lancamentos.pay': 'Marcar como pago',
+    'permissoes.manage': 'Gerenciar permissões',
+    'relatorios.export': 'Exportar relatórios',
+    'relatorios.view': 'Visualizar relatórios',
+    'usuarios.manage': 'Gerenciar usuários',
+  }
+
+  return permissionLabelMap[permission.key] ?? actionMap[permission.action] ?? permission.key
 }
 </script>
 
@@ -111,27 +156,21 @@ backoffice-modal-form-shell(
     dd-stack(compact nogap)
       strong {{ roleName }}
       span Ajuste o conjunto de permissões deste papel.
-
-    dd-select(
-      :model-value="moduleFilter"
-      placeholder="Todos os módulos"
-      :options="moduleOptions"
-      @update:model-value="moduleFilter = String($event ?? '')"
-    )
-
-    dd-stack(compact)
-      dd-card(
-        v-for="permission in filteredPermissions"
-        :key="permission.id"
-        tag="article"
-        noborder
-        flat
-      )
-        dd-checkbox(
-          :model-value="selectedPermissionKeys.includes(permission.key)"
-          @update:model-value="togglePermission(permission.key, Boolean($event))"
+    template(v-if="loading")
+      dd-center
+        dd-loading(label="Carregando permissões...")
+    template(v-else)
+      dd-accordion-group
+        dd-accordion(
+          v-for="group in groupedPermissions"
+          :key="group.module"
+          :title="`${group.label} (${group.selectedCount})`"
         )
-          dd-stack(compact nogap)
-            strong {{ formatPermissionLabel(permission) }}
-            span {{ permission.key }}
+          dd-stack(compact)
+            dd-checkbox(
+              v-for="permission in group.permissions"
+              :key="permission.id"
+              :model-value="selectedPermissionKeys.includes(permission.key)"
+              @update:model-value="togglePermission(permission.key, Boolean($event))"
+            ) {{ formatPermissionLabel(permission) }}
 </template>

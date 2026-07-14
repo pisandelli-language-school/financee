@@ -16,6 +16,7 @@ const { showToast } = useToaster()
 const meta = getSectionMeta('permissoes')
 const requestError = ref('')
 const modalOpen = ref(false)
+const modalLoading = ref(false)
 const editingRole = ref<AuthRoleRecord | null>(null)
 const form = ref<RolePermissionsFormValues>({
   permissionKeys: [],
@@ -38,6 +39,10 @@ watch(() => [
   await permissionsStore.fetch()
 }, { immediate: true })
 
+onMounted(() => {
+  void fetchPermissionCatalog()
+})
+
 function handleSearch(value: string) {
   permissionsStore.setFilters({
     search: value,
@@ -59,8 +64,14 @@ async function openEditModal(role: AuthRoleRecord) {
     permissionKeys: [...role.permissions],
   }
   requestError.value = ''
-  await fetchPermissionCatalog()
   modalOpen.value = true
+  modalLoading.value = true
+
+  try {
+    await fetchPermissionCatalog()
+  } finally {
+    modalLoading.value = false
+  }
 }
 
 async function handleSave() {
@@ -140,7 +151,7 @@ dd-stack
     :role-name="editingRole?.name ?? ''"
     :model-value="form"
     :permissions="permissionCatalog"
-    :loading="permissionsStore.loading"
+    :loading="modalLoading || permissionsStore.loading"
     :error-message="requestError"
     @update:open="modalOpen = $event"
     @update:model-value="form = $event"

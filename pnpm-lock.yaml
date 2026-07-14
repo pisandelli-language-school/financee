@@ -15,8 +15,8 @@ importers:
         specifier: ^0.11.3
         version: 0.11.3(magicast@0.5.3)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.38(typescript@5.9.3)))
       '@pisandelli/daredash':
-        specifier: ^0.0.28-beta
-        version: 0.0.28-beta(6f91a94d74d52c5a4360df9f0e835ebc)
+        specifier: ^0.0.30-beta
+        version: 0.0.30-beta(6f91a94d74d52c5a4360df9f0e835ebc)
       '@prisma/adapter-mariadb':
         specifier: ^7.8.0
         version: 7.8.0
@@ -751,9 +751,6 @@ packages:
   '@humanwhocodes/retry@0.4.3':
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
-
-  '@iconify-json/heroicons-solid@1.2.1':
-    resolution: {integrity: sha512-sRZ6U1FT1lkxtIuL+iQ9Fpm5IZxvJCDaKdLpP5elgZ6OkQn6j8HVJpxgFIcuJbHC/EeoNp3tHldMEELqN9pZDQ==}
 
   '@iconify-json/heroicons@1.2.3':
     resolution: {integrity: sha512-n+vmCEgTesRsOpp5AB5ILB6srsgsYK+bieoQBNlafvoEhjVXLq8nIGN4B0v/s4DUfa0dOrjwE/cKJgIKdJXOEg==}
@@ -1624,8 +1621,8 @@ packages:
     peerDependencies:
       pinia: ^3.0.4
 
-  '@pisandelli/daredash@0.0.28-beta':
-    resolution: {integrity: sha512-i23BiyzgM6+o6ZK3e2ZxbhbVRRnYoGbu8gCNtowrXnfdfIUkDGU5T8ts+4XHN5ITKFhSC5/hT0mim6etFqqMtg==}
+  '@pisandelli/daredash@0.0.30-beta':
+    resolution: {integrity: sha512-gUQ/95s82Vfa9vM0/BnVEoX41IsULWO2+UzaW1zu0xvQGY2hEAXY2QkXKokJuEtxSNoFBbo1wb0paSYUicjuuw==}
     peerDependencies:
       nuxt: ^4.3.0
 
@@ -6545,10 +6542,6 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@iconify-json/heroicons-solid@1.2.1':
-    dependencies:
-      '@iconify/types': 2.0.0
-
   '@iconify-json/heroicons@1.2.3':
     dependencies:
       '@iconify/types': 2.0.0
@@ -7510,10 +7503,9 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@pisandelli/daredash@0.0.28-beta(6f91a94d74d52c5a4360df9f0e835ebc)':
+  '@pisandelli/daredash@0.0.30-beta(6f91a94d74d52c5a4360df9f0e835ebc)':
     dependencies:
-      '@iconify-json/heroicons': 1.2.3
-      '@iconify-json/heroicons-solid': 1.2.1
+      '@iconify-json/lucide': 1.2.114
       '@iconify-json/svg-spinners': 1.2.4
       '@nuxt/devtools-kit': 3.2.4(magicast@0.5.3)(vite@7.3.5(@types/node@26.0.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(yaml@2.9.0))
       '@nuxt/fonts': 0.14.0(db0@0.3.4(@electric-sql/pglite@0.4.1)(mysql2@3.22.5(@types/node@26.0.1)))(esbuild@0.28.1)(ioredis@5.11.1)(magicast@0.5.3)(rollup@4.62.2)(vite@7.3.5(@types/node@26.0.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(yaml@2.9.0))

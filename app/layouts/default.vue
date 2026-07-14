@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import logoUrl from '~/assets/images/logo-opt.svg?url'
-import { AuthModule } from '~/api/auth'
+import { AuthCache, AuthModule } from '~/api/auth'
 import type { CurrentAuthPayload } from '~/types/auth'
 
 const quickLinks = [
@@ -37,6 +37,7 @@ const deniedCodes = new Set([
 
 watch(user, async () => {
   if (!user.value) {
+    AuthCache.invalidateAll()
     currentAuth.value = null
     currentAuthLoading.value = false
     return
@@ -73,6 +74,7 @@ watch(user, async () => {
 }, { immediate: true })
 
 async function handleSignOut() {
+  AuthCache.invalidateAll()
   await supabase.auth.signOut()
   currentAuth.value = null
   await navigateTo('/')
