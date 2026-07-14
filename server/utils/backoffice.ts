@@ -62,6 +62,10 @@ function normalizeString(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 function optionalString(value: unknown) {
   const normalized = normalizeString(value)
   return normalized ? normalized : null
@@ -180,7 +184,7 @@ function handleKnownPrismaError(error: unknown) {
     })
   }
 
-  throw error
+  sanitizeInternalError(error)
 }
 
 function errorText(error: unknown) {
@@ -205,6 +209,28 @@ function errorText(error: unknown) {
   return ''
 }
 
+function isNuxtHttpError(error: unknown): error is { statusCode: number } {
+  return Boolean(
+    error
+    && typeof error === 'object'
+    && 'statusCode' in error
+    && typeof error.statusCode === 'number',
+  )
+}
+
+function sanitizeInternalError(error: unknown): never {
+  if (isNuxtHttpError(error)) {
+    throw error
+  }
+
+  console.error('Unhandled backoffice error:', error)
+
+  throw createError({
+    statusCode: 500,
+    message: 'Erro interno no servidor.',
+  })
+}
+
 export function handleBackofficeInfrastructureError(error: unknown): never {
   const details = errorText(error)
 
@@ -224,7 +250,7 @@ export function handleBackofficeInfrastructureError(error: unknown): never {
     })
   }
 
-  throw error
+  sanitizeInternalError(error)
 }
 
 async function finalizePaginatedQuery<T>(
@@ -576,6 +602,10 @@ function normalizeFinancialResponsible(
     validationError('Responsável financeiro precisa de nome e email.', 'financialResponsible')
   }
 
+  if (normalized.email && !isValidEmail(normalized.email)) {
+    validationError('Email do responsável financeiro inválido.', 'financialResponsible.email')
+  }
+
   return normalized
 }
 
@@ -608,6 +638,10 @@ export function normalizeContactPayload(payload: ContactFormValues) {
 
   if ((nature === 'INDIVIDUAL' || nature === 'COMPANY') && !email) {
     validationError('Informe o e-mail.', 'email')
+  }
+
+  if (email && !isValidEmail(email)) {
+    validationError('Email inválido.', 'email')
   }
 
   if ((nature === 'INDIVIDUAL' || nature === 'COMPANY') && !phone) {
@@ -1162,79 +1196,81 @@ export async function updateContact(event: H3Event, id: string) {
   const payload = normalizeContactPayload(await readBody<ContactFormValues>(event))
 
   try {
-    await prisma.contact.update({
-      where: { id },
-      data: {
-        name: payload.name,
-        tradeName: payload.tradeName,
-        document: payload.document,
-        documentType: payload.documentType,
-        nature: payload.nature,
-        birthDate: payload.birthDate,
-        municipalRegistration: payload.municipalRegistration,
-        email: payload.email,
-        phone: payload.phone,
-        notes: payload.notes,
-        isActive: payload.isActive,
-      },
+    const record = await prisma.$transaction(async (tx) => {
+      await tx.contact.update({
+        where: { id },
+        data: {
+          name: payload.name,
+          tradeName: payload.tradeName,
+          document: payload.document,
+          documentType: payload.documentType,
+          nature: payload.nature,
+          birthDate: payload.birthDate,
+          municipalRegistration: payload.municipalRegistration,
+          email: payload.email,
+          phone: payload.phone,
+          notes: payload.notes,
+          isActive: payload.isActive,
+        },
+      })
+
+      await tx.contactRoleAssignment.deleteMany({
+        where: { contactId: id },
+      })
+
+      if (payload.roles.length) {
+        await tx.contactRoleAssignment.createMany({
+          data: payload.roles.map((role) => ({
+            contactId: id,
+            role,
+          })),
+        })
+      }
+
+      if (payload.address) {
+        await tx.address.upsert({
+          where: { contactId: id },
+          create: {
+            contactId: id,
+            ...payload.address,
+          },
+          update: payload.address,
+        })
+      } else {
+        await tx.address.deleteMany({
+          where: { contactId: id },
+        })
+      }
+
+      if (payload.financialResponsible) {
+        await tx.contactFinancialResponsible.upsert({
+          where: { contactId: id },
+          create: {
+            contactId: id,
+            ...payload.financialResponsible,
+          },
+          update: payload.financialResponsible,
+        })
+      } else {
+        await tx.contactFinancialResponsible.deleteMany({
+          where: { contactId: id },
+        })
+      }
+
+      return await tx.contact.findUnique({
+        where: { id },
+        include: contactInclude,
+      })
     })
+
+    if (!record) {
+      throw createError({ statusCode: 404, statusMessage: 'Contato não encontrado.' })
+    }
+
+    return mapContact(record)
   } catch (error) {
     handleKnownPrismaError(error)
   }
-
-  await prisma.contactRoleAssignment.deleteMany({
-    where: { contactId: id },
-  })
-
-  if (payload.roles.length) {
-    await prisma.contactRoleAssignment.createMany({
-      data: payload.roles.map((role) => ({
-        contactId: id,
-        role,
-      })),
-    })
-  }
-
-  if (payload.address) {
-    await prisma.address.upsert({
-      where: { contactId: id },
-      create: {
-        contactId: id,
-        ...payload.address,
-      },
-      update: payload.address,
-    })
-  } else {
-    await prisma.address.deleteMany({
-      where: { contactId: id },
-    })
-  }
-
-  if (payload.financialResponsible) {
-    await prisma.contactFinancialResponsible.upsert({
-      where: { contactId: id },
-      create: {
-        contactId: id,
-        ...payload.financialResponsible,
-      },
-      update: payload.financialResponsible,
-    })
-  } else {
-    await prisma.contactFinancialResponsible.deleteMany({
-      where: { contactId: id },
-    })
-  }
-
-  const record = await prisma.contact.findUnique({
-    where: { id },
-    include: contactInclude,
-  })
-
-  if (!record) {
-    throw createError({ statusCode: 404, statusMessage: 'Contato não encontrado.' })
-  }
-
-  return mapContact(record)
 }
 
 export async function deleteContact(id: string) {

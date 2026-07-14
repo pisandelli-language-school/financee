@@ -1,8 +1,10 @@
 <script setup lang="ts">
 const { getBreadcrumb, getSectionMeta } = useBackofficeSections()
 const { backofficeCards } = useBackofficeNavigation()
+const currentAuthLoading = useState('auth:current-user-loading', () => false)
 
 const meta = getSectionMeta('configuracoes')
+const pendingCardsCount = 3
 </script>
 
 <template lang="pug">
@@ -18,6 +20,11 @@ dd-stack(spaced)
       v-for="card in backofficeCards"
       :key="card.title"
       :card="card"
+    )
+    backoffice-config-card-skeleton(
+      v-if="currentAuthLoading"
+      v-for="item in pendingCardsCount"
+      :key="`skeleton-${item}`"
     )
 </template>
 

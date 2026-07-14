@@ -1,0 +1,89 @@
+model User {
+  id                  String           @id @default(cuid())
+  email               String           @unique
+  name                String
+  avatarUrl           String?
+  googleWorkspaceRole String?
+  isWorkspaceAdmin    Boolean          @default(false)
+  internalRoleId      String?
+  internalRole        Role?            @relation(fields: [internalRoleId], references: [id])
+  isActive            Boolean          @default(true)
+  preferences         UserPreferences?
+  auditLogs           AuditLog[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  deletedAt           DateTime?
+
+  @@index([internalRoleId])
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model UserPreferences {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme            String?
+  locale           String?
+  timezone         String?
+  sidebarCollapsed Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  module      String
+  action      String
+  description String?
+  roles       RolePermission[]
+
+  @@index([module])
+  @@index([action])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model AuditLog {
+  id          String        @id @default(cuid())
+  severity    AuditSeverity
+  eventType   String
+  entityType  String
+  entityId    String
+  entityLabel String?
+  action      String
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userEmail   String?
+  before      Json?
+  after       Json?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+
+  @@index([severity])
+  @@index([eventType])
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([userEmail])
+  @@index([createdAt])
+}

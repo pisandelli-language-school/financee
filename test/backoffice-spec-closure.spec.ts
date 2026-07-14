@@ -32,8 +32,8 @@ vi.mock('~~/server/utils/prisma', () => ({
   },
 }))
 
-import { prisma } from '~~/server/utils/prisma'
-import { deleteSection, normalizeContactPayload } from '~~/server/utils/backoffice'
+const { prisma } = await import('~~/server/utils/prisma')
+const { deleteSection, normalizeContactPayload } = await import('~~/server/utils/backoffice')
 
 function createBaseContact(overrides: Partial<ContactFormValues> = {}): ContactFormValues {
   return {

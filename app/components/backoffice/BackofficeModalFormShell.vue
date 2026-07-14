@@ -9,6 +9,7 @@ withDefaults(defineProps<{
   saveIcon?: string
 }>(), {
   errorTitle: 'Cadastro',
+  errorMessage: '',
   saveLabel: 'Salvar',
   saveIcon: 'lucide:save',
 })

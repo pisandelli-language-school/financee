@@ -31,6 +31,18 @@ const sectionMap = {
     title: 'Dias não úteis',
     description: 'Cadastre datas fixas, calculadas e excepcionais para ajuste automático de vencimentos.',
   },
+  usuarios: {
+    title: 'Usuários',
+    description: 'Gerencie acesso, ativação e papéis internos dos usuários autenticados.',
+  },
+  permissoes: {
+    title: 'Permissões',
+    description: 'Revise perfis, matriz de acesso e permissões atribuídas por papel interno.',
+  },
+  auditoria: {
+    title: 'Auditoria',
+    description: 'Consulte eventos críticos e ações rastreadas para investigação operacional.',
+  },
 } as const
 
 export function useBackofficeSections() {
