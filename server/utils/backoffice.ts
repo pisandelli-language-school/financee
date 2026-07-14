@@ -1161,8 +1161,11 @@ export async function createContact(event: H3Event) {
 export async function updateContact(event: H3Event, id: string) {
   const payload = normalizeContactPayload(await readBody<ContactFormValues>(event))
 
-  try {
-    await prisma.contact.update({
+  const transactions: Prisma.PrismaPromise<unknown>[] = []
+
+  // 1. Update main contact details
+  transactions.push(
+    prisma.contact.update({
       where: { id },
       data: {
         name: payload.name,
@@ -1178,51 +1181,70 @@ export async function updateContact(event: H3Event, id: string) {
         isActive: payload.isActive,
       },
     })
-  } catch (error) {
-    handleKnownPrismaError(error)
-  }
+  )
 
-  await prisma.contactRoleAssignment.deleteMany({
-    where: { contactId: id },
-  })
+  // 2. Update role assignments
+  transactions.push(
+    prisma.contactRoleAssignment.deleteMany({
+      where: { contactId: id },
+    })
+  )
 
   if (payload.roles.length) {
-    await prisma.contactRoleAssignment.createMany({
-      data: payload.roles.map((role) => ({
-        contactId: id,
-        role,
-      })),
-    })
+    transactions.push(
+      prisma.contactRoleAssignment.createMany({
+        data: payload.roles.map((role) => ({
+          contactId: id,
+          role,
+        })),
+      })
+    )
   }
 
+  // 3. Update address
   if (payload.address) {
-    await prisma.address.upsert({
-      where: { contactId: id },
-      create: {
-        contactId: id,
-        ...payload.address,
-      },
-      update: payload.address,
-    })
+    transactions.push(
+      prisma.address.upsert({
+        where: { contactId: id },
+        create: {
+          contactId: id,
+          ...payload.address,
+        },
+        update: payload.address,
+      })
+    )
   } else {
-    await prisma.address.deleteMany({
-      where: { contactId: id },
-    })
+    transactions.push(
+      prisma.address.deleteMany({
+        where: { contactId: id },
+      })
+    )
   }
 
+  // 4. Update financial responsible
   if (payload.financialResponsible) {
-    await prisma.contactFinancialResponsible.upsert({
-      where: { contactId: id },
-      create: {
-        contactId: id,
-        ...payload.financialResponsible,
-      },
-      update: payload.financialResponsible,
-    })
+    transactions.push(
+      prisma.contactFinancialResponsible.upsert({
+        where: { contactId: id },
+        create: {
+          contactId: id,
+          ...payload.financialResponsible,
+        },
+        update: payload.financialResponsible,
+      })
+    )
   } else {
-    await prisma.contactFinancialResponsible.deleteMany({
-      where: { contactId: id },
-    })
+    transactions.push(
+      prisma.contactFinancialResponsible.deleteMany({
+        where: { contactId: id },
+      })
+    )
+  }
+
+  try {
+    await prisma.$transaction(transactions)
+  } catch (error) {
+    handleKnownPrismaError(error)
   }
 
   const record = await prisma.contact.findUnique({
