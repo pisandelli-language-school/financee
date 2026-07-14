@@ -180,7 +180,16 @@ function handleKnownPrismaError(error: unknown) {
     })
   }
 
-  throw error
+  if (error && typeof error === 'object' && 'statusCode' in error) {
+    throw error
+  }
+
+  // Log the raw error internally and return a generic message to prevent information leakage
+  console.error('Unhandled backoffice error:', error)
+  throw createError({
+    statusCode: 500,
+    statusMessage: 'Erro interno no servidor.',
+  })
 }
 
 function errorText(error: unknown) {
@@ -224,7 +233,16 @@ export function handleBackofficeInfrastructureError(error: unknown): never {
     })
   }
 
-  throw error
+  if (error && typeof error === 'object' && 'statusCode' in error) {
+    throw error
+  }
+
+  // Log the raw error internally and return a generic message to prevent information leakage
+  console.error('Unhandled backoffice error:', error)
+  throw createError({
+    statusCode: 500,
+    statusMessage: 'Erro interno no servidor.',
+  })
 }
 
 async function finalizePaginatedQuery<T>(

@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ContactFormValues } from '~/types/backoffice'
 import { contactSchema } from '~/validators/contact'
 
+import { prisma } from '~~/server/utils/prisma'
+import { deleteSection, normalizeContactPayload } from '~~/server/utils/backoffice'
+
 vi.stubGlobal('createError', (payload: Record<string, unknown>) => payload)
 
 vi.mock('~~/server/utils/prisma', () => ({
@@ -31,9 +34,6 @@ vi.mock('~~/server/utils/prisma', () => ({
     $queryRaw: vi.fn(),
   },
 }))
-
-import { prisma } from '~~/server/utils/prisma'
-import { deleteSection, normalizeContactPayload } from '~~/server/utils/backoffice'
 
 function createBaseContact(overrides: Partial<ContactFormValues> = {}): ContactFormValues {
   return {

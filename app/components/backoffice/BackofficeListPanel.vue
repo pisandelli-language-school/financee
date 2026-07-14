@@ -18,8 +18,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (event: 'update:page', value: number): void
-  (event: 'update:pageSize', value: number): void
+  (event: 'update:page' | 'update:pageSize', value: number): void
 }>()
 
 const slots = useSlots()
