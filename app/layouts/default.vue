@@ -2,6 +2,7 @@
 import logoUrl from '~/assets/images/logo-opt.svg?url'
 import { AuthCache, AuthModule } from '~/api/auth'
 import type { CurrentAuthPayload } from '~/types/auth'
+import { useUserPreferencesStore } from '~~/stores/useUserPreferencesStore'
 
 const quickLinks = [
   { label: 'Política de dados', to: '#' },
@@ -17,8 +18,9 @@ const currentAuthLoading = useState('auth:current-user-loading', () => false)
 const {
   primaryMenuItems,
 } = useBackofficeNavigation()
+const preferencesStore = useUserPreferencesStore()
 
-const collapsed = useState('app:sidebar-collapsed', () => false)
+const collapsed = ref(false)
 const menuRef = ref<{
   collapse: () => void
   expand: () => void
@@ -40,6 +42,7 @@ watch(user, async () => {
     AuthCache.invalidateAll()
     currentAuth.value = null
     currentAuthLoading.value = false
+    preferencesStore.hydrate(null)
     return
   }
 
@@ -47,6 +50,7 @@ watch(user, async () => {
 
   try {
     currentAuth.value = await AuthModule.getCurrentUser()
+    preferencesStore.hydrate(currentAuth.value.user.preferences)
   } catch (error) {
     currentAuth.value = null
 
@@ -73,8 +77,29 @@ watch(user, async () => {
   }
 }, { immediate: true })
 
+watch(() => preferencesStore.preferences.sidebarCollapsed, (value) => {
+  if (collapsed.value !== value) {
+    collapsed.value = value
+  }
+}, { immediate: true })
+
+watch(collapsed, async (value) => {
+  if (!preferencesStore.hydrated || value === preferencesStore.preferences.sidebarCollapsed) {
+    return
+  }
+
+  try {
+    await preferencesStore.updatePreferences({
+      sidebarCollapsed: value,
+    })
+  } catch {
+    collapsed.value = preferencesStore.preferences.sidebarCollapsed
+  }
+})
+
 async function handleSignOut() {
   AuthCache.invalidateAll()
+  preferencesStore.hydrate(null)
   await supabase.auth.signOut()
   currentAuth.value = null
   await navigateTo('/')

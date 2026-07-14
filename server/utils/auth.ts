@@ -20,6 +20,9 @@ type UserWithPermissions = PrismaUser & {
       permission: Permission
     }>
   }) | null
+  preferences: {
+    sidebarCollapsed: boolean
+  } | null
 }
 
 const authInclude = {
@@ -30,6 +33,11 @@ const authInclude = {
           permission: true,
         },
       },
+    },
+  },
+  preferences: {
+    select: {
+      sidebarCollapsed: true,
     },
   },
 } satisfies Parameters<typeof prisma.user.findUnique>[0]['include']
@@ -74,6 +82,9 @@ function toCurrentAuthPayload(user: UserWithPermissions): CurrentAuthPayload {
       internalRoleId: user.internalRoleId,
       internalRoleName: user.internalRole?.name ?? null,
       isActive: user.isActive,
+      preferences: {
+        sidebarCollapsed: user.preferences?.sidebarCollapsed ?? false,
+      },
     },
     permissions: extractPermissions(user),
   }

@@ -1,5 +1,6 @@
 import type {
   AuditFilters,
+  AuditLogDetailRecord,
   AuditLogRecord,
   AuthRoleRecord,
   AuthRolesFilters,
@@ -7,13 +8,14 @@ import type {
   AuthUsersFilters,
   CurrentAuthPayload,
   PermissionCatalogRecord,
+  UserPreferencesRecord,
 } from '~/types/auth'
 import type { PaginatedResponse } from '~/types/backoffice'
 
 interface AuthRequestOptions {
   method: 'GET' | 'PATCH'
   query?: object
-  body?: Record<string, unknown>
+  body?: object
   headers?: Record<string, string | undefined>
 }
 
@@ -107,6 +109,26 @@ function invalidatePermissionsCache() {
   getPermissionsCache().value = null
 }
 
+function patchCurrentUserCache(nextUser: CurrentAuthPayload['user']) {
+  if (!canUseClientCache()) {
+    return
+  }
+
+  const currentUserCache = getCurrentUserCache()
+
+  if (!currentUserCache.value) {
+    return
+  }
+
+  currentUserCache.value = {
+    ...currentUserCache.value,
+    value: {
+      ...currentUserCache.value.value,
+      user: nextUser,
+    },
+  }
+}
+
 export const AuthCache = {
   invalidateCurrentUser: invalidateCurrentUserCache,
   invalidateRoles: invalidateRolesCache,
@@ -119,6 +141,9 @@ export const AuthCache = {
     invalidateCurrentUserCache()
     invalidateRolesCache()
     invalidatePermissionsCache()
+  },
+  patchCurrentUser(nextUser: CurrentAuthPayload['user']) {
+    patchCurrentUserCache(nextUser)
   },
 }
 
@@ -142,6 +167,37 @@ export const AuthModule = {
       getCurrentUserCache().value = {
         value: response,
         loadedAt: Date.now(),
+      }
+    }
+
+    return response
+  },
+}
+
+export const AuthPreferencesModule = {
+  async update(payload: UserPreferencesRecord) {
+    const requestOptions = useAuthRequestOptions()
+    const response = await fetchAuth<UserPreferencesRecord>('/api/auth/preferences', {
+      method: 'PATCH',
+      body: payload,
+      ...requestOptions,
+    })
+
+    if (canUseClientCache()) {
+      const currentUser = useState<CurrentAuthPayload | null>('auth:current-user', () => null)
+
+      if (currentUser.value) {
+        const nextUser = {
+          ...currentUser.value.user,
+          preferences: response,
+        }
+
+        currentUser.value = {
+          ...currentUser.value,
+          user: nextUser,
+        }
+
+        patchCurrentUserCache(nextUser)
       }
     }
 
@@ -242,6 +298,14 @@ export const AuditModule = {
     return await fetchAuth<PaginatedResponse<AuditLogRecord>>('/api/auth/audit', {
       method: 'GET',
       query: filters,
+      ...requestOptions,
+    })
+  },
+  async getById(id: string) {
+    const requestOptions = useAuthRequestOptions()
+
+    return await fetchAuth<AuditLogDetailRecord>(`/api/auth/audit/${id}`, {
+      method: 'GET',
       ...requestOptions,
     })
   },

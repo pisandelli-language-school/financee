@@ -53,11 +53,16 @@ export interface CurrentUserProfile {
   internalRoleId: string | null
   internalRoleName: string | null
   isActive: boolean
+  preferences: UserPreferencesRecord
 }
 
 export interface CurrentAuthPayload {
   user: CurrentUserProfile
   permissions: string[]
+}
+
+export interface UserPreferencesRecord {
+  sidebarCollapsed: boolean
 }
 
 export interface AuthUserRecord extends CurrentUserProfile {
@@ -89,6 +94,11 @@ export interface AuditLogRecord {
   userEmail: string | null
   createdAt: string
   metadata: Record<string, unknown> | null
+}
+
+export interface AuditLogDetailRecord extends AuditLogRecord {
+  before: Record<string, unknown> | null
+  after: Record<string, unknown> | null
 }
 
 export interface AuthUsersFilters {

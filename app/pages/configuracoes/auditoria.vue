@@ -1,11 +1,18 @@
 <script setup lang="ts">
+import { AuditModule } from '~/api/auth'
 import type { AppTableColumn } from '~/types/backoffice'
+import type { AuditLogDetailRecord, AuditLogRecord } from '~/types/auth'
 import { useAuditStore } from '~~/stores/useAuditStore'
 
 const { getBreadcrumb, getSectionMeta } = useBackofficeSections()
 const auditStore = useAuditStore()
+const { getErrorMessage } = useBackofficeApiFeedback()
 
 const meta = getSectionMeta('auditoria')
+const detailOpen = ref(false)
+const detailLoading = ref(false)
+const detailError = ref('')
+const detailEntry = ref<AuditLogDetailRecord | null>(null)
 const severityOptions = [
   { label: 'Todas as severidades', value: '' },
   { label: 'Info', value: 'INFO' },
@@ -19,6 +26,7 @@ const columns: AppTableColumn[] = [
   { key: 'eventType', title: 'Evento' },
   { key: 'entityType', title: 'Entidade' },
   { key: 'userEmail', title: 'Usuário' },
+  { key: 'actions', title: 'Ações', width: '64px', align: 'right' },
 ]
 
 watch(() => [
@@ -78,6 +86,21 @@ function formatDateTime(value: string) {
     timeStyle: 'short',
   }).format(new Date(value))
 }
+
+async function openDetailModal(row: AuditLogRecord) {
+  detailOpen.value = true
+  detailLoading.value = true
+  detailError.value = ''
+  detailEntry.value = null
+
+  try {
+    detailEntry.value = await AuditModule.getById(row.id)
+  } catch (error) {
+    detailError.value = getErrorMessage(error, 'Não foi possível carregar os detalhes da auditoria.')
+  } finally {
+    detailLoading.value = false
+  }
+}
 </script>
 
 <template lang="pug">
@@ -131,4 +154,25 @@ dd-stack
 
     template(#cell-severity="{ row }")
       dd-badge(:color="severityColor(row.severity)") {{ row.severity }}
+
+    template(#cell-actions="{ row }")
+      dd-button(
+        ghost
+        tiny
+        icon-only
+        info
+        type="button"
+        icon="lucide:eye"
+        aria-label="Ver detalhes da auditoria"
+        @click="openDetailModal(row)"
+      )
+
+  backoffice-audit-detail-modal(
+    v-if="detailOpen"
+    :open="detailOpen"
+    :entry="detailEntry"
+    :loading="detailLoading"
+    :error-message="detailError"
+    @update:open="detailOpen = $event"
+  )
 </template>
