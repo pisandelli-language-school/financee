@@ -98,7 +98,7 @@ function validateCompanyRules(value: ContactFormValues, ctx: ContactValidationCo
   }
 }
 
-function validateForeignRules(value: ContactFormValues, ctx: ContactValidationContext) {
+function validateForeignRules(value: ContactFormValues, _ctx: ContactValidationContext) {
   if (value.nature !== 'FOREIGN') {
     return
   }

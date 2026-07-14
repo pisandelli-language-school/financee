@@ -8,6 +8,8 @@ withDefaults(defineProps<{
   saveLabel?: string
   saveIcon?: string
 }>(), {
+  loading: false,
+  errorMessage: '',
   errorTitle: 'Cadastro',
   saveLabel: 'Salvar',
   saveIcon: 'lucide:save',
