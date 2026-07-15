@@ -1,0 +1,3 @@
+## 2026-07-15 - Cache Google Auth JWT client to reuse access tokens
+**Learning:** In Node.js server environments, instantiating a new `google.auth.JWT` client for every request prevents the `google-auth-library` from caching and reusing the access token. This causes an additional HTTP request to Google's token endpoint (`oauth2.googleapis.com/token`) for every authenticated API call, introducing significant latency.
+**Action:** Always cache and reuse the `google.auth.JWT` client instance at the module level. The client automatically manages token expiration (usually 1 hour) and refreshes it in the background when needed, drastically reducing API latency.

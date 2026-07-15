@@ -14,7 +14,15 @@ function getRequiredEnv(name: 'ROOT_USER_EMAIL' | 'GOOGLE_SERVICE_ACCOUNT_JSON')
   return value
 }
 
+// Cache the JWT client to allow google-auth-library to reuse access tokens.
+// This prevents a redundant HTTP request to Google's token endpoint on every authenticated API call.
+let cachedAuthClient: InstanceType<typeof google.auth.JWT> | null = null
+
 function createGoogleAuth() {
+  if (cachedAuthClient) {
+    return cachedAuthClient
+  }
+
   const rootUserEmail = getRequiredEnv('ROOT_USER_EMAIL')
   const serviceAccountJson = getRequiredEnv('GOOGLE_SERVICE_ACCOUNT_JSON')
 
@@ -23,12 +31,14 @@ function createGoogleAuth() {
     private_key: string
   }
 
-  return new google.auth.JWT({
+  cachedAuthClient = new google.auth.JWT({
     email: credentials.client_email,
     key: credentials.private_key,
     scopes: ['https://www.googleapis.com/auth/admin.directory.user.readonly'],
     subject: rootUserEmail,
   })
+
+  return cachedAuthClient
 }
 
 export async function getGoogleWorkspaceUser(email: string) {
