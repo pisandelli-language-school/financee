@@ -4,28 +4,41 @@ import {
   handleBackofficeInfrastructureError,
   updateSection,
 } from '~~/server/utils/backoffice'
-import { requireSupabaseUser } from '~~/server/utils/auth'
+import { requirePermission } from '~~/server/utils/auth'
+
+const sectionToModuleMap: Record<string, string> = {
+  'categorias': 'categorias',
+  'contas-carteiras': 'contas',
+  'centros-custo': 'centros-custo',
+  'tags': 'tags',
+  'contatos': 'contatos',
+  'formas-pagamento': 'formas-pagamento',
+  'dias-nao-uteis': 'dias-nao-uteis',
+}
 
 export default defineEventHandler(async (event) => {
   try {
-    await requireSupabaseUser(event)
-
     const section = getRouterParam(event, 'section')
     const id = getRouterParam(event, 'id')
 
-    if (!section || !id) {
+    if (!section || !id || !sectionToModuleMap[section]) {
       throw createError({ statusCode: 404, statusMessage: 'Recurso não encontrado.' })
     }
 
+    const moduleName = sectionToModuleMap[section]
+
     if (event.method === 'GET') {
+      await requirePermission(event, `${moduleName}.view`)
       return await getSectionItem(section as never, id)
     }
 
     if (event.method === 'PUT') {
+      await requirePermission(event, `${moduleName}.update`)
       return await updateSection(section as never, id, event)
     }
 
     if (event.method === 'DELETE') {
+      await requirePermission(event, `${moduleName}.delete`)
       return await deleteSection(section as never, id)
     }
 
