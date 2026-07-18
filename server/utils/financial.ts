@@ -8,8 +8,11 @@ import type {
   FinancialEntryFilters,
   FinancialEntryPaymentPayload,
   FinancialEntryRecord,
+  FinancialEntryScopePayload,
   FinancialEntryUpdatePayload,
+  FinancialEntryUpdateRequest,
   ManualEntryType,
+  RecurrenceEditScope,
   RecurrenceFrequency,
   RecurrenceType,
 } from '~~/app/types/financial'
@@ -46,6 +49,8 @@ const recurrenceFrequencySet = new Set<RecurrenceFrequency>([
   'SEMIANNUAL',
   'ANNUAL',
 ])
+const recurrenceEditScopeSet = new Set<RecurrenceEditScope>(['ONLY_THIS', 'THIS_AND_NEXT', 'ALL'])
+const DEFAULT_INDEFINITE_RECURRENCE_OCCURRENCES = 12
 
 function normalizeString(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
@@ -196,6 +201,29 @@ function parseRecurrenceTotal(value: string, recurrenceType: RecurrenceType) {
   return parsed
 }
 
+function parseOptionalRecurrenceTotal(value: string, recurrenceType: RecurrenceType) {
+  const normalized = normalizeString(value)
+
+  if (recurrenceType === 'FIXED' && !normalized) {
+    return null
+  }
+
+  return parseRecurrenceTotal(normalized, recurrenceType)
+}
+
+function parseRecurrenceEditScope(value: unknown): RecurrenceEditScope {
+  const normalized = normalizeString(value) || 'ONLY_THIS'
+
+  if (!recurrenceEditScopeSet.has(normalized as RecurrenceEditScope)) {
+    throw createError({
+      statusCode: 400,
+      message: 'Selecione um escopo válido para a série.',
+    })
+  }
+
+  return normalized as RecurrenceEditScope
+}
+
 function toFinancialEntryRecord(entry: FinancialEntryWithRelations): FinancialEntryRecord {
   return {
     id: entry.id,
@@ -255,18 +283,13 @@ function getLastDayOfMonth(year: number, monthIndex: number) {
 }
 
 function addMonths(date: Date, monthOffset: number) {
-  const year = date.getUTCFullYear()
-  const month = date.getUTCMonth()
+  const totalMonths = date.getUTCFullYear() * 12 + date.getUTCMonth() + monthOffset
+  const year = Math.floor(totalMonths / 12)
+  const month = ((totalMonths % 12) + 12) % 12
   const day = date.getUTCDate()
-  const targetMonth = month + monthOffset
-  const targetYear = year + Math.floor(targetMonth / 12)
-  const normalizedMonth = ((targetMonth % 12) + 12) % 12
-  const normalizedYear = targetMonth < 0 && targetMonth % 12 !== 0
-    ? targetYear - 1
-    : targetYear
-  const targetDay = Math.min(day, getLastDayOfMonth(normalizedYear, normalizedMonth))
+  const targetDay = Math.min(day, getLastDayOfMonth(year, month))
 
-  return new Date(Date.UTC(normalizedYear, normalizedMonth, targetDay))
+  return new Date(Date.UTC(year, month, targetDay))
 }
 
 function addDays(date: Date, dayOffset: number) {
@@ -327,13 +350,13 @@ function resolveRecurrenceInput(payload: FinancialEntryCreatePayload, type: Entr
   }
 
   const recurrenceFrequency = parseRecurrenceFrequency(payload.recurrenceFrequency)
-  const recurrenceTotal = parseRecurrenceTotal(payload.recurrenceTotal, recurrenceType)
+  const recurrenceTotal = parseOptionalRecurrenceTotal(payload.recurrenceTotal, recurrenceType)
 
   return {
     recurrenceType,
     recurrenceFrequency,
     recurrenceTotal,
-    occurrenceCount: recurrenceTotal,
+    occurrenceCount: recurrenceTotal ?? DEFAULT_INDEFINITE_RECURRENCE_OCCURRENCES,
   }
 }
 
@@ -431,7 +454,7 @@ export async function createFinancialEntry(payload: FinancialEntryCreatePayload)
   const { tagIds, ...entryData } = await resolveFinancialEntryInput(payload)
   const recurrence = resolveRecurrenceInput(payload, type)
 
-  if (recurrence.occurrenceCount > 1 && recurrence.recurrenceFrequency && recurrence.recurrenceTotal) {
+  if (recurrence.occurrenceCount > 1 && recurrence.recurrenceFrequency) {
     const recurrenceGroupId = randomUUID()
     const occurrenceIndexes = Array.from({ length: recurrence.occurrenceCount }, (_, index) => index)
     const occurrenceData = await Promise.all(occurrenceIndexes.map(async (index) => {
@@ -614,7 +637,7 @@ async function createFinancialTransfer(payload: FinancialEntryCreatePayload) {
   return toFinancialEntryRecord(records)
 }
 
-export async function updateFinancialEntry(id: string, payload: FinancialEntryUpdatePayload) {
+export async function updateFinancialEntry(id: string, payload: FinancialEntryUpdateRequest) {
   const currentEntry = await prisma.financialEntry.findFirst({
     where: {
       id,
@@ -637,24 +660,122 @@ export async function updateFinancialEntry(id: string, payload: FinancialEntryUp
   }
 
   const { tagIds, ...entryData } = await resolveFinancialEntryInput(payload)
+  const scope = parseRecurrenceEditScope(payload.scope)
 
-  const record = await prisma.financialEntry.update({
-    where: {
-      id,
-    },
-    data: {
-      ...entryData,
-      tags: {
-        deleteMany: {},
-        create: tagIds.map(tagId => ({
-          tagId,
-        })),
+  if (!currentEntry.recurrenceGroupId || scope === 'ONLY_THIS') {
+    const record = await prisma.financialEntry.update({
+      where: {
+        id,
       },
+      data: {
+        ...entryData,
+        recurrenceType: currentEntry.recurrenceType,
+        recurrenceFrequency: currentEntry.recurrenceFrequency,
+        recurrenceGroupId: currentEntry.recurrenceGroupId,
+        recurrenceIndex: currentEntry.recurrenceIndex,
+        recurrenceTotal: currentEntry.recurrenceTotal,
+        tags: {
+          deleteMany: {},
+          create: tagIds.map(tagId => ({
+            tagId,
+          })),
+        },
+      },
+      include: financialEntryInclude,
+    })
+
+    return toFinancialEntryRecord(record)
+  }
+
+  if (!currentEntry.recurrenceFrequency || !currentEntry.recurrenceIndex) {
+    throw createError({
+      statusCode: 400,
+      message: 'A série deste lançamento não possui dados suficientes para edição em lote.',
+    })
+  }
+
+  const currentRecurrenceFrequency = currentEntry.recurrenceFrequency
+  const currentRecurrenceIndex = currentEntry.recurrenceIndex
+
+  const targetWhere: Prisma.FinancialEntryWhereInput = {
+    recurrenceGroupId: currentEntry.recurrenceGroupId,
+    deletedAt: null,
+    ...(scope === 'THIS_AND_NEXT'
+      ? {
+          recurrenceIndex: {
+            gte: currentRecurrenceIndex,
+          },
+        }
+      : {}),
+  }
+
+  const targets = await prisma.financialEntry.findMany({
+    where: targetWhere,
+    orderBy: {
+      recurrenceIndex: 'asc',
     },
-    include: financialEntryInclude,
   })
 
-  return toFinancialEntryRecord(record)
+  if (!targets.length) {
+    throw createError({
+      statusCode: 404,
+      message: 'Nenhuma ocorrência da série foi encontrada.',
+    })
+  }
+
+  const updatedRecord = await prisma.$transaction(async (transaction) => {
+    let selectedRecord: FinancialEntryWithRelations | null = null
+
+    for (const target of targets) {
+      if (target.type === 'TRANSFER' || target.transferGroupId) {
+        throw createError({
+          statusCode: 400,
+          message: 'Transferências serão editadas em um fluxo próprio.',
+        })
+      }
+
+      const occurrenceOffset = (target.recurrenceIndex ?? currentRecurrenceIndex) - currentRecurrenceIndex
+      const competenceDate = addRecurrenceOffset(entryData.competenceDate, currentRecurrenceFrequency, occurrenceOffset)
+      const scheduledDueDate = addRecurrenceOffset(entryData.scheduledDueDate, currentRecurrenceFrequency, occurrenceOffset)
+      const effectiveDueDate = await resolveEffectiveDueDate(scheduledDueDate)
+
+      const record = await transaction.financialEntry.update({
+        where: {
+          id: target.id,
+        },
+        data: {
+          ...entryData,
+          competenceDate,
+          scheduledDueDate,
+          effectiveDueDate,
+          recurrenceType: target.recurrenceType,
+          recurrenceFrequency: target.recurrenceFrequency,
+          recurrenceGroupId: target.recurrenceGroupId,
+          recurrenceIndex: target.recurrenceIndex,
+          recurrenceTotal: target.recurrenceTotal,
+          tags: {
+            deleteMany: {},
+            create: tagIds.map(tagId => ({
+              tagId,
+            })),
+          },
+        },
+        include: financialEntryInclude,
+      })
+
+      if (target.id === id) {
+        selectedRecord = record
+      }
+    }
+
+    return selectedRecord
+  })
+
+  if (!updatedRecord) {
+    return await getFinancialEntry(id)
+  }
+
+  return toFinancialEntryRecord(updatedRecord)
 }
 
 export async function markFinancialEntryAsPaid(id: string, payload: FinancialEntryPaymentPayload) {
@@ -724,22 +845,55 @@ export async function markFinancialEntryAsOpen(id: string) {
   return toFinancialEntryRecord(record)
 }
 
-export async function cancelFinancialEntry(id: string) {
-  await getWritableFinancialEntry(id)
+export async function cancelFinancialEntry(id: string, payload: FinancialEntryScopePayload = {}) {
+  const entry = await getWritableFinancialEntry(id)
+  const scope = parseRecurrenceEditScope(payload.scope)
 
-  const record = await prisma.financialEntry.update({
-    where: {
-      id,
-    },
+  if (!entry.recurrenceGroupId || scope === 'ONLY_THIS') {
+    const record = await prisma.financialEntry.update({
+      where: {
+        id,
+      },
+      data: {
+        status: 'CANCELED',
+        paymentDate: null,
+        paymentAccountId: null,
+      },
+      include: financialEntryInclude,
+    })
+
+    return toFinancialEntryRecord(record)
+  }
+
+  if (!entry.recurrenceIndex) {
+    throw createError({
+      statusCode: 400,
+      message: 'A série deste lançamento não possui dados suficientes para cancelamento em lote.',
+    })
+  }
+
+  const targetWhere: Prisma.FinancialEntryWhereInput = {
+    recurrenceGroupId: entry.recurrenceGroupId,
+    deletedAt: null,
+    ...(scope === 'THIS_AND_NEXT'
+      ? {
+          recurrenceIndex: {
+            gte: entry.recurrenceIndex,
+          },
+        }
+      : {}),
+  }
+
+  await prisma.financialEntry.updateMany({
+    where: targetWhere,
     data: {
       status: 'CANCELED',
       paymentDate: null,
       paymentAccountId: null,
     },
-    include: financialEntryInclude,
   })
 
-  return toFinancialEntryRecord(record)
+  return await getFinancialEntry(id)
 }
 
 export async function deleteFinancialEntry(id: string) {

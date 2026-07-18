@@ -39,7 +39,7 @@ describe('financial entry validation', () => {
     }))
   })
 
-  it('requires frequency and occurrence count for finite recurring entries', async () => {
+  it('requires frequency for recurring entries', async () => {
     const result = await financialEntrySchema.safeParseAsync(createValidEntry({
       recurrenceType: 'FIXED',
       recurrenceFrequency: '',
@@ -52,11 +52,17 @@ describe('financial entry validation', () => {
         path: ['recurrenceFrequency'],
         message: 'Selecione a frequência.',
       }),
-      expect.objectContaining({
-        path: ['recurrenceTotal'],
-        message: 'Informe o número de ocorrências.',
-      }),
     ]))
+  })
+
+  it('allows fixed recurring entries without total as an indefinite series', async () => {
+    const result = await financialEntrySchema.safeParseAsync(createValidEntry({
+      recurrenceType: 'FIXED',
+      recurrenceFrequency: 'MONTHLY',
+      recurrenceTotal: '',
+    }))
+
+    expect(result.success).toBe(true)
   })
 
   it('accepts finite recurring entries with frequency and occurrence count', async () => {

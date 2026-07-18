@@ -4,7 +4,9 @@ import type {
   FinancialEntryListResponse,
   FinancialEntryPaymentPayload,
   FinancialEntryRecord,
+  FinancialEntryScopePayload,
   FinancialEntryUpdatePayload,
+  RecurrenceEditScope,
 } from '~/types/financial'
 
 interface FinancialRequestOptions {
@@ -59,12 +61,15 @@ export const FinancialEntriesModule = {
       ...requestOptions,
     })
   },
-  async update(id: string, payload: FinancialEntryUpdatePayload) {
+  async update(id: string, payload: FinancialEntryUpdatePayload, scope?: RecurrenceEditScope) {
     const requestOptions = useFinancialRequestOptions()
 
     return await fetchFinancial<FinancialEntryRecord>(`/api/lancamentos/${id}`, {
       method: 'PUT',
-      body: payload,
+      body: {
+        ...payload,
+        ...(scope ? { scope } : {}),
+      },
       ...requestOptions,
     })
   },
@@ -85,11 +90,12 @@ export const FinancialEntriesModule = {
       ...requestOptions,
     })
   },
-  async cancel(id: string) {
+  async cancel(id: string, payload: FinancialEntryScopePayload = {}) {
     const requestOptions = useFinancialRequestOptions()
 
     return await fetchFinancial<FinancialEntryRecord>(`/api/lancamentos/${id}/cancel`, {
       method: 'POST',
+      body: payload,
       ...requestOptions,
     })
   },

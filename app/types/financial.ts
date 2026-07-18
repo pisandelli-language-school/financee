@@ -39,12 +39,19 @@ export const recurrenceFrequencyOptions = [
   { label: 'Anual', value: 'ANNUAL' },
 ] as const
 
+export const recurrenceEditScopeOptions = [
+  { label: 'Apenas este lançamento', value: 'ONLY_THIS' },
+  { label: 'Este e os próximos', value: 'THIS_AND_NEXT' },
+  { label: 'Todos da série', value: 'ALL' },
+] as const
+
 export type EntryDirection = (typeof entryDirectionOptions)[number]['value']
 export type EntryType = (typeof entryTypeOptions)[number]['value']
 export type EntryStatus = (typeof entryStatusOptions)[number]['value']
 export type ManualEntryType = (typeof manualEntryTypeOptions)[number]['value']
 export type RecurrenceType = (typeof recurrenceTypeOptions)[number]['value']
 export type RecurrenceFrequency = (typeof recurrenceFrequencyOptions)[number]['value']
+export type RecurrenceEditScope = (typeof recurrenceEditScopeOptions)[number]['value']
 
 export interface FinancialEntryRecord {
   id: string
@@ -118,9 +125,17 @@ export type FinancialEntryCreatePayload = FinancialEntryFormValues
 
 export type FinancialEntryUpdatePayload = FinancialEntryFormValues
 
+export interface FinancialEntryUpdateRequest extends FinancialEntryFormValues {
+  scope?: RecurrenceEditScope
+}
+
 export interface FinancialEntryPaymentPayload {
   paymentDate: string
   paymentAccountId?: string
+}
+
+export interface FinancialEntryScopePayload {
+  scope?: RecurrenceEditScope
 }
 
 export type FinancialEntryListResponse = PaginatedResponse<FinancialEntryRecord>

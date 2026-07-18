@@ -7,6 +7,7 @@ import {
   entryStatusOptions,
   type EntryDirection,
   type FinancialEntryRecord,
+  type RecurrenceEditScope,
 } from '~/types/financial'
 import { useFinancialEntriesStore } from '~~/stores/useFinancialEntriesStore'
 
@@ -272,17 +273,54 @@ async function reopenEntry(entry: FinancialEntryRecord) {
 }
 
 async function cancelEntry(entry: FinancialEntryRecord) {
-  if (!window.confirm(`Deseja cancelar o lançamento "${entry.description}"?`)) {
+  const scope = getRecurrenceScope(entry, 'cancelar')
+
+  if (!scope) {
     return
   }
 
   await runStatusAction(entry.id, async () => {
-    await FinancialEntriesModule.cancel(entry.id)
+    await FinancialEntriesModule.cancel(entry.id, { scope })
     showToast('Lançamento cancelado.', {
       title: 'Lançamentos',
       type: 'success',
     })
   })
+}
+
+function getRecurrenceScope(entry: FinancialEntryRecord, actionLabel: string): RecurrenceEditScope | null {
+  if (!entry.recurrenceGroupId) {
+    return window.confirm(`Deseja ${actionLabel} o lançamento "${entry.description}"?`)
+      ? 'ONLY_THIS'
+      : null
+  }
+
+  const selectedOption = window.prompt(
+    [
+      `Este lançamento faz parte de uma série. Como deseja ${actionLabel}?`,
+      '',
+      '1 - Apenas este lançamento',
+      '2 - Este e os próximos',
+      '3 - Todos da série',
+    ].join('\n'),
+    '1',
+  )
+
+  if (selectedOption === null) {
+    return null
+  }
+
+  if (selectedOption.trim() === '2') {
+    return 'THIS_AND_NEXT'
+  }
+
+  if (selectedOption.trim() === '3') {
+    return 'ALL'
+  }
+
+  return selectedOption.trim() === '1' || selectedOption.trim() === ''
+    ? 'ONLY_THIS'
+    : null
 }
 
 async function deleteEntry(entry: FinancialEntryRecord) {
@@ -636,7 +674,7 @@ dd-stack
           @click="cancelEntry(row)"
         )
         dd-button(
-          v-if="canDeleteEntries && row.status === 'OPEN' && row.type !== 'TRANSFER' && !row.paymentDate"
+          v-if="canDeleteEntries && row.status === 'OPEN' && row.type !== 'TRANSFER' && !row.paymentDate && !row.recurrenceGroupId"
           ghost
           tiny
           icon-only

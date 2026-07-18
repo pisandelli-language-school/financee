@@ -182,13 +182,15 @@ export const financialEntrySchema = z.object({
 
     const recurrenceTotal = Number(value.recurrenceTotal)
 
+    if (value.recurrenceType === 'FIXED' && !value.recurrenceTotal.trim()) {
+      return
+    }
+
     if (!value.recurrenceTotal.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['recurrenceTotal'],
-        message: value.recurrenceType === 'INSTALLMENT'
-          ? 'Informe o número de parcelas.'
-          : 'Informe o número de ocorrências.',
+        message: 'Informe o número de parcelas.',
       })
     } else if (!Number.isInteger(recurrenceTotal) || recurrenceTotal < 2 || recurrenceTotal > 120) {
       ctx.addIssue({

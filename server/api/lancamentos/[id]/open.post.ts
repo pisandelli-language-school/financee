@@ -1,8 +1,9 @@
 import { requirePermission } from '~~/server/utils/auth'
-import { markFinancialEntryAsOpen } from '~~/server/utils/financial'
+import { createAuditLog } from '~~/server/utils/audit'
+import { getFinancialEntry, markFinancialEntryAsOpen } from '~~/server/utils/financial'
 
 export default defineEventHandler(async (event) => {
-  await requirePermission(event, 'lancamentos.pay')
+  const { user: actor } = await requirePermission(event, 'lancamentos.pay')
 
   const id = getRouterParam(event, 'id')
 
@@ -13,5 +14,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return await markFinancialEntryAsOpen(id)
+  const before = await getFinancialEntry(id)
+  const record = await markFinancialEntryAsOpen(id)
+
+  await createAuditLog({
+    eventType: 'FINANCIAL_ENTRY_REOPENED',
+    entityType: 'FinancialEntry',
+    entityId: record.id,
+    entityLabel: record.description,
+    action: 'reopen',
+    actor,
+    before,
+    after: record,
+  })
+
+  return record
 })

@@ -20,8 +20,10 @@ import {
   entryTypeOptions,
   type FinancialEntryFormValues,
   type FinancialEntryRecord,
+  recurrenceEditScopeOptions,
   recurrenceFrequencyOptions,
   recurrenceTypeOptions,
+  type RecurrenceEditScope,
 } from '~/types/financial'
 import {
   cloneFinancialEntryForm,
@@ -51,8 +53,12 @@ const tagRecords = ref<TagRecord[]>([])
 const loading = ref(false)
 const optionsLoading = ref(false)
 const errorMessage = ref('')
+const editScope = ref<RecurrenceEditScope>('ONLY_THIS')
+const newTagName = ref('')
+const tagCreateLoading = ref(false)
 
 const isEditing = computed(() => Boolean(props.entry))
+const isEditingRecurring = computed(() => Boolean(props.entry?.recurrenceGroupId))
 const modalTitle = computed(() => isEditing.value ? 'Editar lançamento' : 'Novo lançamento')
 const saveLabel = computed(() => isEditing.value ? 'Salvar alterações' : 'Salvar lançamento')
 const isTransfer = computed(() => values.type === 'TRANSFER')
@@ -67,6 +73,7 @@ const typeOptions = computed(() => {
 })
 const recurrenceOptions = computed(() => recurrenceTypeOptions.map(option => ({ ...option })))
 const frequencyOptions = computed(() => recurrenceFrequencyOptions.map(option => ({ ...option })))
+const editScopeOptions = computed(() => recurrenceEditScopeOptions.map(option => ({ ...option })))
 const accountOptions = computed(() => accountRecords.value.map(account => ({
   label: account.name,
   value: account.id,
@@ -133,6 +140,7 @@ watch(() => props.open, async (open) => {
       ? createFinancialEntryFormFromRecord(props.entry)
       : createFinancialEntryForm(),
   })
+  editScope.value = 'ONLY_THIS'
   errorMessage.value = ''
   await loadOptions()
 })
@@ -171,7 +179,7 @@ const submit = handleSubmit(async (submittedValues) => {
   try {
     const payload = cloneFinancialEntryForm(submittedValues)
     const record = props.entry
-      ? await FinancialEntriesModule.update(props.entry.id, payload)
+      ? await FinancialEntriesModule.update(props.entry.id, payload, isEditingRecurring.value ? editScope.value : undefined)
       : await FinancialEntriesModule.create(payload)
 
     showToast(props.entry ? 'Lançamento atualizado com sucesso.' : 'Lançamento criado com sucesso.', {
@@ -219,12 +227,20 @@ function updateField<K extends keyof FinancialEntryFormValues>(field: K, value: 
   void validateField(field)
 }
 
+function getSelectValue(value: unknown) {
+  if (value && typeof value === 'object' && 'value' in value) {
+    return String(value.value ?? '')
+  }
+
+  return String(value ?? '')
+}
+
 function updateDirection(value: unknown) {
-  updateField('direction', String(value) as FinancialEntryFormValues['direction'])
+  updateField('direction', getSelectValue(value) as FinancialEntryFormValues['direction'])
 }
 
 function updateType(value: unknown) {
-  const type = String(value) as FinancialEntryFormValues['type']
+  const type = getSelectValue(value) as FinancialEntryFormValues['type']
 
   updateField('type', type)
 
@@ -240,7 +256,7 @@ function updateType(value: unknown) {
 }
 
 function updateRecurrenceType(value: unknown) {
-  const recurrenceType = String(value) as FinancialEntryFormValues['recurrenceType']
+  const recurrenceType = getSelectValue(value) as FinancialEntryFormValues['recurrenceType']
 
   updateField('recurrenceType', recurrenceType)
 
@@ -249,8 +265,12 @@ function updateRecurrenceType(value: unknown) {
   }
 }
 
+function updateEditScope(value: unknown) {
+  editScope.value = getSelectValue(value) as RecurrenceEditScope
+}
+
 function updateStringField(field: keyof FinancialEntryFormValues, value: unknown) {
-  updateField(field, String(value) as never)
+  updateField(field, getSelectValue(value) as never)
 }
 
 function toggleTag(tagId: string, selected: boolean) {
@@ -259,6 +279,38 @@ function toggleTag(tagId: string, selected: boolean) {
     : values.tagIds.filter(currentTagId => currentTagId !== tagId)
 
   updateField('tagIds', nextTagIds)
+}
+
+async function createInlineTag() {
+  const name = newTagName.value.trim()
+
+  if (!name) {
+    return
+  }
+
+  tagCreateLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const tag = await TagModule.create({
+      name,
+      bgColor: '',
+      textColor: '',
+      isActive: true,
+    })
+
+    tagRecords.value = [tag, ...tagRecords.value.filter(currentTag => currentTag.id !== tag.id)]
+    updateField('tagIds', [...new Set([...values.tagIds, tag.id])])
+    newTagName.value = ''
+    showToast('Tag criada e selecionada.', {
+      title: 'Lançamentos',
+      type: 'success',
+    })
+  } catch (error) {
+    errorMessage.value = getErrorMessage(error, 'Não foi possível criar a tag.')
+  } finally {
+    tagCreateLoading.value = false
+  }
 }
 
 function getError(path: keyof typeof errors.value | string) {
@@ -454,17 +506,35 @@ backoffice-modal-form-shell(
           dd-input(
             v-if="isRecurring"
             :model-value="values.recurrenceTotal"
-            :label="values.recurrenceType === 'INSTALLMENT' ? 'Parcelas' : 'Ocorrências'"
-            required
+            :label="values.recurrenceType === 'INSTALLMENT' ? 'Parcelas' : 'Ocorrências iniciais'"
+            :required="values.recurrenceType === 'INSTALLMENT'"
             type="number"
             min="2"
             max="120"
             step="1"
-            placeholder="Ex.: 12"
+            :placeholder="values.recurrenceType === 'INSTALLMENT' ? 'Ex.: 12' : '12 por padrão'"
             :is-invalid="Boolean(getError('recurrenceTotal'))"
             :error-message="getError('recurrenceTotal')"
             @update:model-value="updateStringField('recurrenceTotal', $event)"
           )
+
+        dd-alert(
+          v-if="!isEditing && !isTransfer && values.recurrenceType === 'FIXED'"
+          info
+          title="Recorrência sem prazo"
+          :closable="false"
+          icon
+        ) Se deixar as ocorrências em branco, o sistema cria 12 lançamentos iniciais e mantém a série sem total definido para expansão futura.
+
+        dd-select(
+          v-if="isEditingRecurring"
+          :model-value="editScope"
+          label="Aplicar alterações"
+          required
+          placeholder="Selecione"
+          :options="editScopeOptions"
+          @update:model-value="updateEditScope"
+        )
 
         dd-textarea(
           :model-value="values.notes"
@@ -473,15 +543,31 @@ backoffice-modal-form-shell(
           @update:model-value="updateStringField('notes', $event)"
         )
 
-        dd-stack(v-if="!isTransfer && tagOptions.length" compact)
+        dd-stack(v-if="!isTransfer" compact)
           strong(:class="fin.sectionTitle") Tags
-          dd-cluster(compact)
+          dd-cluster(compact v-if="tagOptions.length")
             dd-checkbox(
               v-for="tag in tagOptions"
               :key="tag.value"
               :model-value="values.tagIds.includes(tag.value)"
               @update:model-value="toggleTag(tag.value, Boolean($event))"
             ) {{ tag.label }}
+          dd-cluster(compact)
+            dd-input(
+              v-model="newTagName"
+              no-message
+              placeholder="Criar nova tag"
+              :disabled="tagCreateLoading"
+              @keyup.enter="createInlineTag"
+            )
+            dd-button(
+              outline
+              small
+              type="button"
+              icon="lucide:plus"
+              :disabled="tagCreateLoading || !newTagName.trim()"
+              @click="createInlineTag"
+            ) Criar tag
 
         dd-alert(
           v-if="!isTransfer"

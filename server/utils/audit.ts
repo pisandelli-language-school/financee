@@ -15,13 +15,13 @@ interface CreateAuditLogInput {
   entityLabel?: string | null
   action: string
   actor?: AuditActor | Pick<User, 'id' | 'email'> | null
-  before?: Record<string, unknown> | null
-  after?: Record<string, unknown> | null
-  metadata?: Record<string, unknown> | null
+  before?: unknown
+  after?: unknown
+  metadata?: unknown
 }
 
 export async function createAuditLog(input: CreateAuditLogInput) {
-  const toJsonValue = (value: Record<string, unknown> | null | undefined) => {
+  const toJsonValue = (value: unknown) => {
     if (value == null) {
       return Prisma.JsonNull
     }
