@@ -40,7 +40,9 @@ const moduleLabelMap: Record<string, string> = {
   usuarios: 'Usuários',
 }
 
-const groupedPermissions = computed(() => {
+// ⚡ Bolt: Extract expensive grouping/sorting based on static props into its own computed property.
+// This prevents re-evaluation of O(N log N) sorting when reactive selection state changes.
+const baseGroupedPermissions = computed(() => {
   const groups = props.permissions.reduce((accumulator, permission) => {
     const group = accumulator.get(permission.module) ?? {
       module: permission.module,
@@ -64,10 +66,20 @@ const groupedPermissions = computed(() => {
       permissions: [...group.permissions].sort((left, right) =>
         formatPermissionLabel(left).localeCompare(formatPermissionLabel(right)),
       ),
-      selectedCount: group.permissions.filter(permission =>
-        selectedPermissionKeys.value.includes(permission.key),
-      ).length,
     }))
+})
+
+// ⚡ Bolt: Compute dynamic selection mapping on top of the memoized base groups.
+// Converts array to Set for O(1) lookups instead of O(N*M) array.includes checks during filtering.
+const groupedPermissions = computed(() => {
+  const selectedSet = new Set(selectedPermissionKeys.value)
+
+  return baseGroupedPermissions.value.map(group => ({
+    ...group,
+    selectedCount: group.permissions.filter(permission =>
+      selectedSet.has(permission.key),
+    ).length,
+  }))
 })
 
 watch(
