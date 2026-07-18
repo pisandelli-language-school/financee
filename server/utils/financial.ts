@@ -10,6 +10,8 @@ import type {
   FinancialEntryRecord,
   FinancialEntryUpdatePayload,
   ManualEntryType,
+  RecurrenceFrequency,
+  RecurrenceType,
 } from '~~/app/types/financial'
 import { resolveEffectiveDueDate } from '~~/server/utils/financial-calendar'
 import { prisma } from '~~/server/utils/prisma'
@@ -35,6 +37,15 @@ type FinancialEntryWithRelations = Prisma.FinancialEntryGetPayload<{
 const entryDirectionSet = new Set<EntryDirection>(['INCOME', 'EXPENSE'])
 const entryTypeSet = new Set<EntryType>(['NORMAL', 'ESTORNO', 'AJUSTE', 'TRANSFER'])
 const manualEntryTypeSet = new Set<ManualEntryType>(['NORMAL', 'ESTORNO', 'AJUSTE'])
+const recurrenceTypeSet = new Set<RecurrenceType>(['ONE_TIME', 'FIXED', 'INSTALLMENT'])
+const recurrenceFrequencySet = new Set<RecurrenceFrequency>([
+  'WEEKLY',
+  'BIWEEKLY',
+  'MONTHLY',
+  'QUARTERLY',
+  'SEMIANNUAL',
+  'ANNUAL',
+])
 
 function normalizeString(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
@@ -144,6 +155,47 @@ function parseEntryType(value: string): EntryType {
   return value as EntryType
 }
 
+function parseRecurrenceType(value: string): RecurrenceType {
+  const normalized = normalizeString(value) || 'ONE_TIME'
+
+  if (!recurrenceTypeSet.has(normalized as RecurrenceType)) {
+    throw createError({
+      statusCode: 400,
+      message: 'Selecione uma repetição válida.',
+    })
+  }
+
+  return normalized as RecurrenceType
+}
+
+function parseRecurrenceFrequency(value: string): RecurrenceFrequency {
+  const normalized = normalizeString(value)
+
+  if (!recurrenceFrequencySet.has(normalized as RecurrenceFrequency)) {
+    throw createError({
+      statusCode: 400,
+      message: 'Selecione uma frequência válida.',
+    })
+  }
+
+  return normalized as RecurrenceFrequency
+}
+
+function parseRecurrenceTotal(value: string, recurrenceType: RecurrenceType) {
+  const parsed = Number(value)
+
+  if (!Number.isInteger(parsed) || parsed < 2 || parsed > 120) {
+    throw createError({
+      statusCode: 400,
+      message: recurrenceType === 'INSTALLMENT'
+        ? 'Informe um número de parcelas entre 2 e 120.'
+        : 'Informe um número de ocorrências entre 2 e 120.',
+    })
+  }
+
+  return parsed
+}
+
 function toFinancialEntryRecord(entry: FinancialEntryWithRelations): FinancialEntryRecord {
   return {
     id: entry.id,
@@ -170,6 +222,11 @@ function toFinancialEntryRecord(entry: FinancialEntryWithRelations): FinancialEn
     contactName: entry.contact?.name ?? null,
     tagIds: entry.tags.map(item => item.tagId),
     tagNames: entry.tags.map(item => item.tag.name),
+    recurrenceType: entry.recurrenceType,
+    recurrenceFrequency: entry.recurrenceFrequency,
+    recurrenceGroupId: entry.recurrenceGroupId,
+    recurrenceIndex: entry.recurrenceIndex,
+    recurrenceTotal: entry.recurrenceTotal,
     notes: entry.notes ?? null,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
@@ -190,6 +247,93 @@ export function parseFinancialEntryFilters(event: H3Event): FinancialEntryFilter
     dateTo: normalizeString(query.dateTo),
     page: parsePage(query.page),
     pageSize: parsePageSize(query.pageSize),
+  }
+}
+
+function getLastDayOfMonth(year: number, monthIndex: number) {
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate()
+}
+
+function addMonths(date: Date, monthOffset: number) {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth()
+  const day = date.getUTCDate()
+  const targetMonth = month + monthOffset
+  const targetYear = year + Math.floor(targetMonth / 12)
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12
+  const normalizedYear = targetMonth < 0 && targetMonth % 12 !== 0
+    ? targetYear - 1
+    : targetYear
+  const targetDay = Math.min(day, getLastDayOfMonth(normalizedYear, normalizedMonth))
+
+  return new Date(Date.UTC(normalizedYear, normalizedMonth, targetDay))
+}
+
+function addDays(date: Date, dayOffset: number) {
+  const nextDate = new Date(date)
+
+  nextDate.setUTCDate(nextDate.getUTCDate() + dayOffset)
+
+  return nextDate
+}
+
+function addRecurrenceOffset(date: Date, frequency: RecurrenceFrequency, index: number) {
+  if (index === 0) {
+    return date
+  }
+
+  if (frequency === 'WEEKLY') {
+    return addDays(date, index * 7)
+  }
+
+  if (frequency === 'BIWEEKLY') {
+    return addDays(date, index * 14)
+  }
+
+  if (frequency === 'QUARTERLY') {
+    return addMonths(date, index * 3)
+  }
+
+  if (frequency === 'SEMIANNUAL') {
+    return addMonths(date, index * 6)
+  }
+
+  if (frequency === 'ANNUAL') {
+    return addMonths(date, index * 12)
+  }
+
+  return addMonths(date, index)
+}
+
+function resolveRecurrenceInput(payload: FinancialEntryCreatePayload, type: EntryType) {
+  if (type === 'TRANSFER') {
+    return {
+      recurrenceType: 'ONE_TIME' as const,
+      recurrenceFrequency: null,
+      recurrenceTotal: null,
+      occurrenceCount: 1,
+    }
+  }
+
+  const recurrenceType = parseRecurrenceType(payload.recurrenceType)
+
+  if (recurrenceType === 'ONE_TIME') {
+    return {
+      recurrenceType,
+      recurrenceFrequency: null,
+      recurrenceTotal: null,
+      occurrenceCount: 1,
+    }
+  }
+
+  const recurrenceFrequency = parseRecurrenceFrequency(payload.recurrenceFrequency)
+  const recurrenceTotal = parseRecurrenceTotal(payload.recurrenceTotal, recurrenceType)
+
+  return {
+    recurrenceType,
+    recurrenceFrequency,
+    recurrenceTotal,
+    occurrenceCount: recurrenceTotal,
   }
 }
 
@@ -285,12 +429,70 @@ export async function createFinancialEntry(payload: FinancialEntryCreatePayload)
   }
 
   const { tagIds, ...entryData } = await resolveFinancialEntryInput(payload)
+  const recurrence = resolveRecurrenceInput(payload, type)
+
+  if (recurrence.occurrenceCount > 1 && recurrence.recurrenceFrequency && recurrence.recurrenceTotal) {
+    const recurrenceGroupId = randomUUID()
+    const occurrenceIndexes = Array.from({ length: recurrence.occurrenceCount }, (_, index) => index)
+    const occurrenceData = await Promise.all(occurrenceIndexes.map(async (index) => {
+      const competenceDate = addRecurrenceOffset(entryData.competenceDate, recurrence.recurrenceFrequency, index)
+      const scheduledDueDate = addRecurrenceOffset(entryData.scheduledDueDate, recurrence.recurrenceFrequency, index)
+
+      return {
+        ...entryData,
+        competenceDate,
+        scheduledDueDate,
+        effectiveDueDate: await resolveEffectiveDueDate(scheduledDueDate),
+        status: 'OPEN' as const,
+        recurrenceType: recurrence.recurrenceType,
+        recurrenceFrequency: recurrence.recurrenceFrequency,
+        recurrenceGroupId,
+        recurrenceIndex: index + 1,
+        recurrenceTotal: recurrence.recurrenceTotal,
+      }
+    }))
+
+    const firstRecord = await prisma.$transaction(async (transaction) => {
+      let firstEntry: FinancialEntryWithRelations | null = null
+
+      for (const data of occurrenceData) {
+        const record = await transaction.financialEntry.create({
+          data: {
+            ...data,
+            tags: {
+              create: tagIds.map(tagId => ({
+                tagId,
+              })),
+            },
+          },
+          include: financialEntryInclude,
+        })
+
+        firstEntry ??= record
+      }
+
+      return firstEntry
+    })
+
+    if (!firstRecord) {
+      throw createError({
+        statusCode: 500,
+        message: 'Não foi possível criar a série de lançamentos.',
+      })
+    }
+
+    return toFinancialEntryRecord(firstRecord)
+  }
 
   const record = await prisma.financialEntry.create({
     data: {
       ...entryData,
       status: 'OPEN',
       recurrenceType: 'ONE_TIME',
+      recurrenceFrequency: null,
+      recurrenceGroupId: null,
+      recurrenceIndex: null,
+      recurrenceTotal: null,
       tags: {
         create: tagIds.map(tagId => ({
           tagId,

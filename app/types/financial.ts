@@ -24,10 +24,27 @@ export const entryStatusOptions = [
   { label: 'Cancelado', value: 'CANCELED' },
 ] as const
 
+export const recurrenceTypeOptions = [
+  { label: 'À vista', value: 'ONE_TIME' },
+  { label: 'Parcelado', value: 'INSTALLMENT' },
+  { label: 'Recorrente', value: 'FIXED' },
+] as const
+
+export const recurrenceFrequencyOptions = [
+  { label: 'Semanal', value: 'WEEKLY' },
+  { label: 'Quinzenal', value: 'BIWEEKLY' },
+  { label: 'Mensal', value: 'MONTHLY' },
+  { label: 'Trimestral', value: 'QUARTERLY' },
+  { label: 'Semestral', value: 'SEMIANNUAL' },
+  { label: 'Anual', value: 'ANNUAL' },
+] as const
+
 export type EntryDirection = (typeof entryDirectionOptions)[number]['value']
 export type EntryType = (typeof entryTypeOptions)[number]['value']
 export type EntryStatus = (typeof entryStatusOptions)[number]['value']
 export type ManualEntryType = (typeof manualEntryTypeOptions)[number]['value']
+export type RecurrenceType = (typeof recurrenceTypeOptions)[number]['value']
+export type RecurrenceFrequency = (typeof recurrenceFrequencyOptions)[number]['value']
 
 export interface FinancialEntryRecord {
   id: string
@@ -54,6 +71,11 @@ export interface FinancialEntryRecord {
   contactName: string | null
   tagIds: string[]
   tagNames: string[]
+  recurrenceType: RecurrenceType | null
+  recurrenceFrequency: RecurrenceFrequency | null
+  recurrenceGroupId: string | null
+  recurrenceIndex: number | null
+  recurrenceTotal: number | null
   notes: string | null
   createdAt: string
   updatedAt: string
@@ -86,6 +108,9 @@ export interface FinancialEntryFormValues {
   costCenterId: string
   contactId: string
   tagIds: string[]
+  recurrenceType: RecurrenceType
+  recurrenceFrequency: RecurrenceFrequency | ''
+  recurrenceTotal: string
   notes: string
 }
 

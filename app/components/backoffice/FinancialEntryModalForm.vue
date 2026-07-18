@@ -20,6 +20,8 @@ import {
   entryTypeOptions,
   type FinancialEntryFormValues,
   type FinancialEntryRecord,
+  recurrenceFrequencyOptions,
+  recurrenceTypeOptions,
 } from '~/types/financial'
 import {
   cloneFinancialEntryForm,
@@ -54,6 +56,7 @@ const isEditing = computed(() => Boolean(props.entry))
 const modalTitle = computed(() => isEditing.value ? 'Editar lançamento' : 'Novo lançamento')
 const saveLabel = computed(() => isEditing.value ? 'Salvar alterações' : 'Salvar lançamento')
 const isTransfer = computed(() => values.type === 'TRANSFER')
+const isRecurring = computed(() => values.recurrenceType !== 'ONE_TIME')
 const directionOptions = computed(() => entryDirectionOptions.map(option => ({ ...option })))
 const typeOptions = computed(() => {
   const options = isEditing.value
@@ -62,6 +65,8 @@ const typeOptions = computed(() => {
 
   return options.map(option => ({ ...option }))
 })
+const recurrenceOptions = computed(() => recurrenceTypeOptions.map(option => ({ ...option })))
+const frequencyOptions = computed(() => recurrenceFrequencyOptions.map(option => ({ ...option })))
 const accountOptions = computed(() => accountRecords.value.map(account => ({
   label: account.name,
   value: account.id,
@@ -229,6 +234,18 @@ function updateType(value: unknown) {
     updateField('subcategoryId', '')
     updateField('contactId', '')
     updateField('tagIds', [])
+    updateField('recurrenceType', 'ONE_TIME')
+    updateField('recurrenceTotal', '')
+  }
+}
+
+function updateRecurrenceType(value: unknown) {
+  const recurrenceType = String(value) as FinancialEntryFormValues['recurrenceType']
+
+  updateField('recurrenceType', recurrenceType)
+
+  if (recurrenceType === 'ONE_TIME') {
+    updateField('recurrenceTotal', '')
   }
 }
 
@@ -270,10 +287,10 @@ backoffice-modal-form-shell(
       dd-alert(
         v-if="!isEditing"
         info
-        title="Primeiro bloco da criação"
+        title="Criação de lançamentos"
         :closable="false"
         icon
-      ) Nesta etapa vamos cobrir lançamentos manuais simples. Transferências, recorrência, tags e mudança de status entram nos próximos blocos.
+      ) Nesta etapa criamos lançamentos simples, transferências e séries finitas. A edição em massa de recorrências entra em um bloco próprio.
 
       dd-center(v-if="optionsLoading")
         dd-loading(label="Carregando formulário...")
@@ -408,6 +425,45 @@ backoffice-modal-form-shell(
             placeholder="Selecione"
             :options="contactOptions"
             @update:model-value="updateStringField('contactId', $event)"
+          )
+
+        dd-grid(v-if="!isEditing && !isTransfer")
+          dd-select(
+            :model-value="values.recurrenceType"
+            label="Repetição"
+            required
+            placeholder="Selecione"
+            :options="recurrenceOptions"
+            :is-invalid="Boolean(getError('recurrenceType'))"
+            :error-message="getError('recurrenceType')"
+            @update:model-value="updateRecurrenceType"
+          )
+
+          dd-select(
+            v-if="isRecurring"
+            :model-value="values.recurrenceFrequency"
+            label="Frequência"
+            required
+            placeholder="Selecione"
+            :options="frequencyOptions"
+            :is-invalid="Boolean(getError('recurrenceFrequency'))"
+            :error-message="getError('recurrenceFrequency')"
+            @update:model-value="updateStringField('recurrenceFrequency', $event)"
+          )
+
+          dd-input(
+            v-if="isRecurring"
+            :model-value="values.recurrenceTotal"
+            :label="values.recurrenceType === 'INSTALLMENT' ? 'Parcelas' : 'Ocorrências'"
+            required
+            type="number"
+            min="2"
+            max="120"
+            step="1"
+            placeholder="Ex.: 12"
+            :is-invalid="Boolean(getError('recurrenceTotal'))"
+            :error-message="getError('recurrenceTotal')"
+            @update:model-value="updateStringField('recurrenceTotal', $event)"
           )
 
         dd-textarea(

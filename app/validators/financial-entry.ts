@@ -7,12 +7,20 @@ import {
   type EntryType,
   type FinancialEntryFormValues,
   type FinancialEntryRecord,
+  recurrenceFrequencyOptions,
+  recurrenceTypeOptions,
+  type RecurrenceFrequency,
+  type RecurrenceType,
 } from '~/types/financial'
 
 const entryDirectionValues = entryDirectionOptions.map((option) => option.value) as [EntryDirection, ...EntryDirection[]]
 const entryTypeValues = entryTypeOptions.map((option) => option.value) as [EntryType, ...EntryType[]]
+const recurrenceTypeValues = recurrenceTypeOptions.map((option) => option.value) as [RecurrenceType, ...RecurrenceType[]]
+const recurrenceFrequencyValues = recurrenceFrequencyOptions.map((option) => option.value) as [RecurrenceFrequency, ...RecurrenceFrequency[]]
 const entryDirectionSet = new Set<string>(entryDirectionValues)
 const entryTypeSet = new Set<string>(entryTypeValues)
+const recurrenceTypeSet = new Set<string>(recurrenceTypeValues)
+const recurrenceFrequencySet = new Set<string>(recurrenceFrequencyValues)
 
 function isValidDateOnly(value: string) {
   if (!value) {
@@ -22,7 +30,7 @@ function isValidDateOnly(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T00:00:00.000Z`).valueOf())
 }
 
-const financialEntrySchema = z.object({
+export const financialEntrySchema = z.object({
   direction: z.string(),
   type: z.string(),
   description: z.string().trim().min(1, 'Descrição é obrigatória.'),
@@ -36,6 +44,9 @@ const financialEntrySchema = z.object({
   costCenterId: z.string(),
   contactId: z.string(),
   tagIds: z.array(z.string()),
+  recurrenceType: z.string(),
+  recurrenceFrequency: z.string(),
+  recurrenceTotal: z.string(),
   notes: z.string(),
 }).superRefine((value, ctx) => {
   const isTransfer = value.type === 'TRANSFER'
@@ -139,6 +150,54 @@ const financialEntrySchema = z.object({
       message: 'Selecione uma categoria antes da subcategoria.',
     })
   }
+
+  if (!value.recurrenceType) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['recurrenceType'],
+      message: 'Selecione como o lançamento se repete.',
+    })
+  } else if (!recurrenceTypeSet.has(value.recurrenceType)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['recurrenceType'],
+      message: 'Selecione uma repetição válida.',
+    })
+  }
+
+  if (value.recurrenceType !== 'ONE_TIME') {
+    if (!value.recurrenceFrequency) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['recurrenceFrequency'],
+        message: 'Selecione a frequência.',
+      })
+    } else if (!recurrenceFrequencySet.has(value.recurrenceFrequency)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['recurrenceFrequency'],
+        message: 'Selecione uma frequência válida.',
+      })
+    }
+
+    const recurrenceTotal = Number(value.recurrenceTotal)
+
+    if (!value.recurrenceTotal.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['recurrenceTotal'],
+        message: value.recurrenceType === 'INSTALLMENT'
+          ? 'Informe o número de parcelas.'
+          : 'Informe o número de ocorrências.',
+      })
+    } else if (!Number.isInteger(recurrenceTotal) || recurrenceTotal < 2 || recurrenceTotal > 120) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['recurrenceTotal'],
+        message: 'Informe um número entre 2 e 120.',
+      })
+    }
+  }
 })
 
 export const financialEntryValidationSchema = toTypedSchema(financialEntrySchema)
@@ -160,6 +219,9 @@ export function createFinancialEntryForm(): FinancialEntryFormValues {
     costCenterId: '',
     contactId: '',
     tagIds: [],
+    recurrenceType: 'ONE_TIME',
+    recurrenceFrequency: 'MONTHLY',
+    recurrenceTotal: '',
     notes: '',
   }
 }
@@ -185,6 +247,9 @@ export function createFinancialEntryFormFromRecord(record: FinancialEntryRecord)
     costCenterId: record.costCenterId ?? '',
     contactId: record.contactId ?? '',
     tagIds: [...record.tagIds],
+    recurrenceType: record.recurrenceType ?? 'ONE_TIME',
+    recurrenceFrequency: record.recurrenceFrequency ?? 'MONTHLY',
+    recurrenceTotal: record.recurrenceTotal ? String(record.recurrenceTotal) : '',
     notes: record.notes ?? '',
   }
 }
