@@ -6,6 +6,8 @@ model Category {
   parentId      String?
   parent        Category?   @relation("CategoryToSub", fields: [parentId], references: [id], onDelete: SetNull)
   subcategories Category[]  @relation("CategoryToSub")
+  entries       FinancialEntry[] @relation("EntryCategory")
+  subentries    FinancialEntry[] @relation("EntrySubcategory")
   isActive      Boolean     @default(true)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -22,6 +24,8 @@ model Account {
   name         String   @unique
   type         String
   initialValue Decimal? @db.Decimal(14, 2)
+  entries      FinancialEntry[] @relation("EntryAccount")
+  paymentEntries FinancialEntry[] @relation("EntryPaymentAccount")
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -33,6 +37,7 @@ model Account {
 model CostCenter {
   id        String   @id @default(cuid())
   name      String   @unique
+  entries   FinancialEntry[]
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -46,6 +51,7 @@ model Tag {
   name      String
   bgColor   String?
   textColor String?
+  financialEntries FinancialEntryTag[]
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -68,6 +74,7 @@ model Contact {
   phone                 String?
   address               Address?
   financialResponsible  ContactFinancialResponsible?
+  entries               FinancialEntry[]
   notes                 String?
   isActive              Boolean                      @default(true)
   createdAt             DateTime                     @default(now())

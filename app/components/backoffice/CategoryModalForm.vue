@@ -105,63 +105,57 @@ backoffice-modal-form-shell(
 )
   dd-card(tag='article' noborder flat :class='fin.card')
     dd-stack(compact)
-      dd-stack(compact nogap)
-        dd-form-label
-          | Nome da categoria
-          span(:class="fin.requiredMark")  *
-        dd-form-input(
-          name="name"
-          placeholder="Digite o nome da categoria"
-        )
+      dd-form-input(
+        name="name"
+        label="Nome da categoria"
+        required
+        placeholder="Digite o nome da categoria"
+      )
 
       dd-grid
-        dd-stack(compact nogap)
-          dd-form-label
-            | Tipo
-            span(:class="fin.requiredMark")  *
-          dd-select(
-            :model-value="values.type"
-            placeholder="Selecione"
-            :options="typeOptions"
-            :is-invalid="Boolean(getError('type'))"
-            :error-message="getError('type')"
-            @update:model-value="updateType"
-          )
-        dd-stack(compact nogap)
-          dd-form-label Subcategoria de
-          dd-cluster(compact)
-            dd-select(
-              :class="fin.selectField"
-              :model-value="values.parentId"
-              placeholder="Selecione"
-              :options="parentOptions"
-              @update:model-value="updateField('parentId', String($event))"
-            )
-            dd-button(
-              v-if="values.parentId"
-              outline
-              tiny
-              type="button"
-              @click="updateField('parentId', '')"
-            ) Limpar
-
-      dd-stack(compact nogap)
-        dd-form-label Grupo DRE
+        dd-select(
+          :model-value="values.type"
+          label="Tipo"
+          required
+          placeholder="Selecione"
+          :options="typeOptions"
+          :is-invalid="Boolean(getError('type'))"
+          :error-message="getError('type')"
+          @update:model-value="updateType"
+        )
         dd-cluster(compact)
           dd-select(
             :class="fin.selectField"
-            :model-value="values.dreGroup"
+            :model-value="values.parentId"
+            label="Subcategoria de"
             placeholder="Selecione"
-            :options="groupOptions"
-            @update:model-value="updateDreGroup"
+            :options="parentOptions"
+            @update:model-value="updateField('parentId', String($event))"
           )
           dd-button(
-            v-if="values.dreGroup"
+            v-if="values.parentId"
             outline
             tiny
             type="button"
-            @click="updateDreGroup('')"
+            @click="updateField('parentId', '')"
           ) Limpar
+
+      dd-cluster(compact)
+        dd-select(
+          :class="fin.selectField"
+          :model-value="values.dreGroup"
+          label="Grupo DRE"
+          placeholder="Selecione"
+          :options="groupOptions"
+          @update:model-value="updateDreGroup"
+        )
+        dd-button(
+          v-if="values.dreGroup"
+          outline
+          tiny
+          type="button"
+          @click="updateDreGroup('')"
+        ) Limpar
 
       dd-checkbox(
         :model-value="values.isActive"
@@ -181,7 +175,4 @@ backoffice-modal-form-shell(
   flex: 1 1 auto;
 }
 
-.requiredMark {
-  color: v('color.danger');
-}
 </style>

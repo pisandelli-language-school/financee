@@ -211,31 +211,28 @@ dd-modal(
             dd-select(
               :model-value="values.nature"
               label="Tipo de pessoa"
+              required
               :options="natureOptions"
               :is-invalid="Boolean(getError('nature'))"
               :error-message="getError('nature')"
               @update:model-value="updateNature"
             )
-            dd-stack(compact nogap)
-              dd-form-label
-                | {{ documentLabel }}
-                span(v-if="documentRequired" :class="fin.requiredMark")  *
-              dd-input(
-                :model-value="values.document"
-                placeholder="Documento principal"
-                :is-invalid="Boolean(getError('document'))"
-                :error-message="getError('document')"
-                @update:model-value="updateDocument"
-              )
+            dd-input(
+              :model-value="values.document"
+              :label="documentLabel"
+              :required="documentRequired"
+              placeholder="Documento principal"
+              :is-invalid="Boolean(getError('document'))"
+              :error-message="getError('document')"
+              @update:model-value="updateDocument"
+            )
           dd-grid
-            dd-stack(compact nogap)
-              dd-form-label
-                | {{ isCompany ? 'Razão social' : 'Nome' }}
-                span(:class="fin.requiredMark")  *
-              dd-form-input(
-                name="name"
-                placeholder="Digite o nome"
-              )
+            dd-form-input(
+              name="name"
+              :label="isCompany ? 'Razão social' : 'Nome'"
+              required
+              placeholder="Digite o nome"
+            )
 
             dd-input(
               v-if="isCompany"
@@ -247,25 +244,21 @@ dd-modal(
               @update:model-value="updateField('tradeName', String($event))"
             )
           dd-grid
-            dd-stack(compact nogap)
-              dd-form-label
-                | E-mail
-                span(v-if="isIndividual || isCompany" :class="fin.requiredMark")  *
-              dd-form-input(
-                name="email"
-                placeholder="email@exemplo.com"
-              )
-            dd-stack(compact nogap)
-              dd-form-label
-                | Telefone
-                span(v-if="isIndividual || isCompany" :class="fin.requiredMark")  *
-              dd-input(
-                :model-value="values.phone"
-                placeholder="(00) 00000-0000"
-                :is-invalid="Boolean(getError('phone'))"
-                :error-message="getError('phone')"
-                @update:model-value="updatePhone"
-              )
+            dd-form-input(
+              name="email"
+              label="E-mail"
+              :required="isIndividual || isCompany"
+              placeholder="email@exemplo.com"
+            )
+            dd-input(
+              :model-value="values.phone"
+              label="Telefone"
+              :required="isIndividual || isCompany"
+              placeholder="(00) 00000-0000"
+              :is-invalid="Boolean(getError('phone'))"
+              :error-message="getError('phone')"
+              @update:model-value="updatePhone"
+            )
 
             dd-grid(v-if="isIndividual || isCompany" :class="fin.gridTwo")
               div(v-if="isIndividual")
@@ -385,18 +378,18 @@ dd-modal(
               icon(name="lucide:briefcase-business")
               strong Responsável financeiro
 
-            dd-stack(compact nogap)
-              dd-form-label
-                | Nome do responsável
-                span(:class="fin.requiredMark")  *
-              dd-form-input(name="financialResponsible.name")
+            dd-form-input(
+              name="financialResponsible.name"
+              label="Nome do responsável"
+              required
+            )
 
             dd-grid
-              dd-stack(compact nogap)
-                dd-form-label
-                  | E-mail
-                  span(:class="fin.requiredMark")  *
-                dd-form-input(name="financialResponsible.email")
+              dd-form-input(
+                name="financialResponsible.email"
+                label="E-mail"
+                required
+              )
               dd-input(
                 :model-value="values.financialResponsible.phone"
                 label="Telefone"

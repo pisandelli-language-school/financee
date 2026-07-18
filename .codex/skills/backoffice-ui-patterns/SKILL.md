@@ -63,6 +63,9 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 43. Persist user preferences through a dedicated store and a narrow server contract. Start with the smallest real preference, hydrate it from the authenticated user payload, and expand only when a new preference has clear product value.
 44. In auth and RBAC flows, prefer reusing an already trusted identity-mapping strategy from a sibling product or proven implementation rather than inventing a parallel mapping with slightly different rules.
 45. When a spec's service list is broader than the agreed MVP, document the accepted scope decision in the spec or closure review instead of letting the code silently diverge from the written contract.
+46. Prefer field-native labels over external label wrappers. If `dd-input`, `dd-select`, `dd-textarea`, or a `dd-form-*` wrapper can receive `label`, put the label on the field itself so spacing, invalid state, and alignment stay owned by Daredash.
+47. For required fields, use the field-level `required` attribute and let Daredash own the required marker. Do not recreate red asterisks with local `dd-form-label` markup unless there is no field-level API for that interaction yet.
+48. In forms powered by `vee-validate`, prefer `dd-form-input`, `dd-form-select`, `dd-form-textarea`, and other `dd-form-*` wrappers for simple fields. Use primitive fields only when masks, lookups, nested updates, or custom event handling genuinely require direct control.
 
 ## Workflow
 
@@ -94,6 +97,7 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 24. For protected pages and app shells, keep the authenticated payload as the source of truth for permissions and preferences, and mirror that contract in the frontend types instead of inferring fields ad hoc.
 25. When adding client cache around auth or admin data, cache only data with low volatility and short dependency chains. Keep lists with active filters server-driven unless there is a concrete performance reason to do more.
 26. During closure review, explicitly separate implemented investigation capability from future “smart” or aggregated flows. A searchable list plus per-entry detail may satisfy the current spec intent even if a richer timeline is postponed.
+27. When refactoring form fields, remove standalone `dd-form-label` + field stacks if the target field supports `label`; add `required` on the field instead of rendering a local required marker.
 
 ## Toolbar Pattern
 

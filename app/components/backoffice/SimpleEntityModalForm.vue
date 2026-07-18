@@ -74,14 +74,12 @@ backoffice-modal-form-shell(
 )
   dd-card(tag='article' noborder flat)
     dd-stack(compact)
-      dd-stack(compact nogap)
-        dd-form-label
-          | Nome
-          span(:class="fin.requiredMark")  *
-        dd-form-input(
-          name="name"
-          placeholder="Digite um nome"
-        )
+      dd-form-input(
+        name="name"
+        label="Nome"
+        required
+        placeholder="Digite um nome"
+      )
 
       dd-checkbox(
         :model-value="values.isActive"
@@ -96,7 +94,4 @@ backoffice-modal-form-shell(
   max-block-size: 50rem;
 }
 
-.requiredMark {
-  color: v('color.danger');
-}
 </style>

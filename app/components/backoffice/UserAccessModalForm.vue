@@ -125,16 +125,15 @@ backoffice-modal-form-shell(
       dd-cluster(compact)
         dd-badge(info) {{ financeeRoleLabel }}
 
-      dd-stack(compact nogap)
-        dd-form-label Papel interno
-        dd-select(
-          :model-value="values.internalRoleId"
-          placeholder="Selecione"
-          :options="roleOptions"
-          :is-invalid="Boolean(getError('internalRoleId'))"
-          :error-message="getError('internalRoleId')"
-          @update:model-value="updateField('internalRoleId', String($event ?? ''))"
-        )
+      dd-select(
+        :model-value="values.internalRoleId"
+        label="Papel interno"
+        placeholder="Selecione"
+        :options="roleOptions"
+        :is-invalid="Boolean(getError('internalRoleId'))"
+        :error-message="getError('internalRoleId')"
+        @update:model-value="updateField('internalRoleId', String($event ?? ''))"
+      )
 
       dd-checkbox(
         :model-value="values.isActive"

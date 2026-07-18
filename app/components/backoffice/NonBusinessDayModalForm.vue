@@ -78,23 +78,22 @@ backoffice-modal-form-shell(
           :options="typeOptions"
           @update:model-value="updateType"
         )
-        dd-stack(compact nogap)
-          dd-form-label Escopo
-          dd-cluster(compact)
-            dd-select(
-              :class="fin.selectField"
-              :model-value="modelValue.scope"
-              placeholder="Selecione"
-              :options="scopeOptions"
-              @update:model-value="updateScope"
-            )
-            dd-button(
-              v-if="modelValue.scope"
-              outline
-              tiny
-              type="button"
-              @click="updateScope('')"
-            ) Limpar
+        dd-cluster(compact)
+          dd-select(
+            :class="fin.selectField"
+            :model-value="modelValue.scope"
+            label="Escopo"
+            placeholder="Selecione"
+            :options="scopeOptions"
+            @update:model-value="updateScope"
+          )
+          dd-button(
+            v-if="modelValue.scope"
+            outline
+            tiny
+            type="button"
+            @click="updateScope('')"
+          ) Limpar
 
       dd-grid(v-if="isFixed")
         dd-input(

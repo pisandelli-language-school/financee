@@ -98,28 +98,24 @@ backoffice-modal-form-shell(
 )
   dd-card(tag='article' noborder flat)
     dd-stack(compact)
-      dd-stack(compact nogap)
-        dd-form-label
-          | Nome
-          span(:class="fin.requiredMark")  *
-        dd-form-input(
-          name="name"
-          placeholder="Digite o nome da conta"
-        )
+      dd-form-input(
+        name="name"
+        label="Nome"
+        required
+        placeholder="Digite o nome da conta"
+      )
 
       dd-grid
-        dd-stack(compact nogap)
-          dd-form-label
-            | Tipo
-            span(:class="fin.requiredMark")  *
-          dd-select(
-            :model-value="values.type"
-            placeholder="Selecione"
-            :options="typeOptions"
-            :is-invalid="Boolean(getError('type'))"
-            :error-message="getError('type')"
-            @update:model-value="updateField('type', String($event))"
-          )
+        dd-select(
+          :model-value="values.type"
+          label="Tipo"
+          required
+          placeholder="Selecione"
+          :options="typeOptions"
+          :is-invalid="Boolean(getError('type'))"
+          :error-message="getError('type')"
+          @update:model-value="updateField('type', String($event))"
+        )
 
         dd-input(
           :model-value="values.initialValue ?? ''"
@@ -142,7 +138,4 @@ backoffice-modal-form-shell(
   max-block-size: 50rem;
 }
 
-.requiredMark {
-  color: v('color.danger');
-}
 </style>

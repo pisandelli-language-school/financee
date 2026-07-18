@@ -1,0 +1,66 @@
+model FinancialEntry {
+  id                  String              @id @default(cuid())
+  direction           EntryDirection
+  type                EntryType
+  status              EntryStatus
+  description         String
+  amount              Decimal             @db.Decimal(14, 2)
+  competenceDate      DateTime            @db.Date
+  scheduledDueDate    DateTime            @db.Date
+  effectiveDueDate    DateTime            @db.Date
+  paymentDate         DateTime?           @db.Date
+  paymentAccountId    String?
+  contactId           String?
+  accountId           String
+  categoryId          String?
+  subcategoryId       String?
+  costCenterId        String?
+  contractId          String?
+  recurrenceType      RecurrenceType?
+  recurrenceFrequency RecurrenceFrequency?
+  recurrenceGroupId   String?
+  recurrenceIndex     Int?
+  recurrenceTotal     Int?
+  transferGroupId     String?
+  notes               String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  deletedAt           DateTime?
+
+  account         Account               @relation("EntryAccount", fields: [accountId], references: [id])
+  paymentAccount  Account?              @relation("EntryPaymentAccount", fields: [paymentAccountId], references: [id])
+  category        Category?             @relation("EntryCategory", fields: [categoryId], references: [id])
+  subcategory     Category?             @relation("EntrySubcategory", fields: [subcategoryId], references: [id])
+  costCenter      CostCenter?           @relation(fields: [costCenterId], references: [id])
+  contact         Contact?              @relation(fields: [contactId], references: [id])
+  tags            FinancialEntryTag[]
+
+  @@index([direction])
+  @@index([type])
+  @@index([status])
+  @@index([accountId])
+  @@index([paymentAccountId])
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@index([costCenterId])
+  @@index([contactId])
+  @@index([contractId])
+  @@index([competenceDate])
+  @@index([scheduledDueDate])
+  @@index([effectiveDueDate])
+  @@index([paymentDate])
+  @@index([recurrenceGroupId])
+  @@index([transferGroupId])
+  @@index([deletedAt])
+}
+
+model FinancialEntryTag {
+  financialEntryId String
+  tagId            String
+
+  financialEntry FinancialEntry @relation(fields: [financialEntryId], references: [id], onDelete: Cascade)
+  tag            Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([financialEntryId, tagId])
+  @@index([tagId])
+}

@@ -53,3 +53,36 @@ enum AuditSeverity {
   WARNING
   CRITICAL
 }
+
+enum EntryDirection {
+  INCOME
+  EXPENSE
+}
+
+enum EntryType {
+  NORMAL
+  ESTORNO
+  AJUSTE
+  TRANSFER
+}
+
+enum EntryStatus {
+  OPEN
+  PAID
+  CANCELED
+}
+
+enum RecurrenceType {
+  ONE_TIME
+  FIXED
+  INSTALLMENT
+}
+
+enum RecurrenceFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+}

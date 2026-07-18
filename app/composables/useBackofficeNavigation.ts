@@ -153,18 +153,23 @@ export function useBackofficeNavigation() {
   ])
 
   const primaryMenuItems = computed<AppMenuItem[]>(() => [
-    {
-      key: 'dashboard',
-      label: 'Dashboard',
-      icon: 'lucide:layout-dashboard',
-      action: { type: 'none' },
-    },
-    {
-      key: 'lancamentos',
-      label: 'Lançamentos',
-      icon: 'lucide:arrow-right-left',
-      action: { type: 'none' },
-    },
+    ...(can('dashboard.view')
+      ? [{
+          key: 'dashboard',
+          label: 'Dashboard',
+          icon: 'lucide:layout-dashboard',
+          action: { type: 'none' as const },
+        }]
+      : []),
+    ...(can('lancamentos.view')
+      ? [{
+          key: 'lancamentos',
+          label: 'Lançamentos',
+          icon: 'lucide:arrow-right-left',
+          active: route.path.startsWith('/lancamentos'),
+          action: { type: 'link' as const, to: '/lancamentos' },
+        }]
+      : []),
     {
       key: 'contratos',
       label: 'Contratos',
