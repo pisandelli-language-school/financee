@@ -1,0 +1,4 @@
+## 2024-05-15 - [CRITICAL] API Authorization Bypass due to `requireSupabaseUser`
+**Vulnerability:** The backoffice API endpoints (`server/api/backoffice/[section].ts` and `server/api/backoffice/[section]/[id].ts`) were using `requireSupabaseUser` which only validates that a user is authenticated via Supabase. This bypassed the application's RBAC system, allowing any authenticated user to perform administrative and CRUD actions on backoffice entities regardless of their actual permissions.
+**Learning:** `requireSupabaseUser` is solely for authentication. Relying on it for protected endpoints creates an authorization bypass vulnerability.
+**Prevention:** Always use `requireFinanceeUser` to ensure the user has an active application profile, and `requirePermission` to enforce proper RBAC based on the specific action and module being accessed.
