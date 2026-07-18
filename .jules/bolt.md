@@ -1,0 +1,3 @@
+## 2024-07-18 - Vue Computed Array Dependencies
+**Learning:** In Vue 3, computed properties re-evaluate entirely when any reactive dependency changes. When computing lists from arrays along with selection state (e.g., `selectedKeys`), updating a single selection forces re-execution of expensive grouping and sorting of the base list. Additionally, filtering arrays with `.includes` inside a computed property causes `O(N * M)` checks on every tick.
+**Action:** Split base list transformations (grouping/sorting based on static props) into a separate computed property from state-dependent mappings (selected count based on reactive refs). Convert reactive arrays like `selectedKeys` to a `Set` within the mapping computed property to make subset lookups `O(1)`.
