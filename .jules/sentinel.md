@@ -1,0 +1,4 @@
+## 2024-05-18 - [Fix Authorization Bypass in Backoffice API]
+**Vulnerability:** The backoffice dynamic API endpoints (`/api/backoffice/[section].ts` and `/api/backoffice/[section]/[id].ts`) were using `requireSupabaseUser` instead of `requirePermission` or `requireFinanceeUser`. This resulted in a serious authorization bypass where anyone authenticated with Supabase could access these APIs regardless of their application roles or permissions.
+**Learning:** `requireSupabaseUser` is solely for confirming authentication via Supabase. It provides NO authorization guarantees and bypassing proper role-based access checks.
+**Prevention:** Always use `requirePermission(event, 'module.action')` or `requireFinanceeUser(event)` to enforce correct access control based on user roles and permissions. Dynamic API routes also require mapping route parameters to their respective RBAC modules.
