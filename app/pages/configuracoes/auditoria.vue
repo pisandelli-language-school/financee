@@ -40,12 +40,13 @@ watch(() => [
   await auditStore.fetch()
 }, { immediate: true })
 
-function handleSearch(value: string) {
+// ⚡ Bolt: Debounce search to prevent excessive API calls and state updates
+const handleSearch = useDebounceFn((value: string) => {
   auditStore.setFilters({
     search: value,
     page: 1,
   })
-}
+}, 300)
 
 function handleSeverity(value: string) {
   auditStore.setFilters({
