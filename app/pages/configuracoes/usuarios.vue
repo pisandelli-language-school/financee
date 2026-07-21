@@ -47,12 +47,13 @@ onMounted(() => {
   void fetchRoleOptions()
 })
 
-function handleSearch(value: string) {
+// ⚡ Bolt: Debounce search to prevent excessive API calls and state updates
+const handleSearch = useDebounceFn((value: string) => {
   usersStore.setFilters({
     search: value,
     page: 1,
   })
-}
+}, 300)
 
 async function fetchRoleOptions() {
   if (roleOptions.value.length) {

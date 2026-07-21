@@ -30,10 +30,11 @@ async function refreshList() {
   await store.fetch()
 }
 
-async function handleSearch(value: string | number) {
+// ⚡ Bolt: Debounce search to prevent excessive API calls and state updates
+const handleSearch = useDebounceFn(async (value: string | number) => {
   store.setFilters({ search: String(value), page: 1 })
   await refreshList()
-}
+}, 300)
 
 async function handlePageChange(value: number) {
   store.setFilters({ page: value })
