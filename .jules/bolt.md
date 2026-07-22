@@ -1,0 +1,3 @@
+## 2024-03-24 - Debouncing search inputs in list views
+**Learning:** List views that trigger data fetching on search input updates can cause excessive state updates and backend API requests if not debounced. The Nuxt framework here has `@vueuse/core` auto-imported, making `useDebounceFn` readily available for search handlers.
+**Action:** Always wrap search input handlers (e.g., `handleSearch`) with `@vueuse/core`'s `useDebounceFn` when they trigger data fetching in list views to prevent excessive state updates and backend API requests. Use `const handleSearch = useDebounceFn((value) => { ... }, 300)` instead of `function handleSearch(value) { ... }`.
