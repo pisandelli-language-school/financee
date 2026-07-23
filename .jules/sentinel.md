@@ -1,0 +1,4 @@
+## 2024-07-23 - Transition from Authentication to Authorization (RBAC) in Nuxt Server APIs
+**Vulnerability:** Dynamic API routes in `/server/api/backoffice` were using `requireSupabaseUser`, which only validates authentication. This resulted in an authorization bypass (Insecure Direct Object Reference / IDOR-like behavior), where any authenticated user could potentially perform actions on sections without explicit role-based access.
+**Learning:** Relying purely on basic session authentication vs. true authorization mapping can expose severe vulnerabilities, especially when using generic, dynamically generated routes like `[section].ts`.
+**Prevention:** Always enforce RBAC using `requirePermission(event, '<module>.<action>')` for dynamic endpoints, ensuring that parameters like `section` correctly map to application permission catalogs.
