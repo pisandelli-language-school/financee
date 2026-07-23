@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { AccountModule, CategoryModule, ContactModule } from '~/api/backoffice'
+import { AccountModule, CategoryModule, ContactModule, PaymentMethodModule, TagModule } from '~/api/backoffice'
 import { FinancialEntriesModule } from '~/api/financial'
 import type { AppTableColumn } from '~/types/backoffice'
+import { getAccountInitials, getInstitutionLogoByKey } from '~/utils/account-institutions'
 import {
   entryDirectionOptions,
   entryStatusOptions,
   type EntryDirection,
+  type FinancialEntryFilters,
   type FinancialEntryRecord,
+  type FinancialEntrySummary,
   type RecurrenceEditScope,
 } from '~/types/financial'
 import { useFinancialEntriesStore } from '~~/stores/useFinancialEntriesStore'
@@ -31,33 +34,42 @@ const breadcrumb = {
   routes: [{ label: 'Lançamentos' }],
 }
 
-const currentMonth = ref(startOfMonth(new Date()))
 const categoryOptions = ref<Array<{ label: string; value: string }>>([])
 const accountOptions = ref<Array<{ label: string; value: string }>>([])
 const contactOptions = ref<Array<{ label: string; value: string }>>([])
+const paymentMethodOptions = ref<Array<{ label: string; value: string }>>([])
+const tagOptions = ref<Array<{ label: string; value: string }>>([])
 const createModalOpen = ref(false)
 const editingEntry = ref<FinancialEntryRecord | null>(null)
 const paymentModalOpen = ref(false)
 const paymentTarget = ref<FinancialEntryRecord | null>(null)
+const detailsModalOpen = ref(false)
+const detailsEntry = ref<FinancialEntryRecord | null>(null)
+const actionModalOpen = ref(false)
+const actionTarget = ref<FinancialEntryRecord | null>(null)
+const actionKind = ref<'reopen' | 'cancel' | 'delete' | null>(null)
 const statusActionLoading = ref('')
+const currentSummary = ref<FinancialEntrySummary>(createEmptySummary())
+const previousSummary = ref<FinancialEntrySummary>(createEmptySummary())
 
 const columns: AppTableColumn[] = [
+  { key: 'direction', title: 'Direção', width: '80px', align: 'center' },
+  { key: 'effectiveDueDate', title: 'Vencimento', width: '120px' },
   { key: 'description', title: 'Descrição' },
-  { key: 'direction', title: 'Direção', width: '120px' },
-  { key: 'categoryName', title: 'Categoria' },
-  { key: 'accountName', title: 'Conta' },
   { key: 'contactName', title: 'Contato' },
-  { key: 'effectiveDueDate', title: 'Vencimento', width: '140px' },
-  { key: 'amount', title: 'Valor', align: 'right', width: '160px' },
-  { key: 'status', title: 'Status', width: '160px' },
-  { key: 'actions', title: 'Ações', width: '96px', align: 'right' },
+  { key: 'accountName', title: 'Conta', width: '5rem', align: 'center' },
+  { key: 'categoryName', title: 'Categoria' },
+  { key: 'amount', title: 'Valor', width: '7rem' },
+  { key: 'status', title: 'Status', width: '5rem', align: 'center' },
+  { key: 'actions', title: 'Ações', width: '5rem', align: 'center' },
 ]
 
-syncMonthFilters(currentMonth.value)
+syncMonthFilters(startOfMonth(new Date()))
 
 await Promise.all([
   loadFilterOptions(),
   entriesStore.fetch(),
+  loadSummaryComparisons(),
 ])
 
 watch(() => [
@@ -65,70 +77,89 @@ watch(() => [
   entriesStore.filters.direction,
   entriesStore.filters.status,
   entriesStore.filters.accountId,
+  entriesStore.filters.paymentMethodId,
   entriesStore.filters.categoryId,
   entriesStore.filters.contactId,
+  entriesStore.filters.tagId,
   entriesStore.filters.dateFrom,
   entriesStore.filters.dateTo,
   entriesStore.filters.page,
   entriesStore.filters.pageSize,
 ] as const, async () => {
-  await entriesStore.fetch()
+  await Promise.all([
+    entriesStore.fetch(),
+    loadSummaryComparisons(),
+  ])
 })
+
+const visibleMonth = computed(() => parseDateInput(entriesStore.filters.dateFrom) ?? startOfMonth(new Date()))
 
 const periodLabel = computed(() => capitalizeMonthLabel(
   new Intl.DateTimeFormat('pt-BR', {
     month: 'long',
+    timeZone: 'UTC',
     year: 'numeric',
-  }).format(currentMonth.value),
+  }).format(visibleMonth.value),
 ))
 
 const activeFilterCount = computed(() => [
   entriesStore.filters.direction,
   entriesStore.filters.status,
   entriesStore.filters.accountId,
+  entriesStore.filters.paymentMethodId,
   entriesStore.filters.categoryId,
   entriesStore.filters.contactId,
+  entriesStore.filters.tagId,
 ].filter(Boolean).length)
 
 const summaryCards = computed(() => {
-  const income = entriesStore.data
-    .filter(item => item.direction === 'INCOME')
-    .reduce((total, item) => total + item.amount, 0)
-  const expense = entriesStore.data
-    .filter(item => item.direction === 'EXPENSE')
-    .reduce((total, item) => total + item.amount, 0)
-  const net = income - expense
-
   return [
     {
-      key: 'all',
-      label: 'Todos',
-      value: formatCurrency(net),
-      tone: 'neutral' as const,
-      active: !entriesStore.filters.direction,
-      onClick: () => setDirectionCard(''),
+      key: 'income',
+      label: 'Entradas',
+      value: formatCurrency(currentSummary.value.income),
+      tone: 'income' as const,
+      active: entriesStore.filters.direction === 'INCOME',
+      trend: getSummaryTrend(currentSummary.value.income, previousSummary.value.income, 'income'),
+      onClick: () => setDirectionCard('INCOME'),
     },
     {
       key: 'expense',
       label: 'Saídas',
-      value: formatCurrency(-expense),
+      value: formatCurrency(-currentSummary.value.expense),
       tone: 'expense' as const,
       active: entriesStore.filters.direction === 'EXPENSE',
+      trend: getSummaryTrend(currentSummary.value.expense, previousSummary.value.expense, 'expense'),
       onClick: () => setDirectionCard('EXPENSE'),
     },
     {
-      key: 'income',
-      label: 'Entradas',
-      value: formatCurrency(income),
-      tone: 'income' as const,
-      active: entriesStore.filters.direction === 'INCOME',
-      onClick: () => setDirectionCard('INCOME'),
+      key: 'all',
+      label: 'Total',
+      value: formatCurrency(currentSummary.value.net),
+      tone: 'total' as const,
+      active: !entriesStore.filters.direction,
+      trend: getSummaryTrend(currentSummary.value.net, previousSummary.value.net, 'total'),
+      onClick: () => setDirectionCard(''),
     },
   ]
 })
 
+async function loadSummaryComparisons() {
+  const month = parseDateInput(entriesStore.filters.dateFrom) ?? startOfMonth(new Date())
+  const currentFilters = getSummaryFilters(month)
+  const previousFilters = getSummaryFilters(shiftMonth(month, -1))
+
+  const [current, previous] = await Promise.all([
+    FinancialEntriesModule.summary(currentFilters),
+    FinancialEntriesModule.summary(previousFilters),
+  ])
+
+  currentSummary.value = current
+  previousSummary.value = previous
+}
+
 async function loadFilterOptions() {
-  const [categoriesResponse, accountsResponse, contactsResponse] = await Promise.all([
+  const [categoriesResponse, accountsResponse, contactsResponse, paymentMethodsResponse, tagsResponse] = await Promise.all([
     CategoryModule.list({
       search: '',
       type: '',
@@ -144,6 +175,16 @@ async function loadFilterOptions() {
       search: '',
       nature: '',
       role: '',
+      page: 1,
+      pageSize: 200,
+    }),
+    PaymentMethodModule.list({
+      search: '',
+      page: 1,
+      pageSize: 200,
+    }),
+    TagModule.list({
+      search: '',
       page: 1,
       pageSize: 200,
     }),
@@ -164,6 +205,20 @@ async function loadFilterOptions() {
     }))
 
   contactOptions.value = contactsResponse.items
+    .filter(item => item.isActive)
+    .map(item => ({
+      label: item.name,
+      value: item.id,
+    }))
+
+  paymentMethodOptions.value = paymentMethodsResponse.items
+    .filter(item => item.isActive)
+    .map(item => ({
+      label: item.name,
+      value: item.id,
+    }))
+
+  tagOptions.value = tagsResponse.items
     .filter(item => item.isActive)
     .map(item => ({
       label: item.name,
@@ -203,6 +258,13 @@ function setAccount(value: string) {
   })
 }
 
+function setPaymentMethod(value: string) {
+  entriesStore.setFilters({
+    paymentMethodId: value,
+    page: 1,
+  })
+}
+
 function setCategory(value: string) {
   entriesStore.setFilters({
     categoryId: value,
@@ -217,17 +279,31 @@ function setContact(value: string) {
   })
 }
 
+function setTag(value: string) {
+  entriesStore.setFilters({
+    tagId: value,
+    page: 1,
+  })
+}
+
 function clearSecondaryFilters(event?: MouseEvent) {
   entriesStore.setFilters({
     direction: '',
     status: '',
     accountId: '',
+    paymentMethodId: '',
     categoryId: '',
     contactId: '',
+    tagId: '',
     page: 1,
   })
 
   closePopover(event)
+}
+
+function runActionFromMenu(action: () => void | Promise<void>, event?: MouseEvent) {
+  closePopover(event)
+  void action()
 }
 
 function openCreateEntry() {
@@ -245,8 +321,9 @@ function openPaymentModal(entry: FinancialEntryRecord) {
   paymentModalOpen.value = true
 }
 
-function openEntryDetails(id: string) {
-  void navigateTo(`/lancamentos/${id}`)
+function openEntryDetails(entry: FinancialEntryRecord) {
+  detailsEntry.value = entry
+  detailsModalOpen.value = true
 }
 
 async function handleEntrySaved() {
@@ -258,83 +335,59 @@ async function handlePaymentSaved() {
   await entriesStore.fetch()
 }
 
-async function reopenEntry(entry: FinancialEntryRecord) {
-  if (!window.confirm(`Deseja reabrir o lançamento "${entry.description}"?`)) {
+function askReopenEntry(entry: FinancialEntryRecord) {
+  openActionModal('reopen', entry)
+}
+
+function askCancelEntry(entry: FinancialEntryRecord) {
+  openActionModal('cancel', entry)
+}
+
+function askDeleteEntry(entry: FinancialEntryRecord) {
+  openActionModal('delete', entry)
+}
+
+function openActionModal(kind: 'reopen' | 'cancel' | 'delete', entry: FinancialEntryRecord) {
+  actionKind.value = kind
+  actionTarget.value = entry
+  actionModalOpen.value = true
+}
+
+async function confirmEntryAction(scope: RecurrenceEditScope) {
+  if (!actionTarget.value || !actionKind.value) {
     return
   }
 
-  await runStatusAction(entry.id, async () => {
-    await FinancialEntriesModule.markAsOpen(entry.id)
-    showToast('Lançamento reaberto.', {
-      title: 'Lançamentos',
-      type: 'success',
-    })
-  })
-}
-
-async function cancelEntry(entry: FinancialEntryRecord) {
-  const scope = getRecurrenceScope(entry, 'cancelar')
-
-  if (!scope) {
-    return
-  }
+  const entry = actionTarget.value
+  const kind = actionKind.value
 
   await runStatusAction(entry.id, async () => {
-    await FinancialEntriesModule.cancel(entry.id, { scope })
-    showToast('Lançamento cancelado.', {
-      title: 'Lançamentos',
-      type: 'success',
-    })
-  })
-}
+    if (kind === 'reopen') {
+      await FinancialEntriesModule.markAsOpen(entry.id)
+      showToast('Lançamento reaberto.', {
+        title: 'Lançamentos',
+        type: 'success',
+      })
+      return
+    }
 
-function getRecurrenceScope(entry: FinancialEntryRecord, actionLabel: string): RecurrenceEditScope | null {
-  if (!entry.recurrenceGroupId) {
-    return window.confirm(`Deseja ${actionLabel} o lançamento "${entry.description}"?`)
-      ? 'ONLY_THIS'
-      : null
-  }
+    if (kind === 'cancel') {
+      await FinancialEntriesModule.cancel(entry.id, { scope })
+      showToast('Lançamento cancelado.', {
+        title: 'Lançamentos',
+        type: 'success',
+      })
+      return
+    }
 
-  const selectedOption = window.prompt(
-    [
-      `Este lançamento faz parte de uma série. Como deseja ${actionLabel}?`,
-      '',
-      '1 - Apenas este lançamento',
-      '2 - Este e os próximos',
-      '3 - Todos da série',
-    ].join('\n'),
-    '1',
-  )
-
-  if (selectedOption === null) {
-    return null
-  }
-
-  if (selectedOption.trim() === '2') {
-    return 'THIS_AND_NEXT'
-  }
-
-  if (selectedOption.trim() === '3') {
-    return 'ALL'
-  }
-
-  return selectedOption.trim() === '1' || selectedOption.trim() === ''
-    ? 'ONLY_THIS'
-    : null
-}
-
-async function deleteEntry(entry: FinancialEntryRecord) {
-  if (!window.confirm(`Deseja excluir o lançamento "${entry.description}"? Esta ação remove o registro da listagem, mas não deve ser usada para baixa financeira.`)) {
-    return
-  }
-
-  await runStatusAction(entry.id, async () => {
     await FinancialEntriesModule.delete(entry.id)
     showToast('Lançamento excluído.', {
       title: 'Lançamentos',
       type: 'success',
     })
   })
+
+  actionModalOpen.value = false
 }
 
 async function runStatusAction(id: string, action: () => Promise<void>) {
@@ -354,13 +407,11 @@ async function runStatusAction(id: string, action: () => Promise<void>) {
 }
 
 function goToPreviousMonth() {
-  currentMonth.value = shiftMonth(currentMonth.value, -1)
-  syncMonthFilters(currentMonth.value)
+  syncMonthFilters(shiftMonth(visibleMonth.value, -1))
 }
 
 function goToNextMonth() {
-  currentMonth.value = shiftMonth(currentMonth.value, 1)
-  syncMonthFilters(currentMonth.value)
+  syncMonthFilters(shiftMonth(visibleMonth.value, 1))
 }
 
 function syncMonthFilters(value: Date) {
@@ -369,6 +420,17 @@ function syncMonthFilters(value: Date) {
     dateTo: toDateInput(endOfMonth(value)),
     page: 1,
   })
+}
+
+function getSummaryFilters(value: Date): FinancialEntryFilters {
+  return {
+    ...entriesStore.filters,
+    direction: '',
+    dateFrom: toDateInput(startOfMonth(value)),
+    dateTo: toDateInput(endOfMonth(value)),
+    page: 1,
+    pageSize: 0,
+  }
 }
 
 function startOfMonth(value: Date) {
@@ -387,8 +449,49 @@ function toDateInput(value: Date) {
   return value.toISOString().slice(0, 10)
 }
 
+function parseDateInput(value: string) {
+  if (!value) {
+    return null
+  }
+
+  const parsed = new Date(`${value}T00:00:00.000Z`)
+  return Number.isNaN(parsed.valueOf()) ? null : startOfMonth(parsed)
+}
+
 function capitalizeMonthLabel(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function createEmptySummary(): FinancialEntrySummary {
+  return {
+    income: 0,
+    expense: 0,
+    net: 0,
+  }
+}
+
+function getSummaryTrend(
+  current: number,
+  previous: number,
+  kind: 'income' | 'expense' | 'total',
+) {
+  if (previous === 0 || current === previous) {
+    return {
+      icon: 'lucide:minus',
+      label: previous === 0 ? 'Sem dados' : 'Sem variação',
+      tone: 'neutral' as const,
+    }
+  }
+
+  const variation = ((current - previous) / Math.abs(previous)) * 100
+  const increased = variation > 0
+  const isGood = kind === 'expense' ? !increased : increased
+
+  return {
+    icon: increased ? 'lucide:arrow-up' : 'lucide:arrow-down',
+    label: `${Math.abs(variation).toFixed(0)}% ${increased ? 'a mais' : 'a menos'} que o mês passado`,
+    tone: isGood ? 'positive' as const : 'negative' as const,
+  }
 }
 
 function closePopover(event?: MouseEvent) {
@@ -403,45 +506,116 @@ function closePopover(event?: MouseEvent) {
 
 function getSummaryCardClass(card: {
   active: boolean
-  tone: 'neutral' | 'income' | 'expense'
+  tone: 'total' | 'income' | 'expense'
 }) {
   return [
     fin.summaryCard,
     card.active && fin.summaryCardActive,
     card.tone === 'income' && fin.summaryIncome,
     card.tone === 'expense' && fin.summaryExpense,
+    card.tone === 'total' && fin.summaryTotal,
   ]
 }
 
-function getStatusSurfaceClass(status: FinancialEntryRecord['status']) {
+function getSummaryTrendClass(tone: 'neutral' | 'positive' | 'negative') {
   return [
-    fin.statusSurface,
-    status === 'OPEN' && fin.statusSurfaceOpen,
+    fin.summaryTrend,
+    tone === 'positive' && fin.summaryTrendPositive,
+    tone === 'negative' && fin.summaryTrendNegative,
   ]
 }
 
-function statusColor(status: FinancialEntryRecord['status']) {
-  if (status === 'PAID') {
-    return 'success'
+function getSummaryValueClass(tone: 'total' | 'income' | 'expense') {
+  return [
+    fin.summaryValue,
+    tone === 'income' && fin.summaryValueIncome,
+    tone === 'expense' && fin.summaryValueExpense,
+    tone === 'total' && fin.summaryValueTotal,
+  ]
+}
+
+function statusIcon(entry: FinancialEntryRecord) {
+  if (entry.status === 'CANCELED') {
+    return 'lucide:circle-off'
   }
 
-  if (status === 'CANCELED') {
-    return 'danger'
+  if (entry.status === 'PAID') {
+    return 'lucide:thumbs-up'
   }
 
-  return 'warning'
+  return 'lucide:thumbs-down'
 }
 
-function directionLabel(direction: FinancialEntryRecord['direction']) {
-  return direction === 'INCOME' ? 'Entrada' : 'Saída'
+function getStatusIconClass(entry: FinancialEntryRecord) {
+  return [
+    fin.statusToggle,
+    entry.status === 'OPEN' && fin.statusOpenButton,
+  ]
 }
 
-function directionColor(direction: FinancialEntryRecord['direction']) {
-  return direction === 'INCOME' ? 'success' : 'danger'
+function statusTooltip(entry: FinancialEntryRecord) {
+  if (entry.status === 'PAID') {
+    return canPayEntries.value
+      ? 'Pago. Clique para reabrir.'
+      : 'Pago.'
+  }
+
+  if (entry.status === 'CANCELED') {
+    return 'Cancelado.'
+  }
+
+  return canPayEntries.value
+    ? 'Em aberto. Clique para marcar como pago.'
+    : 'Em aberto.'
 }
 
-function statusLabel(status: FinancialEntryRecord['status']) {
-  return entryStatusOptions.find(option => option.value === status)?.label ?? status
+function toggleEntryStatus(entry: FinancialEntryRecord) {
+  if (!canPayEntries.value || entry.status === 'CANCELED') {
+    return
+  }
+
+  if (entry.status === 'PAID') {
+    askReopenEntry(entry)
+    return
+  }
+
+  openPaymentModal(entry)
+}
+
+function directionLabel(entry: FinancialEntryRecord) {
+  if (entry.type === 'TRANSFER') {
+    return 'Transferência'
+  }
+
+  return entry.direction === 'INCOME' ? 'Entrada' : 'Saída'
+}
+
+function directionIcon(entry: FinancialEntryRecord) {
+  if (entry.type === 'TRANSFER') {
+    return 'lucide:arrow-left-right'
+  }
+
+  return entry.direction === 'INCOME'
+    ? 'lucide:circle-arrow-out-down-right'
+    : 'lucide:circle-arrow-out-up-left'
+}
+
+function getDirectionIconClass(entry: FinancialEntryRecord) {
+  return [
+    fin.directionIcon,
+    entry.direction === 'INCOME' && fin.directionIncome,
+    entry.direction === 'EXPENSE' && fin.directionExpense,
+  ]
+}
+
+function hasInstallmentIndicator(entry: FinancialEntryRecord) {
+  return entry.recurrenceType === 'INSTALLMENT'
+    && Boolean(entry.recurrenceIndex)
+    && Boolean(entry.recurrenceTotal)
+}
+
+function hasRecurringIndicator(entry: FinancialEntryRecord) {
+  return entry.recurrenceType === 'FIXED'
 }
 
 function formatCurrency(value: number) {
@@ -454,7 +628,24 @@ function formatCurrency(value: number) {
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
+    timeZone: 'UTC',
   }).format(new Date(`${value}T00:00:00.000Z`))
+}
+
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T00:00:00.000Z`))
+}
+
+function accountAvatarSrc(entry: FinancialEntryRecord) {
+  return getInstitutionLogoByKey(entry.accountInstitutionLogoKey)
+}
+
+function accountAvatarInitials(entry: FinancialEntryRecord) {
+  return getAccountInitials(entry.accountInstitutionName || entry.accountName)
 }
 </script>
 
@@ -475,6 +666,7 @@ dd-stack
     :page="entriesStore.filters.page"
     :total="entriesStore.total"
     :page-size="entriesStore.filters.pageSize"
+    compact-table
     @update:page="entriesStore.setFilters({ page: $event })"
     @update:page-size="entriesStore.setFilters({ pageSize: $event, page: 1 })"
   )
@@ -499,33 +691,52 @@ dd-stack
                   dd-grid(:class="fin.filterGrid")
                     dd-select(
                       :model-value="entriesStore.filters.direction"
+                      no-message
                       :options="[...entryDirectionOptions]"
                       placeholder="Todas as direções"
                       @update:model-value="setDirection(String($event ?? ''))"
                     )
                     dd-select(
                       :model-value="entriesStore.filters.status"
+                      no-message
                       :options="[...entryStatusOptions]"
                       placeholder="Todos os status"
                       @update:model-value="setStatus(String($event ?? ''))"
                     )
                     dd-select(
                       :model-value="entriesStore.filters.accountId"
+                      no-message
                       :options="accountOptions"
                       placeholder="Todas as contas"
                       @update:model-value="setAccount(String($event ?? ''))"
                     )
                     dd-select(
+                      :model-value="entriesStore.filters.paymentMethodId"
+                      no-message
+                      :options="paymentMethodOptions"
+                      placeholder="Todas as formas de pagamento"
+                      @update:model-value="setPaymentMethod(String($event ?? ''))"
+                    )
+                    dd-select(
                       :model-value="entriesStore.filters.categoryId"
+                      no-message
                       :options="categoryOptions"
                       placeholder="Todas as categorias"
                       @update:model-value="setCategory(String($event ?? ''))"
                     )
                     dd-select(
                       :model-value="entriesStore.filters.contactId"
+                      no-message
                       :options="contactOptions"
                       placeholder="Todos os contatos"
                       @update:model-value="setContact(String($event ?? ''))"
+                    )
+                    dd-select(
+                      :model-value="entriesStore.filters.tagId"
+                      no-message
+                      :options="tagOptions"
+                      placeholder="Todas as tags"
+                      @update:model-value="setTag(String($event ?? ''))"
                     )
 
                   dd-cluster(end)
@@ -581,17 +792,20 @@ dd-stack
             ) Novo lançamento
 
         dd-grid(:class="fin.summaryGrid")
-          dd-card(
+          button(
             v-for="card in summaryCards"
             :key="card.key"
-            tag="button"
             type="button"
             :class="getSummaryCardClass(card)"
             @click="card.onClick()"
           )
-            dd-stack(compact nogap)
-              span(:class="fin.summaryLabel") {{ card.label }}
-              strong(:class="fin.summaryValue") {{ card.value }}
+            dd-card
+              dd-stack(compact nogap)
+                span(:class="fin.summaryLabel") {{ card.label }}
+                strong(:class="getSummaryValueClass(card.tone)") {{ card.value }}
+                span(:class="getSummaryTrendClass(card.trend.tone)")
+                  icon(:name="card.trend.icon")
+                  | {{ card.trend.label }}
 
     template(#empty)
       backoffice-empty-state(
@@ -600,12 +814,36 @@ dd-stack
       )
 
     template(#cell-description="{ row }")
-      dd-stack(compact nogap)
-        strong {{ row.description }}
-        span(v-if="row.notes" :class="fin.notes") {{ row.notes }}
+      dd-cluster(between compact :class="fin.descriptionCell")
+        dd-stack(compact nogap)
+          strong {{ row.description }}
+          span(v-if="row.notes" :class="fin.notes") {{ row.notes }}
+        dd-badge(
+          v-if="hasInstallmentIndicator(row)"
+          info
+          :title="`Parcela ${row.recurrenceIndex} de ${row.recurrenceTotal}`"
+          :aria-label="`Parcela ${row.recurrenceIndex} de ${row.recurrenceTotal}`"
+        ) {{ row.recurrenceIndex }}/{{ row.recurrenceTotal }}
+        dd-popover(v-else-if="hasRecurringIndicator(row)" trigger="hover" placement="top" :offset="6")
+          span(
+            :class="fin.recurrenceIcon"
+            title="Lançamento recorrente"
+            aria-label="Lançamento recorrente"
+          )
+            icon(name="lucide:repeat")
+          template(#content)
+            span Lançamento recorrente
 
     template(#cell-direction="{ row }")
-      dd-badge(:color="directionColor(row.direction)") {{ directionLabel(row.direction) }}
+      dd-popover(trigger="hover" placement="top" :offset="6")
+        span(
+          :class="getDirectionIconClass(row)"
+          :title="directionLabel(row)"
+          :aria-label="directionLabel(row)"
+        )
+          icon(:name="directionIcon(row)")
+        template(#content)
+          span {{ directionLabel(row) }}
 
     template(#cell-categoryName="{ row }")
       span {{ row.subcategoryName ? `${row.categoryName} / ${row.subcategoryName}` : row.categoryName ?? '-' }}
@@ -613,88 +851,118 @@ dd-stack
     template(#cell-contactName="{ row }")
       span {{ row.contactName ?? '-' }}
 
+    template(#cell-accountName="{ row }")
+      dd-popover(trigger="hover" placement="top" :offset="6")
+        template(#default)
+          dd-avatar(
+            v-if="accountAvatarSrc(row)"
+            small
+            :src="accountAvatarSrc(row)"
+            :alt="row.accountName"
+          )
+          span(v-else :class="fin.accountInitials") {{ accountAvatarInitials(row) }}
+        template(#content)
+          span {{ row.accountName }}
+
     template(#cell-effectiveDueDate="{ row }")
-      span {{ formatDate(row.effectiveDueDate) }}
+      span {{ formatShortDate(row.effectiveDueDate) }}
 
     template(#cell-amount="{ row }")
       strong(:class="row.direction === 'INCOME' ? fin.amountIncome : fin.amountExpense") {{ formatCurrency(row.amount) }}
 
     template(#cell-status="{ row }")
-      span(:class="getStatusSurfaceClass(row.status)")
-        dd-badge(:color="statusColor(row.status)") {{ statusLabel(row.status) }}
+      dd-popover(trigger="hover" placement="top" :offset="6")
+        dd-button(
+          ghost
+          tiny
+          icon-only
+          type="button"
+          :success="row.status === 'PAID'"
+          :danger="row.status === 'CANCELED'"
+          :class="getStatusIconClass(row)"
+          :icon="statusIcon(row)"
+          :title="statusTooltip(row)"
+          :aria-label="statusTooltip(row)"
+          :aria-disabled="row.status === 'CANCELED' || !canPayEntries"
+          :disabled="statusActionLoading === row.id"
+          @click="toggleEntryStatus(row)"
+        )
+        template(#content)
+          span {{ statusTooltip(row) }}
 
     template(#cell-actions="{ row }")
-      dd-cluster(compact end)
+      dd-popover(trigger="click" placement="left-start")
         dd-button(
-          v-if="canPayEntries && row.status === 'OPEN' && row.type !== 'TRANSFER'"
           ghost
           tiny
           icon-only
-          success
           type="button"
-          icon="lucide:check"
-          aria-label="Marcar como pago"
+          icon="lucide:ellipsis-vertical"
+          aria-label="Ações do lançamento"
           :disabled="statusActionLoading === row.id"
-          @click="openPaymentModal(row)"
         )
-        dd-button(
-          v-if="canPayEntries && row.status === 'PAID' && row.type !== 'TRANSFER'"
-          ghost
-          tiny
-          icon-only
-          warning
-          type="button"
-          icon="lucide:rotate-ccw"
-          aria-label="Reabrir lançamento"
-          :disabled="statusActionLoading === row.id"
-          @click="reopenEntry(row)"
-        )
-        dd-button(
-          v-if="canUpdateEntries && row.type !== 'TRANSFER'"
-          ghost
-          tiny
-          icon-only
-          info
-          type="button"
-          icon="lucide:pencil"
-          aria-label="Editar lançamento"
-          :disabled="row.status === 'CANCELED' || statusActionLoading === row.id"
-          @click="openEditEntry(row)"
-        )
-        dd-button(
-          v-if="canCancelEntries && row.status !== 'CANCELED' && row.type !== 'TRANSFER'"
-          ghost
-          tiny
-          icon-only
-          danger
-          type="button"
-          icon="lucide:x"
-          aria-label="Cancelar lançamento"
-          :disabled="statusActionLoading === row.id"
-          @click="cancelEntry(row)"
-        )
-        dd-button(
-          v-if="canDeleteEntries && row.status === 'OPEN' && row.type !== 'TRANSFER' && !row.paymentDate && !row.recurrenceGroupId"
-          ghost
-          tiny
-          icon-only
-          danger
-          type="button"
-          icon="lucide:trash-2"
-          aria-label="Excluir lançamento"
-          :disabled="statusActionLoading === row.id"
-          @click="deleteEntry(row)"
-        )
-        dd-button(
-          ghost
-          tiny
-          icon-only
-          info
-          type="button"
-          icon="lucide:eye"
-          aria-label="Ver lançamento"
-          @click="openEntryDetails(row.id)"
-        )
+        template(#content)
+          dd-stack(nogap :class="fin.actionsMenu")
+            dd-button(
+              v-if="canPayEntries && row.status === 'OPEN'"
+              ghost
+              full
+              tiny
+              success
+              icon="lucide:check"
+              :class="fin.actionsMenuOption"
+              @click="runActionFromMenu(() => openPaymentModal(row), $event)"
+            ) Marcar como pago
+            dd-button(
+              v-if="canPayEntries && row.status === 'PAID'"
+              ghost
+              full
+              tiny
+              warning
+              icon="lucide:rotate-ccw"
+              :class="fin.actionsMenuOption"
+              @click="runActionFromMenu(() => askReopenEntry(row), $event)"
+            ) Reabrir lançamento
+            dd-button(
+              v-if="canUpdateEntries && row.type !== 'TRANSFER'"
+              ghost
+              full
+              tiny
+              info
+              icon="lucide:pencil"
+              :class="fin.actionsMenuOption"
+              :disabled="row.status === 'CANCELED'"
+              @click="runActionFromMenu(() => openEditEntry(row), $event)"
+            ) Editar
+            dd-button(
+              ghost
+              full
+              tiny
+              info
+              icon="lucide:eye"
+              :class="fin.actionsMenuOption"
+              @click="runActionFromMenu(() => openEntryDetails(row), $event)"
+            ) Ver detalhes
+            dd-button(
+              v-if="canCancelEntries && row.status !== 'CANCELED'"
+              ghost
+              full
+              tiny
+              danger
+              icon="lucide:x"
+              :class="[fin.actionsMenuOption, fin.actionsMenuDanger]"
+              @click="runActionFromMenu(() => askCancelEntry(row), $event)"
+            ) Cancelar
+            dd-button(
+              v-if="canDeleteEntries && row.status === 'OPEN' && row.type !== 'TRANSFER' && !row.paymentDate && !row.recurrenceGroupId"
+              ghost
+              full
+              tiny
+              danger
+              icon="lucide:trash-2"
+              :class="[fin.actionsMenuOption, fin.actionsMenuDanger]"
+              @click="runActionFromMenu(() => askDeleteEntry(row), $event)"
+            ) Excluir
 
   backoffice-financial-entry-modal-form(
     v-model:open="createModalOpen"
@@ -707,6 +975,19 @@ dd-stack
     :entry="paymentTarget"
     :account-options="accountOptions"
     @saved="handlePaymentSaved"
+  )
+
+  backoffice-financial-entry-details-modal(
+    v-model:open="detailsModalOpen"
+    :entry="detailsEntry"
+  )
+
+  backoffice-financial-entry-action-confirm-modal(
+    v-model:open="actionModalOpen"
+    :entry="actionTarget"
+    :action="actionKind"
+    :loading="Boolean(statusActionLoading)"
+    @confirm="confirmEntryAction"
   )
 </template>
 
@@ -748,7 +1029,7 @@ dd-stack
 }
 
 .filterHint {
-  color: v('color.text.soft');
+  color: var(--dd-color-gray);
   font-size: v('font-size.sm');
 }
 
@@ -762,42 +1043,141 @@ dd-stack
 }
 
 .summaryCard {
+  --dd-card-border-color: v('color.light-gray');
+  --summary-card-bg: v('color.info.50');
+  --summary-card-border: v('color.info.300');
+
+  background: transparent;
+  border: 0;
+  color: inherit;
   cursor: pointer;
   inline-size: 100%;
-  text-align: left;
-  transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+  padding: 0;
+  text-align: center;
+  transition: transform .2s ease;
 }
 
-.summaryCard:hover {
+.summaryCard:is(:hover, :focus-visible),
+.summaryCardActive {
+  --dd-card-box-shadow: v('shadow.xl');
+
   transform: translateY(-1px);
 }
 
+.summaryCard:is(:hover, :focus-visible) {
+  --dd-card-background-color: var(--summary-card-bg);
+  --dd-card-border-color: var(--summary-card-border);
+}
+
 .summaryCardActive {
-  box-shadow: 0 0 0 1px v('color.primary');
+  transform: none;
 }
 
 .summaryLabel {
-  color: v('color.text.soft');
+  color: var(--dd-color-gray);
   font-size: v('font-size.sm');
 }
 
 .summaryValue {
-  color: v('color.text');
   font-size: v('font-size.xl');
   line-height: v('line-height.tight');
 }
 
-.summaryIncome .summaryValue {
+.summaryTotal {
+  --summary-card-bg: v('color.info.50');
+  --summary-card-border: v('color.info.300');
+
+  color: v('color.info.700');
+}
+
+.summaryIncome {
+  --summary-card-bg: v('color.success.50');
+  --summary-card-border: v('color.success.300');
+
   color: v('color.success.700');
 }
 
-.summaryExpense .summaryValue {
+.summaryValueIncome {
+  color: v('color.success.700');
+}
+
+.summaryExpense {
+  --summary-card-bg: v('color.danger.50');
+  --summary-card-border: v('color.danger.300');
+
+  color: v('color.danger.700');
+}
+
+.summaryValueExpense {
+  color: v('color.danger.700');
+}
+
+.summaryValueTotal {
+  color: v('color.info.700');
+}
+
+.summaryTrend {
+  align-items: center;
+  color: var(--dd-color-gray);
+  display: inline-flex;
+  font-size: v('font-size.xs');
+  gap: v('space.xxs');
+  justify-content: center;
+  margin-block-start: v('space.xxs');
+}
+
+.summaryTrendPositive {
+  color: v('color.success.700');
+}
+
+.summaryTrendNegative {
   color: v('color.danger.700');
 }
 
 .notes {
-  color: v('color.text.soft');
+  color: var(--dd-color-gray);
   font-size: v('font-size.xs');
+}
+
+.descriptionCell {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: v('space.sm');
+  padding-inline-end: v('space.lg');
+}
+
+.directionIcon,
+.recurrenceIcon {
+  align-items: center;
+  display: inline-flex;
+  font-size: 1.2rem;
+  justify-content: center;
+}
+
+.directionIncome {
+  color: v('color.success.400');
+}
+
+.directionExpense {
+  color: v('color.danger.400');
+}
+
+.recurrenceIcon {
+  color: v('color.info.700');
+}
+
+.accountInitials {
+  align-items: center;
+  background: v('color.secondary.200');
+  border-radius: 999px;
+  color: v('color.secondary.700');
+  display: inline-flex;
+  font-size: .6875rem;
+  font-weight: v('font-weight.semi-bold');
+  justify-content: center;
+  block-size: 1.75rem;
+  inline-size: 1.75rem;
+  text-transform: uppercase;
 }
 
 .amountIncome {
@@ -808,18 +1188,23 @@ dd-stack
   color: v('color.danger.700');
 }
 
-.statusSurface {
-  background: v('color.bg.surface');
-  border-radius: v('border-radius.sm');
-  display: inline-flex;
-  inline-size: 100%;
-  justify-content: flex-start;
-  min-block-size: 2.5rem;
-  padding-block: v('space.xxs');
-  padding-inline: v('space.xs');
+.actionsMenu {
+  min-inline-size: 9.5rem;
 }
 
-.statusSurfaceOpen {
-  background: v('color.warning.50');
+.actionsMenuOption {
+  justify-content: flex-start;
+}
+
+.actionsMenuDanger {
+  color: v('color.danger.700');
+}
+
+.statusOpenButton {
+  --dd-button-base-color: v('color.gray.200');
+}
+
+tbody tr:has(.statusOpenButton) {
+  background-color: color-mix(in srgb, v('color.warning.50') 35%, v('color.bg.surface'));
 }
 </style>

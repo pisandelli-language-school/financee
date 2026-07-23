@@ -14,7 +14,9 @@
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:db:push": "prisma db push",
-    "prisma:migrate": "prisma db push"
+    "prisma:migrate": "prisma db push",
+    "seed": "node prisma/seed.mjs",
+    "db:setup": "pnpm prisma:generate && pnpm prisma:db:push && pnpm seed"
   },
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.9",

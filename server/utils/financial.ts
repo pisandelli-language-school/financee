@@ -20,8 +20,17 @@ import { resolveEffectiveDueDate } from '~~/server/utils/financial-calendar'
 import { prisma } from '~~/server/utils/prisma'
 
 const financialEntryInclude = {
-  account: true,
-  paymentAccount: true,
+  account: {
+    include: {
+      institution: true,
+    },
+  },
+  paymentAccount: {
+    include: {
+      institution: true,
+    },
+  },
+  paymentMethod: true,
   category: true,
   subcategory: true,
   costCenter: true,
@@ -238,8 +247,14 @@ function toFinancialEntryRecord(entry: FinancialEntryWithRelations): FinancialEn
     paymentDate: entry.paymentDate ? entry.paymentDate.toISOString().slice(0, 10) : null,
     accountId: entry.accountId,
     accountName: entry.account.name,
+    accountInstitutionName: entry.account.institution?.name ?? null,
+    accountInstitutionLogoKey: entry.account.institution?.logoKey ?? null,
     paymentAccountId: entry.paymentAccountId,
     paymentAccountName: entry.paymentAccount?.name ?? null,
+    paymentAccountInstitutionName: entry.paymentAccount?.institution?.name ?? null,
+    paymentAccountInstitutionLogoKey: entry.paymentAccount?.institution?.logoKey ?? null,
+    paymentMethodId: entry.paymentMethodId,
+    paymentMethodName: entry.paymentMethod?.name ?? null,
     categoryId: entry.categoryId,
     categoryName: entry.category?.name ?? null,
     subcategoryId: entry.subcategoryId,
@@ -269,8 +284,10 @@ export function parseFinancialEntryFilters(event: H3Event): FinancialEntryFilter
     direction: normalizeString(query.direction) as FinancialEntryFilters['direction'],
     status: normalizeString(query.status) as FinancialEntryFilters['status'],
     accountId: normalizeString(query.accountId),
+    paymentMethodId: normalizeString(query.paymentMethodId),
     categoryId: normalizeString(query.categoryId),
     contactId: normalizeString(query.contactId),
+    tagId: normalizeString(query.tagId),
     dateFrom: normalizeString(query.dateFrom),
     dateTo: normalizeString(query.dateTo),
     page: parsePage(query.page),
@@ -361,36 +378,7 @@ function resolveRecurrenceInput(payload: FinancialEntryCreatePayload, type: Entr
 }
 
 export async function listFinancialEntries(filters: FinancialEntryFilters) {
-  const dateFrom = parseDateRange(filters.dateFrom, 'start')
-  const dateTo = parseDateRange(filters.dateTo, 'end')
-
-  const where: Prisma.FinancialEntryWhereInput = {
-    deletedAt: null,
-    ...(filters.direction ? { direction: filters.direction } : {}),
-    ...(filters.status ? { status: filters.status } : {}),
-    ...(filters.accountId ? { accountId: filters.accountId } : {}),
-    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
-    ...(filters.contactId ? { contactId: filters.contactId } : {}),
-    ...((dateFrom || dateTo)
-      ? {
-          effectiveDueDate: {
-            ...(dateFrom ? { gte: dateFrom } : {}),
-            ...(dateTo ? { lte: dateTo } : {}),
-          },
-        }
-      : {}),
-    ...(filters.search
-      ? {
-          OR: [
-            { description: { contains: filters.search } },
-            { account: { name: { contains: filters.search } } },
-            { category: { name: { contains: filters.search } } },
-            { contact: { name: { contains: filters.search } } },
-            { tags: { some: { tag: { name: { contains: filters.search } } } } },
-          ],
-        }
-      : {}),
-  }
+  const where = buildFinancialEntryWhere(filters)
 
   const itemsPromise = filters.pageSize === 0
     ? prisma.financialEntry.findMany({
@@ -412,9 +400,10 @@ export async function listFinancialEntries(filters: FinancialEntryFilters) {
         take: filters.pageSize,
       })
 
-  const [items, total] = await Promise.all([
+  const [items, total, summaryGroups] = await Promise.all([
     itemsPromise,
     prisma.financialEntry.count({ where }),
+    summarizeFinancialEntries(filters),
   ])
 
   return {
@@ -422,6 +411,61 @@ export async function listFinancialEntries(filters: FinancialEntryFilters) {
     total,
     page: filters.page,
     pageSize: filters.pageSize,
+    summary: summaryGroups,
+  }
+}
+
+export async function summarizeFinancialEntries(filters: FinancialEntryFilters) {
+  const summaryGroups = await prisma.financialEntry.groupBy({
+    by: ['direction'],
+    where: buildFinancialEntryWhere(filters),
+    _sum: {
+      amount: true,
+    },
+  })
+
+  const income = summaryGroups.find(group => group.direction === 'INCOME')?._sum.amount?.toNumber() ?? 0
+  const expense = summaryGroups.find(group => group.direction === 'EXPENSE')?._sum.amount?.toNumber() ?? 0
+
+  return {
+    income,
+    expense,
+    net: income - expense,
+  }
+}
+
+function buildFinancialEntryWhere(filters: FinancialEntryFilters): Prisma.FinancialEntryWhereInput {
+  const dateFrom = parseDateRange(filters.dateFrom, 'start')
+  const dateTo = parseDateRange(filters.dateTo, 'end')
+
+  return {
+    deletedAt: null,
+    ...(filters.direction ? { direction: filters.direction } : {}),
+    ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.accountId ? { accountId: filters.accountId } : {}),
+    ...(filters.paymentMethodId ? { paymentMethodId: filters.paymentMethodId } : {}),
+    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+    ...(filters.contactId ? { contactId: filters.contactId } : {}),
+    ...(filters.tagId ? { tags: { some: { tagId: filters.tagId } } } : {}),
+    ...((dateFrom || dateTo)
+      ? {
+          effectiveDueDate: {
+            ...(dateFrom ? { gte: dateFrom } : {}),
+            ...(dateTo ? { lte: dateTo } : {}),
+          },
+        }
+      : {}),
+    ...(filters.search
+      ? {
+          OR: [
+            { description: { contains: filters.search } },
+            { account: { name: { contains: filters.search } } },
+            { category: { name: { contains: filters.search } } },
+            { contact: { name: { contains: filters.search } } },
+            { tags: { some: { tag: { name: { contains: filters.search } } } } },
+          ],
+        }
+      : {}),
   }
 }
 
@@ -781,7 +825,6 @@ export async function updateFinancialEntry(id: string, payload: FinancialEntryUp
 export async function markFinancialEntryAsPaid(id: string, payload: FinancialEntryPaymentPayload) {
   const currentEntry = await getWritableFinancialEntry(id)
   const paymentDate = parseDateOnly(payload.paymentDate, 'Data de pagamento')
-  const paymentAccountId = normalizeString(payload.paymentAccountId) || currentEntry.accountId
 
   if (currentEntry.status === 'CANCELED') {
     throw createError({
@@ -790,6 +833,36 @@ export async function markFinancialEntryAsPaid(id: string, payload: FinancialEnt
     })
   }
 
+  if (currentEntry.transferGroupId) {
+    const records = await prisma.financialEntry.findMany({
+      where: {
+        transferGroupId: currentEntry.transferGroupId,
+        deletedAt: null,
+      },
+    })
+
+    if (records.some(record => record.status === 'CANCELED')) {
+      throw createError({
+        statusCode: 400,
+        message: 'Não é possível pagar uma transferência cancelada.',
+      })
+    }
+
+    await prisma.$transaction(records.map(record => prisma.financialEntry.update({
+      where: {
+        id: record.id,
+      },
+      data: {
+        status: 'PAID',
+        paymentDate,
+        paymentAccountId: record.accountId,
+      },
+    })))
+
+    return await getFinancialEntry(id)
+  }
+
+  const paymentAccountId = normalizeString(payload.paymentAccountId) || currentEntry.accountId
   const paymentAccount = await prisma.account.findFirst({
     where: {
       id: paymentAccountId,
@@ -830,6 +903,22 @@ export async function markFinancialEntryAsOpen(id: string) {
     })
   }
 
+  if (currentEntry.transferGroupId) {
+    await prisma.financialEntry.updateMany({
+      where: {
+        transferGroupId: currentEntry.transferGroupId,
+        deletedAt: null,
+      },
+      data: {
+        status: 'OPEN',
+        paymentDate: null,
+        paymentAccountId: null,
+      },
+    })
+
+    return await getFinancialEntry(id)
+  }
+
   const record = await prisma.financialEntry.update({
     where: {
       id,
@@ -848,6 +937,22 @@ export async function markFinancialEntryAsOpen(id: string) {
 export async function cancelFinancialEntry(id: string, payload: FinancialEntryScopePayload = {}) {
   const entry = await getWritableFinancialEntry(id)
   const scope = parseRecurrenceEditScope(payload.scope)
+
+  if (entry.transferGroupId) {
+    await prisma.financialEntry.updateMany({
+      where: {
+        transferGroupId: entry.transferGroupId,
+        deletedAt: null,
+      },
+      data: {
+        status: 'CANCELED',
+        paymentDate: null,
+        paymentAccountId: null,
+      },
+    })
+
+    return await getFinancialEntry(id)
+  }
 
   if (!entry.recurrenceGroupId || scope === 'ONLY_THIS') {
     const record = await prisma.financialEntry.update({
@@ -950,13 +1055,6 @@ async function getWritableFinancialEntry(id: string) {
     })
   }
 
-  if (entry.type === 'TRANSFER' || entry.transferGroupId) {
-    throw createError({
-      statusCode: 400,
-      message: 'Transferências serão alteradas em um fluxo próprio.',
-    })
-  }
-
   return entry
 }
 
@@ -971,6 +1069,7 @@ async function resolveFinancialEntryInput(payload: FinancialEntryCreatePayload |
   const subcategoryId = normalizeString(payload.subcategoryId)
   const costCenterId = normalizeString(payload.costCenterId)
   const contactId = normalizeString(payload.contactId)
+  const paymentMethodId = normalizeString(payload.paymentMethodId)
   const tagIds = normalizeTagIds(payload.tagIds)
   const notes = optionalString(payload.notes)
 
@@ -995,7 +1094,7 @@ async function resolveFinancialEntryInput(payload: FinancialEntryCreatePayload |
     })
   }
 
-  const [account, category, subcategory, costCenter, contact, tags, effectiveDueDate] = await Promise.all([
+  const [account, category, subcategory, costCenter, contact, paymentMethod, tags, effectiveDueDate] = await Promise.all([
     prisma.account.findFirst({
       where: {
         id: payload.accountId,
@@ -1037,6 +1136,15 @@ async function resolveFinancialEntryInput(payload: FinancialEntryCreatePayload |
           },
           include: {
             roleAssignments: true,
+          },
+        })
+      : Promise.resolve(null),
+    paymentMethodId
+      ? prisma.paymentMethod.findFirst({
+          where: {
+            id: paymentMethodId,
+            deletedAt: null,
+            isActive: true,
           },
         })
       : Promise.resolve(null),
@@ -1105,6 +1213,13 @@ async function resolveFinancialEntryInput(payload: FinancialEntryCreatePayload |
     })
   }
 
+  if (paymentMethodId && !paymentMethod) {
+    throw createError({
+      statusCode: 400,
+      message: 'Forma de pagamento não encontrada.',
+    })
+  }
+
   if (contactId) {
     if (!contact) {
       throw createError({
@@ -1141,6 +1256,7 @@ async function resolveFinancialEntryInput(payload: FinancialEntryCreatePayload |
     scheduledDueDate,
     effectiveDueDate,
     accountId: account.id,
+    paymentMethodId: paymentMethod?.id ?? null,
     categoryId: category.id,
     subcategoryId: subcategory?.id ?? null,
     costCenterId: costCenter?.id ?? null,

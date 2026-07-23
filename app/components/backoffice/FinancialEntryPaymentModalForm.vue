@@ -20,6 +20,7 @@ const loading = ref(false)
 const errorMessage = ref('')
 const paymentDate = ref('')
 const paymentAccountId = ref('')
+const isTransfer = computed(() => props.entry?.type === 'TRANSFER')
 
 watch(() => props.open, (open) => {
   if (!open) {
@@ -76,7 +77,7 @@ backoffice-modal-form-shell(
     dd-stack(compact)
       dd-stack(compact nogap)
         strong {{ entry?.description }}
-        span(:class="fin.hint") Confirme a data e a conta em que o pagamento foi efetivado.
+        span(:class="fin.hint") {{ isTransfer ? 'Confirme a data em que a transferência foi efetivada.' : 'Confirme a data e a conta em que o pagamento foi efetivado.' }}
 
       dd-grid
         dd-input(
@@ -88,6 +89,7 @@ backoffice-modal-form-shell(
         )
 
         dd-select(
+          v-if="!isTransfer"
           :model-value="paymentAccountId"
           label="Conta de pagamento"
           required

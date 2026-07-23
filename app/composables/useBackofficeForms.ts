@@ -1,4 +1,6 @@
 import type {
+  AccountFormValues,
+  AccountRecord,
   CategoryFormValues,
   CategoryRecord,
   ContactAddressRecord,
@@ -38,6 +40,34 @@ export function createEmptySimpleForm(): SimpleCatalogFormValues {
     type: '',
     initialValue: null,
     isActive: true,
+  }
+}
+
+export function createEmptyAccountForm(): AccountFormValues {
+  return {
+    name: '',
+    type: '',
+    initialValue: null,
+    institutionId: '',
+    alertOnLowBalance: false,
+    contactPhone: '',
+    contactEmail: '',
+    notes: '',
+    isActive: true,
+  }
+}
+
+export function accountToForm(record: AccountRecord): AccountFormValues {
+  return {
+    name: record.name,
+    type: record.type,
+    initialValue: record.initialValue ?? null,
+    institutionId: record.institutionId ?? '',
+    alertOnLowBalance: record.alertOnLowBalance,
+    contactPhone: record.contactPhone ?? '',
+    contactEmail: record.contactEmail ?? '',
+    notes: record.notes ?? '',
+    isActive: record.isActive,
   }
 }
 

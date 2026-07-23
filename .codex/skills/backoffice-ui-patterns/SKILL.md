@@ -66,6 +66,8 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 46. Prefer field-native labels over external label wrappers. If `dd-input`, `dd-select`, `dd-textarea`, or a `dd-form-*` wrapper can receive `label`, put the label on the field itself so spacing, invalid state, and alignment stay owned by Daredash.
 47. For required fields, use the field-level `required` attribute and let Daredash own the required marker. Do not recreate red asterisks with local `dd-form-label` markup unless there is no field-level API for that interaction yet.
 48. In forms powered by `vee-validate`, prefer `dd-form-input`, `dd-form-select`, `dd-form-textarea`, and other `dd-form-*` wrappers for simple fields. Use primitive fields only when masks, lookups, nested updates, or custom event handling genuinely require direct control.
+49. Do not override Daredash internal `--local-*` variables from app code. Customize components through their public `--dd-*` variables or documented props, because `--local-*` belongs to the component implementation and may leak into unrelated internals.
+50. Do not assume `class` falls through to every Daredash component. Some primitives intentionally use `inheritAttrs: false`; verify the component contract before styling it directly, and use a wrapper plus public `--dd-*` tokens when classes are not forwarded.
 
 ## Workflow
 
@@ -98,6 +100,8 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 25. When adding client cache around auth or admin data, cache only data with low volatility and short dependency chains. Keep lists with active filters server-driven unless there is a concrete performance reason to do more.
 26. During closure review, explicitly separate implemented investigation capability from future “smart” or aggregated flows. A searchable list plus per-entry detail may satisfy the current spec intent even if a richer timeline is postponed.
 27. When refactoring form fields, remove standalone `dd-form-label` + field stacks if the target field supports `label`; add `required` on the field instead of rendering a local required marker.
+28. When customizing a Daredash component with CSS variables, verify whether the intended hook is public. Prefer variables such as `--dd-card-border-color` over internal implementation variables such as `--local-border-color`.
+29. When a module class appears in the parent but not on the rendered Daredash primitive, inspect whether the component forwards `class`. If it does not, avoid fighting it with deep selectors; style an outer semantic element and pass public CSS variables down by inheritance.
 
 ## Toolbar Pattern
 

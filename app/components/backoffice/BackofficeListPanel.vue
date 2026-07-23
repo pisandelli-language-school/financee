@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{
   loading?: boolean
   isInvalid?: boolean
   errorMessage?: string
+  compactTable?: boolean
   page: number
   total: number
   pageSize: number
@@ -15,6 +16,7 @@ const props = withDefaults(defineProps<{
   loading: false,
   isInvalid: false,
   errorMessage: '',
+  compactTable: false,
 })
 
 const emit = defineEmits<{
@@ -24,7 +26,7 @@ const emit = defineEmits<{
 const slots = useSlots()
 
 const tableSlotNames = computed(() =>
-  Object.keys(slots).filter(name => name !== 'toolbar' && name !== 'notice'),
+  Object.keys(slots).filter(name => !['toolbar', 'notice', 'content', 'empty'].includes(name)),
 )
 
 const effectivePageSize = computed(() => (
@@ -72,15 +74,20 @@ dd-card
       dd-cluster(end :class="fin.toolbar")
         slot(name="toolbar")
 
-      dd-table(
-        :columns="props.columns"
-        :data="props.data"
-        :loading="props.loading"
-        :is-invalid="props.isInvalid"
-        :error-message="props.errorMessage"
-      )
-        template(v-for="name in tableSlotNames" :key="name" #[name]="slotProps")
-          slot(:name="name" v-bind="slotProps")
+      template(v-if="$slots.content")
+        slot(name="content")
+
+      template(v-else)
+        dd-table(
+          :columns="props.columns"
+          :data="props.data"
+          :loading="props.loading"
+          :compact="props.compactTable"
+          :is-invalid="props.isInvalid"
+          :error-message="props.errorMessage"
+        )
+          template(v-for="name in tableSlotNames" :key="name" #[name]="slotProps")
+            slot(:name="name" v-bind="slotProps")
 
       dd-cluster(between :class="fin.pagination")
         dd-cluster(compact :class="fin.pageSize")

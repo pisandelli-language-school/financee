@@ -10,6 +10,7 @@ model FinancialEntry {
   effectiveDueDate    DateTime            @db.Date
   paymentDate         DateTime?           @db.Date
   paymentAccountId    String?
+  paymentMethodId     String?
   contactId           String?
   accountId           String
   categoryId          String?
@@ -29,6 +30,7 @@ model FinancialEntry {
 
   account         Account               @relation("EntryAccount", fields: [accountId], references: [id])
   paymentAccount  Account?              @relation("EntryPaymentAccount", fields: [paymentAccountId], references: [id])
+  paymentMethod   PaymentMethod?        @relation(fields: [paymentMethodId], references: [id])
   category        Category?             @relation("EntryCategory", fields: [categoryId], references: [id])
   subcategory     Category?             @relation("EntrySubcategory", fields: [subcategoryId], references: [id])
   costCenter      CostCenter?           @relation(fields: [costCenterId], references: [id])
@@ -40,6 +42,7 @@ model FinancialEntry {
   @@index([status])
   @@index([accountId])
   @@index([paymentAccountId])
+  @@index([paymentMethodId])
   @@index([categoryId])
   @@index([subcategoryId])
   @@index([costCenterId])

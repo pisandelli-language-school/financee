@@ -25,6 +25,42 @@ describe('financial entry validation', () => {
     expect(result.success).toBe(true)
   })
 
+  it('requires category for non-transfer entries', async () => {
+    const result = await financialEntrySchema.safeParseAsync(createValidEntry({
+      categoryId: '',
+    }))
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues).toContainEqual(expect.objectContaining({
+      path: ['categoryId'],
+      message: 'Selecione a categoria.',
+    }))
+  })
+
+  it('allows transfer entries without category', async () => {
+    const result = await financialEntrySchema.safeParseAsync(createValidEntry({
+      type: 'TRANSFER',
+      categoryId: '',
+      transferTargetAccountId: 'account_2',
+    }))
+
+    expect(result.success).toBe(true)
+  })
+
+  it('requires different origin and target accounts for transfers', async () => {
+    const result = await financialEntrySchema.safeParseAsync(createValidEntry({
+      type: 'TRANSFER',
+      categoryId: '',
+      transferTargetAccountId: 'account_1',
+    }))
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues).toContainEqual(expect.objectContaining({
+      path: ['transferTargetAccountId'],
+      message: 'A conta de destino deve ser diferente da origem.',
+    }))
+  })
+
   it('requires a valid installment total for installment entries', async () => {
     const result = await financialEntrySchema.safeParseAsync(createValidEntry({
       recurrenceType: 'INSTALLMENT',

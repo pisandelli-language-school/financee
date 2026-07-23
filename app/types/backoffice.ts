@@ -119,6 +119,20 @@ export interface AccountRecord extends BaseRecord {
   name: string
   type: string
   initialValue: number | null
+  institutionId: string | null
+  institutionName: string | null
+  institutionLogoKey: string | null
+  alertOnLowBalance: boolean
+  contactPhone: string | null
+  contactEmail: string | null
+  notes: string | null
+  isActive: boolean
+}
+
+export interface FinancialInstitutionRecord extends BaseRecord {
+  code: string
+  name: string
+  logoKey: string
   isActive: boolean
 }
 
@@ -199,6 +213,18 @@ export interface SimpleCatalogFormValues {
   name: string
   type?: string
   initialValue?: number | null
+  isActive: boolean
+}
+
+export interface AccountFormValues {
+  name: string
+  type: string
+  initialValue: number | null
+  institutionId: string
+  alertOnLowBalance: boolean
+  contactPhone: string
+  contactEmail: string
+  notes: string
   isActive: boolean
 }
 

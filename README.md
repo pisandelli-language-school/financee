@@ -67,6 +67,8 @@ pnpm prisma:generate
 pnpm prisma:validate
 pnpm prisma:db:push
 pnpm prisma:migrate
+pnpm seed
+pnpm db:setup
 ```
 
 ## Prisma workflow
@@ -76,6 +78,8 @@ This repository uses `Supabase` for authentication and `MySQL` for application d
 - `DATABASE_URL`: MySQL connection used by both runtime and Prisma CLI commands
 - `pnpm prisma:migrate`: currently mapped to `prisma db push`
 - versioned SQL migrations are still kept in `prisma/migrations/` as architectural reference, but the active development workflow is schema-first with `db push`
+- `pnpm seed`: resets local QA data and populates roles, permissions, backoffice records and sample financial entries
+- `pnpm db:setup`: generates Prisma Client, syncs the schema and runs the local QA seed
 
 ## Product references
 

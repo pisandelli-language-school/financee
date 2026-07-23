@@ -12,6 +12,7 @@ import {
 } from '@prisma/client'
 import type { H3Event } from 'h3'
 import type {
+  AccountFormValues,
   AccountRecord,
   CategoryFilters,
   CategoryFormValues,
@@ -27,6 +28,7 @@ import type {
   NonBusinessDayRecord,
   PaginatedResponse,
   PaymentMethodRecord,
+  FinancialInstitutionRecord,
   SimpleCatalogFormValues,
   TagFormValues,
   TagRecord,
@@ -36,6 +38,7 @@ import { prisma } from '~~/server/utils/prisma'
 type BackofficeSection =
   | 'categorias'
   | 'contas-carteiras'
+  | 'instituicoes-financeiras'
   | 'centros-custo'
   | 'tags'
   | 'contatos'
@@ -54,6 +57,25 @@ interface SimpleCatalogSource {
   type?: string
   initialValue?: Prisma.Decimal | number | null
   isActive?: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface AccountSource {
+  id: string
+  name: string
+  type: string
+  initialValue: Prisma.Decimal | number | null
+  institutionId: string | null
+  institution: {
+    name: string
+    logoKey: string
+  } | null
+  alertOnLowBalance: boolean
+  contactPhone: string | null
+  contactEmail: string | null
+  notes: string | null
+  isActive: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -327,6 +349,45 @@ function mapSimpleRecord<T extends SimpleCatalogSource>(
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   } as AccountRecord | CostCenterRecord | PaymentMethodRecord
+}
+
+function mapAccountRecord(record: AccountSource): AccountRecord {
+  return {
+    id: record.id,
+    name: record.name,
+    type: record.type,
+    initialValue: record.initialValue == null ? null : Number(record.initialValue),
+    institutionId: record.institutionId,
+    institutionName: record.institution?.name ?? null,
+    institutionLogoKey: record.institution?.logoKey ?? null,
+    alertOnLowBalance: record.alertOnLowBalance,
+    contactPhone: record.contactPhone,
+    contactEmail: record.contactEmail,
+    notes: record.notes,
+    isActive: record.isActive,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  }
+}
+
+function mapFinancialInstitution(record: {
+  id: string
+  code: string
+  name: string
+  logoKey: string
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}): FinancialInstitutionRecord {
+  return {
+    id: record.id,
+    code: record.code,
+    name: record.name,
+    logoKey: record.logoKey,
+    isActive: record.isActive,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  }
 }
 
 function mapTag(record: { id: string; name: string; bgColor: string | null; textColor: string | null; isActive: boolean; createdAt: Date; updatedAt: Date }): TagRecord {
@@ -709,6 +770,36 @@ function normalizeSimplePayload(
   }
 }
 
+function normalizeAccountPayload(payload: AccountFormValues) {
+  const name = normalizeString(payload.name)
+  const type = normalizeString(payload.type)
+  const contactEmail = optionalString(payload.contactEmail)
+
+  if (!name) {
+    validationError('Nome da conta é obrigatório.', 'name')
+  }
+
+  if (!type) {
+    validationError('Tipo da conta é obrigatório.', 'type')
+  }
+
+  if (contactEmail && !isValidEmail(contactEmail)) {
+    validationError('Email inválido.', 'contactEmail')
+  }
+
+  return {
+    name,
+    type,
+    initialValue: parseNullableNumber(payload.initialValue),
+    institutionId: optionalString(payload.institutionId),
+    alertOnLowBalance: parseBoolean(payload.alertOnLowBalance, false),
+    contactPhone: optionalString(payload.contactPhone),
+    contactEmail,
+    notes: optionalString(payload.notes),
+    isActive: parseBoolean(payload.isActive, true),
+  }
+}
+
 export function normalizeTagPayload(payload: TagFormValues) {
   const name = normalizeString(payload.name)
 
@@ -924,6 +1015,170 @@ async function listSimpleSection<T extends 'account' | 'costCenter' | 'paymentMe
     pagination.page,
     pagination.pageSize,
   )
+}
+
+export async function listFinancialInstitutions(event: H3Event) {
+  const pagination = parsePagination(event)
+  const where = withNotDeleted(pagination.search
+    ? {
+        OR: [
+          { name: { contains: pagination.search } },
+          { code: { contains: pagination.search } },
+        ],
+      }
+    : {})
+
+  const { items, total } = await finalizePaginatedQuery(
+    prisma.financialInstitution.findMany({
+      where,
+      orderBy: [{ name: 'asc' }],
+      ...getPaginationWindow(pagination),
+    }),
+    () => prisma.financialInstitution.count({ where }),
+    pagination.page,
+    pagination.pageSize,
+  )
+
+  return buildPaginatedResponse(items.map(mapFinancialInstitution), total, pagination.page, pagination.pageSize)
+}
+
+export async function listAccounts(event: H3Event) {
+  const pagination = parsePagination(event)
+  const where: Prisma.AccountWhereInput = withNotDeleted(pagination.search
+    ? {
+        OR: [
+          { name: { contains: pagination.search } },
+          { institution: { name: { contains: pagination.search } } },
+          { type: { contains: pagination.search } },
+        ],
+      }
+    : {})
+
+  const { items, total } = await finalizePaginatedQuery(
+    prisma.account.findMany({
+      where,
+      include: {
+        institution: {
+          select: {
+            name: true,
+            logoKey: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
+      ...getPaginationWindow(pagination),
+    }),
+    () => prisma.account.count({ where }),
+    pagination.page,
+    pagination.pageSize,
+  )
+
+  return buildPaginatedResponse(items.map(item => mapAccountRecord(item as AccountSource)), total, pagination.page, pagination.pageSize)
+}
+
+export async function getAccount(id: string) {
+  const record = await prisma.account.findFirst({
+    where: withNotDeleted({ id }),
+    include: {
+      institution: {
+        select: {
+          name: true,
+          logoKey: true,
+        },
+      },
+    },
+  })
+
+  if (!record) {
+    throw createError({ statusCode: 404, statusMessage: 'Conta não encontrada.' })
+  }
+
+  return mapAccountRecord(record as AccountSource)
+}
+
+export async function createAccount(event: H3Event) {
+  const payload = normalizeAccountPayload(await readBody<AccountFormValues>(event))
+
+  if (payload.institutionId) {
+    const institution = await prisma.financialInstitution.findFirst({
+      where: withNotDeleted({
+        id: payload.institutionId,
+        isActive: true,
+      }),
+      select: { id: true },
+    })
+
+    if (!institution) {
+      validationError('Instituição financeira não encontrada.', 'institutionId')
+    }
+  }
+
+  try {
+    const record = await prisma.account.create({
+      data: payload,
+      include: {
+        institution: {
+          select: {
+            name: true,
+            logoKey: true,
+          },
+        },
+      },
+    })
+
+    return mapAccountRecord(record as AccountSource)
+  } catch (error) {
+    handleKnownPrismaError(error)
+  }
+}
+
+export async function updateAccount(event: H3Event, id: string) {
+  const payload = normalizeAccountPayload(await readBody<AccountFormValues>(event))
+
+  if (payload.institutionId) {
+    const institution = await prisma.financialInstitution.findFirst({
+      where: withNotDeleted({
+        id: payload.institutionId,
+        isActive: true,
+      }),
+      select: { id: true },
+    })
+
+    if (!institution) {
+      validationError('Instituição financeira não encontrada.', 'institutionId')
+    }
+  }
+
+  try {
+    const record = await prisma.account.update({
+      where: { id },
+      data: payload,
+      include: {
+        institution: {
+          select: {
+            name: true,
+            logoKey: true,
+          },
+        },
+      },
+    })
+
+    return mapAccountRecord(record as AccountSource)
+  } catch (error) {
+    handleKnownPrismaError(error)
+  }
+}
+
+export async function deleteAccount(id: string) {
+  await prisma.account.update({
+    where: { id },
+    data: {
+      isActive: false,
+      deletedAt: new Date(),
+    },
+  })
+
+  return { ok: true }
 }
 
 async function createSimpleSection<T extends 'account' | 'costCenter' | 'paymentMethod'>(
@@ -1351,8 +1606,10 @@ export async function listSection(section: BackofficeSection, event: H3Event) {
   switch (section) {
     case 'categorias':
       return await listCategories(event)
+    case 'instituicoes-financeiras':
+      return await listFinancialInstitutions(event)
     case 'contas-carteiras':
-      return await listSimpleSection('account', event)
+      return await listAccounts(event)
     case 'centros-custo':
       return await listSimpleSection('costCenter', event)
     case 'tags':
@@ -1373,7 +1630,7 @@ export async function createSection(section: BackofficeSection, event: H3Event) 
     case 'categorias':
       return await createCategory(event)
     case 'contas-carteiras':
-      return await createSimpleSection('account', event)
+      return await createAccount(event)
     case 'centros-custo':
       return await createSimpleSection('costCenter', event)
     case 'tags':
@@ -1390,6 +1647,10 @@ export async function createSection(section: BackofficeSection, event: H3Event) 
 }
 
 export async function getSectionItem(section: BackofficeSection, id: string) {
+  if (section === 'contas-carteiras') {
+    return await getAccount(id)
+  }
+
   if (section === 'contatos') {
     return await getContact(id)
   }
@@ -1402,7 +1663,7 @@ export async function updateSection(section: BackofficeSection, id: string, even
     case 'categorias':
       return await updateCategory(event, id)
     case 'contas-carteiras':
-      return await updateSimpleSection('account', id, event)
+      return await updateAccount(event, id)
     case 'centros-custo':
       return await updateSimpleSection('costCenter', id, event)
     case 'tags':
@@ -1423,7 +1684,7 @@ export async function deleteSection(section: BackofficeSection, id: string) {
     case 'categorias':
       return await deleteCategory(id)
     case 'contas-carteiras':
-      return await deleteSimpleSection('account', id)
+      return await deleteAccount(id)
     case 'centros-custo':
       return await deleteSimpleSection('costCenter', id)
     case 'tags':

@@ -5,6 +5,7 @@ import type {
   FinancialEntryPaymentPayload,
   FinancialEntryRecord,
   FinancialEntryScopePayload,
+  FinancialEntrySummary,
   FinancialEntryUpdatePayload,
   RecurrenceEditScope,
 } from '~/types/financial'
@@ -39,6 +40,15 @@ export const FinancialEntriesModule = {
     const requestOptions = useFinancialRequestOptions()
 
     return await fetchFinancial<FinancialEntryListResponse>('/api/lancamentos', {
+      method: 'GET',
+      query: filters,
+      ...requestOptions,
+    })
+  },
+  async summary(filters: FinancialEntryFilters) {
+    const requestOptions = useFinancialRequestOptions()
+
+    return await fetchFinancial<FinancialEntrySummary>('/api/lancamentos/summary', {
       method: 'GET',
       query: filters,
       ...requestOptions,

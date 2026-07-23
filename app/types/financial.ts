@@ -66,8 +66,14 @@ export interface FinancialEntryRecord {
   paymentDate: string | null
   accountId: string
   accountName: string
+  accountInstitutionName: string | null
+  accountInstitutionLogoKey: string | null
   paymentAccountId: string | null
   paymentAccountName: string | null
+  paymentAccountInstitutionName: string | null
+  paymentAccountInstitutionLogoKey: string | null
+  paymentMethodId: string | null
+  paymentMethodName: string | null
   categoryId: string | null
   categoryName: string | null
   subcategoryId: string | null
@@ -93,8 +99,10 @@ export interface FinancialEntryFilters {
   direction: EntryDirection | ''
   status: EntryStatus | ''
   accountId: string
+  paymentMethodId: string
   categoryId: string
   contactId: string
+  tagId: string
   dateFrom: string
   dateTo: string
   page: number
@@ -110,6 +118,7 @@ export interface FinancialEntryFormValues {
   scheduledDueDate: string
   accountId: string
   transferTargetAccountId: string
+  paymentMethodId: string
   categoryId: string
   subcategoryId: string
   costCenterId: string
@@ -138,4 +147,12 @@ export interface FinancialEntryScopePayload {
   scope?: RecurrenceEditScope
 }
 
-export type FinancialEntryListResponse = PaginatedResponse<FinancialEntryRecord>
+export interface FinancialEntrySummary {
+  income: number
+  expense: number
+  net: number
+}
+
+export interface FinancialEntryListResponse extends PaginatedResponse<FinancialEntryRecord> {
+  summary: FinancialEntrySummary
+}

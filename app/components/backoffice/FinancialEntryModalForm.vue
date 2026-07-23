@@ -5,6 +5,7 @@ import {
   CategoryModule,
   ContactModule,
   CostCenterModule,
+  PaymentMethodModule,
   TagModule,
 } from '~/api/backoffice'
 import { FinancialEntriesModule } from '~/api/financial'
@@ -13,6 +14,7 @@ import type {
   CategoryRecord,
   ContactRecord,
   CostCenterRecord,
+  PaymentMethodRecord,
   TagRecord,
 } from '~/types/backoffice'
 import {
@@ -49,6 +51,7 @@ const accountRecords = ref<AccountRecord[]>([])
 const categoryRecords = ref<CategoryRecord[]>([])
 const costCenterRecords = ref<CostCenterRecord[]>([])
 const contactRecords = ref<ContactRecord[]>([])
+const paymentMethodRecords = ref<PaymentMethodRecord[]>([])
 const tagRecords = ref<TagRecord[]>([])
 const loading = ref(false)
 const optionsLoading = ref(false)
@@ -81,6 +84,10 @@ const accountOptions = computed(() => accountRecords.value.map(account => ({
 const costCenterOptions = computed(() => costCenterRecords.value.map(center => ({
   label: center.name,
   value: center.id,
+})))
+const paymentMethodOptions = computed(() => paymentMethodRecords.value.map(method => ({
+  label: method.name,
+  value: method.id,
 })))
 
 const {
@@ -129,6 +136,14 @@ const tagOptions = computed(() => tagRecords.value.map(tag => ({
   label: tag.name,
   value: tag.id,
 })))
+
+const availableTagOptions = computed(() =>
+  tagOptions.value.filter(tag => !values.tagIds.includes(tag.value)),
+)
+
+const selectedTags = computed(() =>
+  tagOptions.value.filter(tag => values.tagIds.includes(tag.value)),
+)
 
 watch(() => props.open, async (open) => {
   if (!open) {
@@ -202,7 +217,8 @@ async function loadOptions() {
   optionsLoading.value = true
 
   try {
-    const [accounts, categories, costCenters, contacts, tags] = await Promise.all([
+    const [paymentMethods, accounts, categories, costCenters, contacts, tags] = await Promise.all([
+      PaymentMethodModule.list({ search: '', page: 1, pageSize: 200 }),
       AccountModule.list({ search: '', page: 1, pageSize: 200 }),
       CategoryModule.list({ search: '', type: '', page: 1, pageSize: 200 }),
       CostCenterModule.list({ search: '', page: 1, pageSize: 200 }),
@@ -210,6 +226,7 @@ async function loadOptions() {
       TagModule.list({ search: '', page: 1, pageSize: 200 }),
     ])
 
+    paymentMethodRecords.value = paymentMethods.items.filter(item => item.isActive)
     accountRecords.value = accounts.items.filter(item => item.isActive)
     categoryRecords.value = categories.items.filter(item => item.isActive)
     costCenterRecords.value = costCenters.items.filter(item => item.isActive)
@@ -246,6 +263,7 @@ function updateType(value: unknown) {
 
   if (type === 'TRANSFER') {
     updateField('direction', '')
+    updateField('paymentMethodId', '')
     updateField('categoryId', '')
     updateField('subcategoryId', '')
     updateField('contactId', '')
@@ -273,12 +291,18 @@ function updateStringField(field: keyof FinancialEntryFormValues, value: unknown
   updateField(field, getSelectValue(value) as never)
 }
 
-function toggleTag(tagId: string, selected: boolean) {
-  const nextTagIds = selected
-    ? [...new Set([...values.tagIds, tagId])]
-    : values.tagIds.filter(currentTagId => currentTagId !== tagId)
+function addTag(value: unknown) {
+  const tagId = getSelectValue(value)
 
-  updateField('tagIds', nextTagIds)
+  if (!tagId) {
+    return
+  }
+
+  updateField('tagIds', [...new Set([...values.tagIds, tagId])])
+}
+
+function removeTag(tagId: string) {
+  updateField('tagIds', values.tagIds.filter(currentTagId => currentTagId !== tagId))
 }
 
 async function createInlineTag() {
@@ -479,6 +503,14 @@ backoffice-modal-form-shell(
             @update:model-value="updateStringField('contactId', $event)"
           )
 
+          dd-select(
+            :model-value="values.paymentMethodId"
+            label="Forma de pagamento"
+            placeholder="Selecione"
+            :options="paymentMethodOptions"
+            @update:model-value="updateStringField('paymentMethodId', $event)"
+          )
+
         dd-grid(v-if="!isEditing && !isTransfer")
           dd-select(
             :model-value="values.recurrenceType"
@@ -545,14 +577,14 @@ backoffice-modal-form-shell(
 
         dd-stack(v-if="!isTransfer" compact)
           strong(:class="fin.sectionTitle") Tags
-          dd-cluster(compact v-if="tagOptions.length")
-            dd-checkbox(
-              v-for="tag in tagOptions"
-              :key="tag.value"
-              :model-value="values.tagIds.includes(tag.value)"
-              @update:model-value="toggleTag(tag.value, Boolean($event))"
-            ) {{ tag.label }}
-          dd-cluster(compact)
+          dd-cluster(compact :class="fin.tagControls")
+            dd-select(
+              no-message
+              placeholder="Adicionar tag"
+              :options="availableTagOptions"
+              :disabled="tagCreateLoading || !availableTagOptions.length"
+              @update:model-value="addTag"
+            )
             dd-input(
               v-model="newTagName"
               no-message
@@ -568,6 +600,23 @@ backoffice-modal-form-shell(
               :disabled="tagCreateLoading || !newTagName.trim()"
               @click="createInlineTag"
             ) Criar tag
+          dd-cluster(v-if="selectedTags.length" compact)
+            dd-cluster(
+              v-for="tag in selectedTags"
+              :key="tag.value"
+              compact
+              :class="fin.selectedTag"
+            )
+              dd-badge(info) {{ tag.label }}
+              dd-button(
+                ghost
+                tiny
+                icon-only
+                icon="lucide:x"
+                type="button"
+                :aria-label="`Remover tag ${tag.label}`"
+                @click="removeTag(tag.value)"
+              )
 
         dd-alert(
           v-if="!isTransfer"
@@ -595,5 +644,22 @@ backoffice-modal-form-shell(
 
 .sectionTitle {
   font-size: v('font-size.sm');
+}
+
+.tagControls {
+  align-items: center;
+}
+
+.tagControls > * {
+  flex: 1 1 12rem;
+}
+
+.tagControls > :last-child {
+  flex: 0 0 auto;
+}
+
+.selectedTag {
+  align-items: center;
+  gap: v('space.xxs');
 }
 </style>

@@ -1,4 +1,5 @@
 import type {
+  AccountFormValues,
   AccountRecord,
   CategoryFilters,
   CategoryFormValues,
@@ -12,6 +13,7 @@ import type {
   NonBusinessDayRecord,
   PaginatedResponse,
   PaymentMethodRecord,
+  FinancialInstitutionRecord,
   SimpleCatalogFormValues,
   TagFormValues,
   TagRecord,
@@ -106,9 +108,21 @@ function createCrudModule<TRecord, TPayload, TFilters extends object>(
 }
 
 export const CategoryModule = createCrudModule<CategoryRecord, CategoryFormValues, CategoryFilters>('categorias')
-export const AccountModule = createCrudModule<AccountRecord, SimpleCatalogFormValues, { search: string; page: number; pageSize: number }>('contas-carteiras')
+export const AccountModule = createCrudModule<AccountRecord, AccountFormValues, { search: string; page: number; pageSize: number }>('contas-carteiras')
 export const CostCenterModule = createCrudModule<CostCenterRecord, SimpleCatalogFormValues, { search: string; page: number; pageSize: number }>('centros-custo')
 export const TagModule = createCrudModule<TagRecord, TagFormValues, { search: string; page: number; pageSize: number }>('tags')
 export const ContactModule = createCrudModule<ContactRecord, ContactFormValues, ContactFilters>('contatos')
 export const PaymentMethodModule = createCrudModule<PaymentMethodRecord, SimpleCatalogFormValues, { search: string; page: number; pageSize: number }>('formas-pagamento')
 export const NonBusinessDayModule = createCrudModule<NonBusinessDayRecord, NonBusinessDayFormValues, NonBusinessDayFilters>('dias-nao-uteis')
+
+export const FinancialInstitutionModule = {
+  async list(filters: { search: string; page: number; pageSize: number }) {
+    const requestOptions = useBackofficeRequestOptions()
+
+    return await fetchBackoffice<PaginatedResponse<FinancialInstitutionRecord>>('/api/backoffice/instituicoes-financeiras', {
+      method: 'GET',
+      query: filters,
+      ...requestOptions,
+    })
+  },
+}

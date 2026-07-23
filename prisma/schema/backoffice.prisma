@@ -19,18 +19,39 @@ model Category {
   @@unique([name, type, parentId])
 }
 
-model Account {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  type         String
-  initialValue Decimal? @db.Decimal(14, 2)
-  entries      FinancialEntry[] @relation("EntryAccount")
-  paymentEntries FinancialEntry[] @relation("EntryPaymentAccount")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
+model FinancialInstitution {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String   @unique
+  logoKey   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  accounts  Account[]
 
+  @@index([deletedAt])
+}
+
+model Account {
+  id                  String   @id @default(cuid())
+  name                String   @unique
+  type                String
+  initialValue        Decimal? @db.Decimal(14, 2)
+  institutionId       String?
+  institution         FinancialInstitution? @relation(fields: [institutionId], references: [id])
+  alertOnLowBalance   Boolean  @default(false)
+  contactPhone        String?
+  contactEmail        String?
+  notes               String?
+  entries             FinancialEntry[] @relation("EntryAccount")
+  paymentEntries      FinancialEntry[] @relation("EntryPaymentAccount")
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime?
+
+  @@index([institutionId])
   @@index([deletedAt])
 }
 
@@ -129,6 +150,7 @@ model ContactFinancialResponsible {
 model PaymentMethod {
   id        String   @id @default(cuid())
   name      String   @unique
+  entries   FinancialEntry[]
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

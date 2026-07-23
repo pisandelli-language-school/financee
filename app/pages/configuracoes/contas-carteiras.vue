@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { AccountRecord, AppTableColumn, SimpleCatalogFormValues } from '~/types/backoffice'
-import { accountTypeOptions } from '~/types/backoffice'
+import type { AccountFormValues, AccountRecord, AppTableColumn } from '~/types/backoffice'
 import { useAccountsStore } from '~~/stores/useAccountsStore'
 
 const store = useAccountsStore()
@@ -9,21 +8,13 @@ const { getErrorMessage } = useBackofficeApiFeedback()
 const { showToast } = useToaster()
 
 const meta = getSectionMeta('contas-carteiras')
-const form = ref<SimpleCatalogFormValues>(createEmptySimpleForm())
+const form = ref<AccountFormValues>(createEmptyAccountForm())
 const modalOpen = ref(false)
 const deleteOpen = ref(false)
 const editingRecord = ref<AccountRecord | null>(null)
 const deleteTarget = ref<AccountRecord | null>(null)
 const requestError = ref('')
-const accountTypeLabelMap = new Map(accountTypeOptions.map((option) => [option.value, option.label]))
-
-const columns: AppTableColumn[] = [
-  { key: 'name', title: 'Conta' },
-  { key: 'type', title: 'Tipo', width: '180px' },
-  { key: 'initialValue', title: 'Saldo inicial', width: '160px', align: 'right' },
-  { key: 'status', title: 'Status', width: '120px' },
-  { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
-]
+const columns: AppTableColumn[] = []
 
 const { status } = await useAsyncData('backoffice-accounts', () => store.fetch())
 const isLoading = computed(() => status.value === 'pending' || store.loading)
@@ -51,14 +42,14 @@ async function handlePageSizeChange(value: number) {
 
 function openCreateModal() {
   editingRecord.value = null
-  form.value = createEmptySimpleForm()
+  form.value = createEmptyAccountForm()
   requestError.value = ''
   modalOpen.value = true
 }
 
 function openEditModal(record: AccountRecord) {
   editingRecord.value = record
-  form.value = simpleRecordToForm(record)
+  form.value = accountToForm(record)
   requestError.value = ''
   modalOpen.value = true
 }
@@ -69,10 +60,16 @@ async function handleSave() {
   try {
     if (editingRecord.value) {
       await store.updateItem(editingRecord.value.id, form.value)
-      showToast('Conta atualizada com sucesso.', { title: 'Contas e carteiras', type: 'success' })
+      showToast('Conta atualizada com sucesso.', {
+        title: 'Contas e carteiras',
+        type: 'success',
+      })
     } else {
       await store.createItem(form.value)
-      showToast('Conta criada com sucesso.', { title: 'Contas e carteiras', type: 'success' })
+      showToast('Conta criada com sucesso.', {
+        title: 'Contas e carteiras',
+        type: 'success',
+      })
     }
 
     modalOpen.value = false
@@ -94,7 +91,10 @@ async function confirmDelete() {
   try {
     await store.removeItem(deleteTarget.value.id)
     deleteOpen.value = false
-    showToast('Conta removida com sucesso.', { title: 'Contas e carteiras', type: 'success' })
+    showToast('Conta removida com sucesso.', {
+      title: 'Contas e carteiras',
+      type: 'success',
+    })
   } catch (error) {
     showToast(getErrorMessage(error, 'Não foi possível excluir a conta.'), {
       title: 'Contas e carteiras',
@@ -133,21 +133,36 @@ dd-stack
       )
       dd-button(primary icon="lucide:plus" @click="openCreateModal") Nova conta
 
-    template(#cell-type="{ row }")
-      span {{ row.type ? (accountTypeLabelMap.get(row.type) ?? row.type) : '-' }}
+    template(#content)
+      dd-grid(v-if="isLoading" :class="fin.grid")
+        dd-card(v-for="index in 3" :key="index")
+          dd-stack(compact)
+            dd-cluster(compact)
+              dd-skeleton(circle block-size="2.5rem" inline-size="2.5rem")
+              dd-stack(compact nogap)
+                dd-skeleton(block-size="1rem" inline-size="10rem")
+                dd-skeleton(block-size=".875rem" inline-size="7rem")
+            dd-stack(compact nogap)
+              dd-skeleton(block-size=".875rem" inline-size="5rem")
+              dd-skeleton(block-size="1.75rem" inline-size="8rem")
+            dd-cluster(compact)
+              dd-skeleton(block-size="2rem" inline-size="5.5rem")
+              dd-skeleton(block-size="2rem" inline-size="5.5rem")
 
-    template(#cell-initialValue="{ row }")
-      span {{ row.initialValue == null ? '-' : row.initialValue.toFixed(2) }}
+      dd-alert(v-else-if="store.error" danger title="Contas e carteiras" :closable="false" icon)
+        | {{ store.error.message }}
 
-    template(#cell-status="{ row }")
-      dd-badge(:success="row.isActive" :warning="!row.isActive") {{ row.isActive ? 'Ativa' : 'Inativa' }}
+      dd-grid(v-else-if="store.data.length" :class="fin.grid")
+        backoffice-account-card(
+          v-for="account in store.data"
+          :key="account.id"
+          :account="account"
+          @edit="openEditModal"
+          @delete="askDelete"
+        )
 
-    template(#cell-actions="{ row }")
-      backoffice-row-actions(@edit="openEditModal(row)" @delete="askDelete(row)")
-
-    template(#empty)
       backoffice-empty-state(
-        v-if="isEmpty"
+        v-else-if="isEmpty"
         title="Nenhuma conta cadastrada"
         message="Cadastre a primeira conta ou carteira para iniciar a base financeira."
       )
@@ -158,6 +173,7 @@ dd-stack
     :model-value="form"
     :loading="store.loading"
     :error-message="requestError"
+    :is-editing="Boolean(editingRecord)"
     @update:open="modalOpen = $event"
     @update:model-value="form = $event"
     @save="handleSave"
@@ -171,3 +187,9 @@ dd-stack
     @confirm="confirmDelete"
   )
 </template>
+
+<style module="fin">
+.grid {
+  --dd-grid-column-min-width: 20rem;
+}
+</style>
