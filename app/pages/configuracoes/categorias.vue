@@ -57,13 +57,13 @@ async function refreshList() {
   await categoriesStore.fetch()
 }
 
-async function handleSearch(value: string | number) {
+const handleSearch = useDebounceFn(async (value: string | number) => {
   categoriesStore.setFilters({
     search: String(value),
     page: 1,
   })
   await refreshList()
-}
+}, 500)
 
 async function handleTypeFilter(value: unknown) {
   categoriesStore.setFilters({

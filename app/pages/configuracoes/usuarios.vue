@@ -47,12 +47,12 @@ onMounted(() => {
   void fetchRoleOptions()
 })
 
-function handleSearch(value: string) {
+const handleSearch = useDebounceFn((value: string) => {
   usersStore.setFilters({
     search: value,
     page: 1,
   })
-}
+}, 500)
 
 async function fetchRoleOptions() {
   if (roleOptions.value.length) {
