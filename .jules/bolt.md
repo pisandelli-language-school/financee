@@ -1,0 +1,3 @@
+## 2024-05-30 - Add debouncing to list views
+**Learning:** In the backoffice configuration list views, `handleSearch` handlers in `app/pages/configuracoes/*.vue` components that trigger state updates/data fetches were previously firing synchronously on every keypress, causing unnecessary immediate network requests or Pinia store updates.
+**Action:** Wrapped these event handlers with `@vueuse/core`s `useDebounceFn` (500ms) to throttle updates when users type in search fields. This significantly reduces redundant execution and network calls and matches the existing pattern from `usePostalCodeLookup.ts`.

@@ -34,10 +34,10 @@ async function refreshList() {
   await store.fetch()
 }
 
-async function handleSearch(value: string | number) {
+const handleSearch = useDebounceFn(async (value: string | number) => {
   store.setFilters({ search: String(value), page: 1 })
   await refreshList()
-}
+}, 500)
 
 async function handlePageChange(value: number) {
   store.setFilters({ page: value })
