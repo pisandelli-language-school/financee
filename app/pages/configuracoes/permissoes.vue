@@ -43,12 +43,13 @@ onMounted(() => {
   void fetchPermissionCatalog()
 })
 
-function handleSearch(value: string) {
+// Debounce search input to prevent excessive API calls while typing
+const handleSearch = useDebounceFn((value: string) => {
   permissionsStore.setFilters({
     search: value,
     page: 1,
   })
-}
+}, 300)
 
 async function fetchPermissionCatalog() {
   if (permissionCatalog.value.length) {
