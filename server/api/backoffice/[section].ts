@@ -3,12 +3,10 @@ import {
   handleBackofficeInfrastructureError,
   listSection,
 } from '~~/server/utils/backoffice'
-import { requireSupabaseUser } from '~~/server/utils/auth'
+import { requirePermission } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
-    await requireSupabaseUser(event)
-
     const section = getRouterParam(event, 'section')
 
     if (!section) {
@@ -16,10 +14,12 @@ export default defineEventHandler(async (event) => {
     }
 
     if (event.method === 'GET') {
+      await requirePermission(event, `${section}.view`)
       return await listSection(section as never, event)
     }
 
     if (event.method === 'POST') {
+      await requirePermission(event, `${section}.create`)
       return await createSection(section as never, event)
     }
 

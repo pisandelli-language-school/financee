@@ -4,12 +4,10 @@ import {
   handleBackofficeInfrastructureError,
   updateSection,
 } from '~~/server/utils/backoffice'
-import { requireSupabaseUser } from '~~/server/utils/auth'
+import { requirePermission } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   try {
-    await requireSupabaseUser(event)
-
     const section = getRouterParam(event, 'section')
     const id = getRouterParam(event, 'id')
 
@@ -18,14 +16,17 @@ export default defineEventHandler(async (event) => {
     }
 
     if (event.method === 'GET') {
+      await requirePermission(event, `${section}.view`)
       return await getSectionItem(section as never, id)
     }
 
     if (event.method === 'PUT') {
+      await requirePermission(event, `${section}.update`)
       return await updateSection(section as never, id, event)
     }
 
     if (event.method === 'DELETE') {
+      await requirePermission(event, `${section}.delete`)
       return await deleteSection(section as never, id)
     }
 
