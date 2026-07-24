@@ -25,10 +25,11 @@ async function refreshList() {
   await store.fetch()
 }
 
-async function handleSearch(value: string | number) {
+// Debounce search input to prevent excessive API calls while typing
+const handleSearch = useDebounceFn(async (value: string | number) => {
   store.setFilters({ search: String(value), page: 1 })
   await refreshList()
-}
+}, 300)
 
 async function handlePageChange(value: number) {
   store.setFilters({ page: value })

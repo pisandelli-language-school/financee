@@ -57,13 +57,14 @@ async function refreshList() {
   await categoriesStore.fetch()
 }
 
-async function handleSearch(value: string | number) {
+// Debounce search input to prevent excessive API calls while typing
+const handleSearch = useDebounceFn(async (value: string | number) => {
   categoriesStore.setFilters({
     search: String(value),
     page: 1,
   })
   await refreshList()
-}
+}, 300)
 
 async function handleTypeFilter(value: unknown) {
   categoriesStore.setFilters({

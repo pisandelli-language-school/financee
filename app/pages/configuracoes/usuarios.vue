@@ -47,12 +47,13 @@ onMounted(() => {
   void fetchRoleOptions()
 })
 
-function handleSearch(value: string) {
+// Debounce search input to prevent excessive API calls while typing
+const handleSearch = useDebounceFn((value: string) => {
   usersStore.setFilters({
     search: value,
     page: 1,
   })
-}
+}, 300)
 
 async function fetchRoleOptions() {
   if (roleOptions.value.length) {

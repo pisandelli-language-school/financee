@@ -226,12 +226,13 @@ async function loadFilterOptions() {
     }))
 }
 
-function handleSearch(value: string) {
+// Debounce search input to prevent excessive API calls while typing
+const handleSearch = useDebounceFn((value: string) => {
   entriesStore.setFilters({
     search: value,
     page: 1,
   })
-}
+}, 300)
 
 function setDirection(value: string) {
   entriesStore.setFilters({
