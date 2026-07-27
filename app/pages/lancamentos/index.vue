@@ -226,12 +226,12 @@ async function loadFilterOptions() {
     }))
 }
 
-function handleSearch(value: string) {
+const handleSearch = useDebounceFn((value: string) => {
   entriesStore.setFilters({
     search: value,
     page: 1,
   })
-}
+}, 300)
 
 function setDirection(value: string) {
   entriesStore.setFilters({

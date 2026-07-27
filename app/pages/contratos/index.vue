@@ -94,13 +94,13 @@ async function refreshList() {
   await contractsStore.fetch()
 }
 
-async function handleSearch(value: string | number) {
+const handleSearch = useDebounceFn(async (value: string | number) => {
   contractsStore.setFilters({
     search: String(value),
     page: 1,
   })
   await refreshList()
-}
+}, 300)
 
 async function handleStatusFilter(value: unknown) {
   contractsStore.setFilters({
