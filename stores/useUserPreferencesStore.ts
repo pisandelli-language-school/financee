@@ -5,6 +5,10 @@ import type { UserPreferencesRecord } from '~/types/auth'
 
 const defaultPreferences: UserPreferencesRecord = {
   sidebarCollapsed: false,
+  dashboardDefaultView: 'FINANCIAL',
+  lastReportPeriod: null,
+  lastReportView: null,
+  lastReportRegime: null,
 }
 
 export const useUserPreferencesStore = defineStore('user-preferences', () => {

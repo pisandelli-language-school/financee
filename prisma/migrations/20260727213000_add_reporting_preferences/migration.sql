@@ -1,0 +1,5 @@
+ALTER TABLE `UserPreferences`
+  ADD COLUMN `dashboardDefaultView` ENUM('FINANCIAL', 'OPERATIONAL') NOT NULL DEFAULT 'FINANCIAL',
+  ADD COLUMN `lastReportPeriod` VARCHAR(191) NULL,
+  ADD COLUMN `lastReportView` VARCHAR(191) NULL,
+  ADD COLUMN `lastReportRegime` ENUM('CASH', 'COMPETENCE') NULL;

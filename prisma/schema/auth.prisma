@@ -20,15 +20,19 @@ model User {
 }
 
 model UserPreferences {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  theme            String?
-  locale           String?
-  timezone         String?
-  sidebarCollapsed Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                   String        @id @default(cuid())
+  userId               String        @unique
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme                String?
+  locale               String?
+  timezone             String?
+  sidebarCollapsed     Boolean       @default(false)
+  dashboardDefaultView DashboardView @default(FINANCIAL)
+  lastReportPeriod     String?
+  lastReportView       String?
+  lastReportRegime     ReportRegime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 }
 
 model Role {

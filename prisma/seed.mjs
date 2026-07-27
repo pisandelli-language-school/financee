@@ -328,11 +328,19 @@ async function seedAdminUser() {
         upsert: {
           update: {
             sidebarCollapsed: false,
+            dashboardDefaultView: 'FINANCIAL',
+            lastReportPeriod: null,
+            lastReportView: null,
+            lastReportRegime: null,
             locale: 'pt-BR',
             timezone: 'America/Fortaleza',
           },
           create: {
             sidebarCollapsed: false,
+            dashboardDefaultView: 'FINANCIAL',
+            lastReportPeriod: null,
+            lastReportView: null,
+            lastReportRegime: null,
             locale: 'pt-BR',
             timezone: 'America/Fortaleza',
           },
@@ -348,6 +356,10 @@ async function seedAdminUser() {
       preferences: {
         create: {
           sidebarCollapsed: false,
+          dashboardDefaultView: 'FINANCIAL',
+          lastReportPeriod: null,
+          lastReportView: null,
+          lastReportRegime: null,
           locale: 'pt-BR',
           timezone: 'America/Fortaleza',
         },

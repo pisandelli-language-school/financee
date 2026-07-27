@@ -22,6 +22,10 @@ type UserWithPermissions = PrismaUser & {
   }) | null
   preferences: {
     sidebarCollapsed: boolean
+    dashboardDefaultView: 'FINANCIAL' | 'OPERATIONAL'
+    lastReportPeriod: string | null
+    lastReportView: string | null
+    lastReportRegime: 'CASH' | 'COMPETENCE' | null
   } | null
 }
 
@@ -38,6 +42,10 @@ const authInclude = {
   preferences: {
     select: {
       sidebarCollapsed: true,
+      dashboardDefaultView: true,
+      lastReportPeriod: true,
+      lastReportView: true,
+      lastReportRegime: true,
     },
   },
 } satisfies Parameters<typeof prisma.user.findUnique>[0]['include']
@@ -84,6 +92,10 @@ function toCurrentAuthPayload(user: UserWithPermissions): CurrentAuthPayload {
       isActive: user.isActive,
       preferences: {
         sidebarCollapsed: user.preferences?.sidebarCollapsed ?? false,
+        dashboardDefaultView: user.preferences?.dashboardDefaultView ?? 'FINANCIAL',
+        lastReportPeriod: user.preferences?.lastReportPeriod ?? null,
+        lastReportView: user.preferences?.lastReportView ?? null,
+        lastReportRegime: user.preferences?.lastReportRegime ?? null,
       },
     },
     permissions: extractPermissions(user),

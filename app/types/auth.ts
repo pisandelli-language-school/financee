@@ -1,4 +1,6 @@
 export type WorkspaceRole = 'ADMIN' | 'MANAGER' | 'TEACHER' | 'STAFF'
+export type DashboardView = 'FINANCIAL' | 'OPERATIONAL'
+export type ReportRegime = 'CASH' | 'COMPETENCE'
 
 export const systemRoleNames = ['Admin', 'Gestor', 'Financeiro', 'Comercial'] as const
 export type SystemRoleName = (typeof systemRoleNames)[number]
@@ -63,6 +65,10 @@ export interface CurrentAuthPayload {
 
 export interface UserPreferencesRecord {
   sidebarCollapsed: boolean
+  dashboardDefaultView: DashboardView
+  lastReportPeriod: string | null
+  lastReportView: string | null
+  lastReportRegime: ReportRegime | null
 }
 
 export interface AuthUserRecord extends CurrentUserProfile {

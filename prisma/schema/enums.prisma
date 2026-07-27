@@ -115,3 +115,13 @@ enum ContractBillingFrequency {
   SEMIANNUAL
   ANNUAL
 }
+
+enum DashboardView {
+  FINANCIAL
+  OPERATIONAL
+}
+
+enum ReportRegime {
+  CASH
+  COMPETENCE
+}

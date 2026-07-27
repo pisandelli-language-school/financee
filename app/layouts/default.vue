@@ -2,6 +2,8 @@
 import logoUrl from '~/assets/images/logo-opt.svg?url'
 import { AuthCache, AuthModule } from '~/api/auth'
 import type { CurrentAuthPayload } from '~/types/auth'
+import { useDashboardStore } from '~~/stores/useDashboardStore'
+import { useReportsStore } from '~~/stores/useReportsStore'
 import { useUserPreferencesStore } from '~~/stores/useUserPreferencesStore'
 
 const quickLinks = [
@@ -19,6 +21,8 @@ const {
   primaryMenuItems,
 } = useBackofficeNavigation()
 const preferencesStore = useUserPreferencesStore()
+const dashboardStore = useDashboardStore()
+const reportsStore = useReportsStore()
 
 const collapsed = ref(false)
 const menuRef = ref<{
@@ -43,6 +47,8 @@ watch(user, async () => {
     currentAuth.value = null
     currentAuthLoading.value = false
     preferencesStore.hydrate(null)
+    dashboardStore.hydratePreferences(null)
+    reportsStore.hydratePreferences(null)
     return
   }
 
@@ -51,6 +57,8 @@ watch(user, async () => {
   try {
     currentAuth.value = await AuthModule.getCurrentUser()
     preferencesStore.hydrate(currentAuth.value.user.preferences)
+    dashboardStore.hydratePreferences(currentAuth.value.user.preferences)
+    reportsStore.hydratePreferences(currentAuth.value.user.preferences)
   } catch (error) {
     currentAuth.value = null
 
