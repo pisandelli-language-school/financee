@@ -40,7 +40,7 @@ const moduleLabelMap: Record<string, string> = {
   usuarios: 'Usuários',
 }
 
-const groupedPermissions = computed(() => {
+const baseGroupedPermissions = computed(() => {
   const groups = props.permissions.reduce((accumulator, permission) => {
     const group = accumulator.get(permission.module) ?? {
       module: permission.module,
@@ -64,10 +64,18 @@ const groupedPermissions = computed(() => {
       permissions: [...group.permissions].sort((left, right) =>
         formatPermissionLabel(left).localeCompare(formatPermissionLabel(right)),
       ),
-      selectedCount: group.permissions.filter(permission =>
-        selectedPermissionKeys.value.includes(permission.key),
-      ).length,
     }))
+})
+
+const groupedPermissions = computed(() => {
+  const selectedSet = new Set(selectedPermissionKeys.value)
+
+  return baseGroupedPermissions.value.map(group => ({
+    ...group,
+    selectedCount: group.permissions.filter(permission =>
+      selectedSet.has(permission.key),
+    ).length,
+  }))
 })
 
 watch(
