@@ -6,3 +6,8 @@ allowBuilds:
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@pisandelli/daredash@0.0.23-beta || 0.0.24-beta || 0.0.25-beta || 0.0.26-beta || 0.0.27-beta || 0.0.28-beta || 0.0.30-beta || 0.0.31-beta || 0.0.32-beta'
+  - '@nuxt/kit@4.5.1'
+  - '@nuxt/nitro-server@4.5.1'
+  - '@nuxt/schema@4.5.1'
+  - '@nuxt/vite-builder@4.5.1'
+  - nuxt@4.5.1
