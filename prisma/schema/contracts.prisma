@@ -1,0 +1,41 @@
+model Contract {
+  id                  String         @id @default(cuid())
+  title               String
+  clientId            String
+  status              ContractStatus
+  originalAmount      Decimal        @db.Decimal(14, 2)
+  discountAmount      Decimal?       @db.Decimal(14, 2)
+  finalAmount         Decimal        @db.Decimal(14, 2)
+  totalHours          Float?
+  weeklyHours         Float?
+  startDate           DateTime       @db.Date
+  expectedEndDate     DateTime?      @db.Date
+  billingModel        ContractBillingModel     @default(CASH)
+  billingFrequency    ContractBillingFrequency?
+  billingOccurrences  Int?
+  firstDueDate        DateTime?      @db.Date
+  paymentConditionId  String?
+  notes               String?
+  externalContractId  String?
+  source              ContractSource @default(LOCAL)
+  renewalOfContractId String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  deletedAt           DateTime?
+
+  client           Contact           @relation("ClientContracts", fields: [clientId], references: [id])
+  paymentCondition PaymentCondition? @relation(fields: [paymentConditionId], references: [id], onDelete: SetNull)
+  renewalOf        Contract?         @relation("ContractRenewal", fields: [renewalOfContractId], references: [id], onDelete: SetNull)
+  renewedBy        Contract[]        @relation("ContractRenewal")
+  entries          FinancialEntry[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([source])
+  @@index([paymentConditionId])
+  @@index([renewalOfContractId])
+  @@index([billingModel])
+  @@index([startDate])
+  @@index([expectedEndDate])
+  @@index([deletedAt])
+}

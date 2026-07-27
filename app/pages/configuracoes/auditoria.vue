@@ -158,7 +158,6 @@ dd-stack
     template(#cell-actions="{ row }")
       dd-button(
         ghost
-        tiny
         icon-only
         info
         type="button"

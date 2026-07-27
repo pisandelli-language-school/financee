@@ -86,3 +86,32 @@ enum RecurrenceFrequency {
   SEMIANNUAL
   ANNUAL
 }
+
+enum ContractStatus {
+  DRAFT
+  PROPOSAL
+  ACTIVE
+  RENEWED
+  CLOSED
+  CANCELED
+  LOCKED
+}
+
+enum ContractSource {
+  LOCAL
+  CLASSTIME
+  EXTERNAL
+}
+
+enum ContractBillingModel {
+  CASH
+  INSTALLMENT
+  RECURRING
+}
+
+enum ContractBillingFrequency {
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+}

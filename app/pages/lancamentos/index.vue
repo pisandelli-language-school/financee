@@ -666,7 +666,6 @@ dd-stack
     :page="entriesStore.filters.page"
     :total="entriesStore.total"
     :page-size="entriesStore.filters.pageSize"
-    compact-table
     @update:page="entriesStore.setFilters({ page: $event })"
     @update:page-size="entriesStore.setFilters({ pageSize: $event, page: 1 })"
   )
@@ -892,22 +891,22 @@ dd-stack
 
     template(#cell-actions="{ row }")
       dd-popover(trigger="click" placement="left-start")
-        dd-button(
-          ghost
-          tiny
-          icon-only
-          type="button"
-          icon="lucide:ellipsis-vertical"
-          aria-label="Ações do lançamento"
-          :disabled="statusActionLoading === row.id"
-        )
+        span(:class="fin.popoverTrigger")
+          dd-button(
+            ghost
+            tiny
+            icon-only
+            type="button"
+            icon="lucide:ellipsis-vertical"
+            aria-label="Ações do lançamento"
+            :disabled="statusActionLoading === row.id"
+          )
         template(#content)
           dd-stack(nogap :class="fin.actionsMenu")
             dd-button(
               v-if="canPayEntries && row.status === 'OPEN'"
               ghost
               full
-              tiny
               success
               icon="lucide:check"
               :class="fin.actionsMenuOption"
@@ -917,7 +916,6 @@ dd-stack
               v-if="canPayEntries && row.status === 'PAID'"
               ghost
               full
-              tiny
               warning
               icon="lucide:rotate-ccw"
               :class="fin.actionsMenuOption"
@@ -927,7 +925,6 @@ dd-stack
               v-if="canUpdateEntries && row.type !== 'TRANSFER'"
               ghost
               full
-              tiny
               info
               icon="lucide:pencil"
               :class="fin.actionsMenuOption"
@@ -937,7 +934,6 @@ dd-stack
             dd-button(
               ghost
               full
-              tiny
               info
               icon="lucide:eye"
               :class="fin.actionsMenuOption"
@@ -947,7 +943,6 @@ dd-stack
               v-if="canCancelEntries && row.status !== 'CANCELED'"
               ghost
               full
-              tiny
               danger
               icon="lucide:x"
               :class="[fin.actionsMenuOption, fin.actionsMenuDanger]"
@@ -957,7 +952,6 @@ dd-stack
               v-if="canDeleteEntries && row.status === 'OPEN' && row.type !== 'TRANSFER' && !row.paymentDate && !row.recurrenceGroupId"
               ghost
               full
-              tiny
               danger
               icon="lucide:trash-2"
               :class="[fin.actionsMenuOption, fin.actionsMenuDanger]"
@@ -1190,6 +1184,10 @@ dd-stack
 
 .actionsMenu {
   min-inline-size: 9.5rem;
+}
+
+.popoverTrigger {
+  display: inline-flex;
 }
 
 .actionsMenuOption {

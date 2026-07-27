@@ -68,6 +68,13 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 48. In forms powered by `vee-validate`, prefer `dd-form-input`, `dd-form-select`, `dd-form-textarea`, and other `dd-form-*` wrappers for simple fields. Use primitive fields only when masks, lookups, nested updates, or custom event handling genuinely require direct control.
 49. Do not override Daredash internal `--local-*` variables from app code. Customize components through their public `--dd-*` variables or documented props, because `--local-*` belongs to the component implementation and may leak into unrelated internals.
 50. Do not assume `class` falls through to every Daredash component. Some primitives intentionally use `inheritAttrs: false`; verify the component contract before styling it directly, and use a wrapper plus public `--dd-*` tokens when classes are not forwarded.
+51. Default backoffice tables should use the regular Daredash table density. Use compact tables only when the screen genuinely has high information density and the smaller line height still preserves readability.
+52. For action menus inside click-triggered popovers, prefer the default button size for menu items. Avoid `tiny` in destructive or high-frequency action lists unless space is critically constrained and the text remains clearly readable.
+53. When a business status label changes semantically, prefer renaming the underlying enum/value and migrating the data instead of keeping a UI-only alias that will become hidden technical debt.
+54. For versioned business entities such as renewals, amendments, or chained records, expose the chain in two places: lightweight context in the list and a full read-only history flow in a modal.
+55. If a form needs async preload for edit or renew flows, open the modal shell immediately and load the record inside it with `dd-loading` rather than delaying the open interaction.
+56. Hide future integration hooks from the UI when the current product has a single source of truth, but document clearly in the spec and closure review why those fields still exist in the model.
+57. Prefer removing risky lifecycle actions from row-action menus when the same outcome can cause accidental state changes; only expose actions that are operationally safe for that screen.
 
 ## Workflow
 
@@ -102,6 +109,10 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 27. When refactoring form fields, remove standalone `dd-form-label` + field stacks if the target field supports `label`; add `required` on the field instead of rendering a local required marker.
 28. When customizing a Daredash component with CSS variables, verify whether the intended hook is public. Prefer variables such as `--dd-card-border-color` over internal implementation variables such as `--local-border-color`.
 29. When a module class appears in the parent but not on the rendered Daredash primitive, inspect whether the component forwards `class`. If it does not, avoid fighting it with deep selectors; style an outer semantic element and pass public CSS variables down by inheritance.
+30. When defining the visual baseline for a CRUD screen, favor readable defaults over maximal compression. If a table or popover action menu feels cramped, return to the regular density before inventing one-off typography overrides.
+31. When a domain has chained lifecycle states such as original contract, renewal, and current version, reflect that relationship in both backend query shape and UI copy. Do not leave the user to infer the chain from dates alone.
+32. When an entity supports explicit generation of downstream records, guard the action with server rules and also remove or disable it in the UI once the downstream records already exist.
+33. For async edit actions in lists, treat perceived responsiveness as part of correctness. If users can double-click because the UI looks idle, the loading strategy is incomplete even if the fetch logic works.
 
 ## Toolbar Pattern
 

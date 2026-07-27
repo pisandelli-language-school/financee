@@ -170,12 +170,15 @@ export function useBackofficeNavigation() {
           action: { type: 'link' as const, to: '/lancamentos' },
         }]
       : []),
-    {
-      key: 'contratos',
-      label: 'Contratos',
-      icon: 'lucide:file-signature',
-      action: { type: 'none' },
-    },
+    ...(can('contratos.view')
+      ? [{
+          key: 'contratos',
+          label: 'Contratos',
+          icon: 'lucide:file-signature',
+          active: route.path.startsWith('/contratos'),
+          action: { type: 'link' as const, to: '/contratos' },
+        }]
+      : []),
     {
       key: 'relatorios',
       label: 'Relatórios',

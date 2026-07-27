@@ -293,6 +293,7 @@ async function seedRbac() {
 async function resetQaData() {
   await prisma.financialEntryTag.deleteMany()
   await prisma.financialEntry.deleteMany()
+  await prisma.contract.deleteMany()
   await prisma.auditLog.deleteMany()
   await prisma.contactFinancialResponsible.deleteMany()
   await prisma.address.deleteMany()
@@ -665,6 +666,77 @@ async function seedBackoffice() {
   }
 }
 
+async function seedContracts(context) {
+  const contratoVip = await prisma.contract.create({
+    data: {
+      title: 'Contrato VIP - Jéssika Basílio',
+      clientId: context.contacts.jessica.id,
+      status: 'ACTIVE',
+      originalAmount: '9800.00',
+      discountAmount: '10.00',
+      finalAmount: '8820.00',
+      totalHours: 96,
+      weeklyHours: 6,
+      startDate: date('2026-07-01'),
+      expectedEndDate: date('2026-12-31'),
+      notes: 'Contrato ativo de acompanhamento VIP com desconto promocional de 10%.',
+      source: 'LOCAL',
+    },
+  })
+
+  await prisma.contract.create({
+    data: {
+      title: 'Proposta Intensivo - Pedro Pisandelli',
+      clientId: context.contacts.pedro.id,
+      status: 'PROPOSAL',
+      originalAmount: '2400.00',
+      discountAmount: '0.00',
+      finalAmount: '2400.00',
+      totalHours: 24,
+      weeklyHours: 4,
+      startDate: date('2026-08-03'),
+      expectedEndDate: date('2026-09-11'),
+      notes: 'Proposta comercial em análise.',
+      source: 'LOCAL',
+    },
+  })
+
+  await prisma.contract.create({
+    data: {
+      title: 'Contrato Corporativo - Hatus',
+      clientId: context.contacts.hatus.id,
+      status: 'ACTIVE',
+      originalAmount: '18000.00',
+      discountAmount: '5.00',
+      finalAmount: '17100.00',
+      totalHours: 120,
+      weeklyHours: 8,
+      startDate: date('2026-06-01'),
+      expectedEndDate: date('2026-11-30'),
+      notes: 'Contrato corporativo com faturamento trimestral.',
+      source: 'LOCAL',
+    },
+  })
+
+  await prisma.contract.create({
+    data: {
+      title: 'Renovação VIP - Jéssika Basílio',
+      clientId: context.contacts.jessica.id,
+      status: 'RENEWED',
+      originalAmount: '10200.00',
+      discountAmount: '8.00',
+      finalAmount: '9384.00',
+      totalHours: 96,
+      weeklyHours: 6,
+      startDate: date('2027-01-05'),
+      expectedEndDate: date('2027-06-30'),
+      renewalOfContractId: contratoVip.id,
+      notes: 'Renovação já registrada para o próximo ciclo.',
+      source: 'LOCAL',
+    },
+  })
+}
+
 async function seedFinancialEntries(context) {
   const transferGroupId = randomUUID()
 
@@ -891,6 +963,7 @@ async function main() {
   await resetQaData()
   const adminUser = await seedAdminUser()
   const context = await seedBackoffice()
+  await seedContracts(context)
   await seedFinancialEntries(context)
   await seedAuditLogs(adminUser)
 

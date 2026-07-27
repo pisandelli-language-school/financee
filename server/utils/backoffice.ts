@@ -1287,7 +1287,7 @@ async function deleteSimpleSection<T extends 'account' | 'costCenter' | 'payment
         deletedAt: new Date(),
       },
     })
-  } else {
+  } else if (model === 'paymentMethod') {
     await prisma.paymentMethod.update({
       where: { id },
       data: {

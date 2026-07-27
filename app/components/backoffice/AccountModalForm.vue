@@ -2,6 +2,7 @@
 import { useForm } from 'vee-validate'
 import { FinancialInstitutionModule } from '~/api/backoffice'
 import { accountTypeOptions, type AccountFormValues, type FinancialInstitutionRecord } from '~/types/backoffice'
+import { formatCurrencyInput, parseCurrencyInput } from '~/utils/number-input'
 import { cloneAccountForm, accountValidationSchema } from '~/validators/account'
 import { getInstitutionLogoByKey } from '~/utils/account-institutions'
 
@@ -45,6 +46,7 @@ const selectedInstitution = computed(() => institutions.value.find(
 
 const selectedInstitutionLogo = computed(() => getInstitutionLogoByKey(selectedInstitution.value?.logoKey))
 const isManualMode = computed(() => !selectedInstitution.value)
+const initialValueDisplay = computed(() => formatCurrencyInput(values.initialValue))
 
 const previewTitle = computed(() => {
   if (selectedInstitution.value) {
@@ -106,13 +108,7 @@ function updateField<K extends keyof AccountFormValues>(field: K, value: Account
 }
 
 function updateInitialValue(value: unknown) {
-  if (value === '' || value == null) {
-    updateField('initialValue', null)
-    return
-  }
-
-  const parsed = Number(value)
-  updateField('initialValue', Number.isFinite(parsed) ? parsed : null)
+  updateField('initialValue', parseCurrencyInput(value))
 }
 
 function selectInstitution(institution: FinancialInstitutionRecord) {
@@ -237,13 +233,12 @@ backoffice-modal-form-shell(
       )
 
     dd-grid
-      dd-input(
-        :model-value="values.initialValue ?? ''"
-        label="Saldo inicial"
-        type="number"
-        placeholder="0.00"
-        @update:model-value="updateInitialValue"
-      )
+      dd-input-group(label="Saldo inicial" pre="R$")
+        dd-input(
+          :model-value="initialValueDisplay"
+          placeholder="0,00"
+          @update:model-value="updateInitialValue"
+        )
       dd-input(
         :model-value="values.contactPhone"
         label="Telefone"
