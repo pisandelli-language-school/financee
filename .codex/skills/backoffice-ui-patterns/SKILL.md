@@ -75,6 +75,9 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 55. If a form needs async preload for edit or renew flows, open the modal shell immediately and load the record inside it with `dd-loading` rather than delaying the open interaction.
 56. Hide future integration hooks from the UI when the current product has a single source of truth, but document clearly in the spec and closure review why those fields still exist in the model.
 57. Prefer removing risky lifecycle actions from row-action menus when the same outcome can cause accidental state changes; only expose actions that are operationally safe for that screen.
+58. In pages that depend on a derived period key such as `visibleMonth`, declare the computed period state before the first async bootstrap call. Do not call `await load...()` first and only then define the computed that the loader reads.
+59. When extending `dd-menu` with route-aware submenu behavior, prefer passive state alignment over synthetic clicks. If the component lacks a native expanded-by-route API, use the smallest local workaround that does not intercept navigation.
+60. When a hierarchical menu gains new child sections, validate three flows before considering it stable: direct navigation into the section, switching between two parent groups, and collapsed/expanded sidebar transitions.
 
 ## Workflow
 
@@ -113,6 +116,7 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 31. When a domain has chained lifecycle states such as original contract, renewal, and current version, reflect that relationship in both backend query shape and UI copy. Do not leave the user to infer the chain from dates alone.
 32. When an entity supports explicit generation of downstream records, guard the action with server rules and also remove or disable it in the UI once the downstream records already exist.
 33. For async edit actions in lists, treat perceived responsiveness as part of correctness. If users can double-click because the UI looks idle, the loading strategy is incomplete even if the fetch logic works.
+34. For analytics pages with shared period navigation, stabilize the period model first, then reuse it across cards, fetches, and labels. Avoid recomputing the active month in multiple disconnected places.
 
 ## Toolbar Pattern
 

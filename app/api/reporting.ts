@@ -1,5 +1,6 @@
 import type {
   CashFlowReport,
+  ContractsReport,
   DelinquencyFilters,
   DelinquencyReport,
   DreReport,
@@ -71,6 +72,15 @@ export const ReportingModule = {
     const requestOptions = useReportingRequestOptions()
 
     return await fetchReporting<DelinquencyReport>('/api/relatorios/inadimplencia', {
+      method: 'GET',
+      query: filters,
+      ...requestOptions,
+    })
+  },
+  async getContracts(filters: ReportingDateRangeFilters) {
+    const requestOptions = useReportingRequestOptions()
+
+    return await fetchReporting<ContractsReport>('/api/relatorios/contratos', {
       method: 'GET',
       query: filters,
       ...requestOptions,

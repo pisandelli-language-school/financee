@@ -71,6 +71,7 @@ export function useBackofficeNavigation() {
   const route = useRoute()
   const currentAuth = useState('auth:current-user', () => null as null | { permissions: string[] })
   const isInSettings = computed(() => route.path.startsWith('/configuracoes'))
+  const isInReports = computed(() => route.path.startsWith('/relatorios'))
   const permissions = computed(() => currentAuth.value?.permissions ?? [])
   const can = (permissionKey: string) => permissions.value.includes(permissionKey)
   const configurationChildren = computed<AppMenuItem[]>(() => [
@@ -158,7 +159,8 @@ export function useBackofficeNavigation() {
           key: 'dashboard',
           label: 'Dashboard',
           icon: 'lucide:layout-dashboard',
-          action: { type: 'none' as const },
+          active: route.path.startsWith('/dashboard'),
+          action: { type: 'link' as const, to: '/dashboard' },
         }]
       : []),
     ...(can('lancamentos.view')
@@ -179,12 +181,45 @@ export function useBackofficeNavigation() {
           action: { type: 'link' as const, to: '/contratos' },
         }]
       : []),
-    {
-      key: 'relatorios',
-      label: 'Relatórios',
-      icon: 'lucide:bar-chart-3',
-      action: { type: 'none' },
-    },
+    ...(can('relatorios.view')
+      ? [{
+          key: 'relatorios',
+          label: 'Relatórios',
+          icon: 'lucide:bar-chart-3',
+          active: isInReports.value,
+          children: [
+            {
+              key: 'relatorios-fluxo-caixa',
+              label: 'Fluxo de caixa',
+              icon: 'lucide:chart-column-big',
+              active: route.path === '/relatorios/fluxo-caixa',
+              action: { type: 'link' as const, to: '/relatorios/fluxo-caixa' },
+            },
+            {
+              key: 'relatorios-dre',
+              label: 'DRE',
+              icon: 'lucide:chart-no-axes-column',
+              active: route.path === '/relatorios/dre',
+              action: { type: 'link' as const, to: '/relatorios/dre' },
+            },
+            {
+              key: 'relatorios-inadimplencia',
+              label: 'Inadimplência',
+              icon: 'lucide:badge-alert',
+              active: route.path === '/relatorios/inadimplencia',
+              action: { type: 'link' as const, to: '/relatorios/inadimplencia' },
+            },
+            {
+              key: 'relatorios-contratos',
+              label: 'Contratos',
+              icon: 'lucide:file-chart-column',
+              active: route.path === '/relatorios/contratos',
+              action: { type: 'link' as const, to: '/relatorios/contratos' },
+            },
+          ],
+          action: { type: 'link' as const, to: '/relatorios' },
+        }]
+      : []),
     {
       key: 'configuracoes',
       label: 'Configurações',

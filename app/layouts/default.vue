@@ -32,6 +32,7 @@ const menuRef = ref<{
 } | null>(null)
 
 const userName = computed(() => user.value?.email?.split('@')[0] ?? 'Perfil')
+const menuScopeKey = computed(() => route.path.split('/')[1] || 'home')
 
 const deniedCodes = new Set([
   'TEACHER_BLOCKED',
@@ -197,6 +198,7 @@ dd-layout
         dd-stack(split-after="1" :class="fin.sidebarFlow")
           dd-stack(compact)
             dd-menu(
+              :key="menuScopeKey"
               ref="menuRef"
               :class="fin.menu"
               :items="primaryMenuItems"
@@ -317,6 +319,16 @@ dd-layout
 .menu > ul > li[data-has-children] {
   display: grid;
   gap: v('space.xxs');
+}
+
+/* TODO: Remove when Daredash supports keeping the active parent group expanded by route. */
+.menu > ul > li[data-active][data-has-children]:not([data-float]) > div {
+  grid-template-rows: 1fr;
+}
+
+/* TODO: Remove when Daredash syncs the active route with the parent caret state. */
+.menu > ul > li[data-active][data-has-children]:not([data-float]) > :first-child [class*="chevron"] {
+  transform: rotate(90deg);
 }
 
 .menu {

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { ReportingModule } from '~/api/reporting'
 import type {
   CashFlowReport,
+  ContractsReport,
   DelinquencyReport,
   DreReport,
   ReportFilters,
@@ -22,6 +23,7 @@ export const useReportsStore = defineStore('reports', () => {
   const cashFlow = ref<CashFlowReport | null>(null)
   const dre = ref<DreReport | null>(null)
   const delinquency = ref<DelinquencyReport | null>(null)
+  const contracts = ref<ContractsReport | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -107,6 +109,26 @@ export const useReportsStore = defineStore('reports', () => {
     }
   }
 
+  async function fetchContracts(payload: {
+    dateFrom: string
+    dateTo: string
+  }) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await ReportingModule.getContracts(payload)
+
+      contracts.value = response
+      return response
+    } catch (caughtError) {
+      error.value = caughtError instanceof Error ? caughtError.message : 'Não foi possível carregar o relatório de contratos.'
+      throw caughtError
+    } finally {
+      loading.value = false
+    }
+  }
+
   function hydratePreferences(preferences: {
     lastReportPeriod?: string | null
     lastReportView?: string | null
@@ -131,6 +153,7 @@ export const useReportsStore = defineStore('reports', () => {
     cashFlow,
     dre,
     delinquency,
+    contracts,
     loading,
     error,
     setView,
@@ -139,6 +162,7 @@ export const useReportsStore = defineStore('reports', () => {
     fetchCashFlow,
     fetchDre,
     fetchDelinquency,
+    fetchContracts,
     hydratePreferences,
   }
 })

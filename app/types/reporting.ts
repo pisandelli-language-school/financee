@@ -1,4 +1,5 @@
 import type { DashboardView, ReportRegime } from './auth'
+import type { ContractStatus } from './contracts'
 
 export type ReportsView = 'fluxo-caixa' | 'dre' | 'inadimplencia' | 'contratos'
 export type DelinquencyTemperature = 'LOW' | 'MEDIUM' | 'HIGH'
@@ -139,6 +140,35 @@ export interface DreReport {
     income: number
     expense: number
     net: number
+  }
+}
+
+export interface ContractsReportItem {
+  id: string
+  title: string
+  clientName: string
+  status: ContractStatus
+  startDate: string
+  expectedEndDate: string | null
+  finalAmount: number
+  entriesCount: number
+  renewedByCount: number
+  renewalOfTitle: string | null
+}
+
+export interface ContractsReport {
+  dateFrom: string
+  dateTo: string
+  items: ContractsReportItem[]
+  totals: {
+    total: number
+    active: number
+    renewed: number
+    locked: number
+    canceled: number
+    closed: number
+    proposals: number
+    drafts: number
   }
 }
 

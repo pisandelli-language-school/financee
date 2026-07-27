@@ -1,5 +1,7 @@
 import type {
   CashFlowReport,
+  ContractsReport,
+  ContractsReportItem,
   DelinquencyFilters,
   DelinquencyRecord,
   DelinquencyReport,
@@ -467,5 +469,90 @@ export async function generateOperationalDashboard(filters: ReportingDateRangeFi
         tone: 'success',
       },
     ],
+  }
+}
+
+export async function generateContractsReport(filters: ReportingDateRangeFilters): Promise<ContractsReport> {
+  const items = await prisma.contract.findMany({
+    where: {
+      deletedAt: null,
+      startDate: {
+        lte: new Date(`${filters.dateTo}T23:59:59.999Z`),
+      },
+      OR: [
+        { expectedEndDate: null },
+        { expectedEndDate: { gte: new Date(`${filters.dateFrom}T00:00:00.000Z`) } },
+      ],
+    },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      startDate: true,
+      expectedEndDate: true,
+      finalAmount: true,
+      client: {
+        select: {
+          name: true,
+        },
+      },
+      renewalOf: {
+        select: {
+          title: true,
+        },
+      },
+      renewedBy: {
+        select: {
+          id: true,
+        },
+      },
+      entries: {
+        select: {
+          id: true,
+        },
+      },
+    },
+    orderBy: [
+      { startDate: 'asc' },
+      { createdAt: 'asc' },
+    ],
+  })
+
+  const normalizedItems = items.map(item => ({
+    id: item.id,
+    title: item.title,
+    clientName: item.client.name,
+    status: item.status,
+    startDate: formatDateOnly(item.startDate),
+    expectedEndDate: item.expectedEndDate ? formatDateOnly(item.expectedEndDate) : null,
+    finalAmount: Number(item.finalAmount),
+    entriesCount: item.entries.length,
+    renewedByCount: item.renewedBy.length,
+    renewalOfTitle: item.renewalOf?.title ?? null,
+  } satisfies ContractsReportItem))
+
+  return {
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
+    items: normalizedItems,
+    totals: normalizedItems.reduce((accumulator, item) => ({
+      total: accumulator.total + 1,
+      active: accumulator.active + (item.status === 'ACTIVE' ? 1 : 0),
+      renewed: accumulator.renewed + (item.status === 'RENEWED' ? 1 : 0),
+      locked: accumulator.locked + (item.status === 'LOCKED' ? 1 : 0),
+      canceled: accumulator.canceled + (item.status === 'CANCELED' ? 1 : 0),
+      closed: accumulator.closed + (item.status === 'CLOSED' ? 1 : 0),
+      proposals: accumulator.proposals + (item.status === 'PROPOSAL' ? 1 : 0),
+      drafts: accumulator.drafts + (item.status === 'DRAFT' ? 1 : 0),
+    }), {
+      total: 0,
+      active: 0,
+      renewed: 0,
+      locked: 0,
+      canceled: 0,
+      closed: 0,
+      proposals: 0,
+      drafts: 0,
+    }),
   }
 }
