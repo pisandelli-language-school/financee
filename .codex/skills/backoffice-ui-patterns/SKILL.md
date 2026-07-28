@@ -78,6 +78,9 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 58. In pages that depend on a derived period key such as `visibleMonth`, declare the computed period state before the first async bootstrap call. Do not call `await load...()` first and only then define the computed that the loader reads.
 59. When extending `dd-menu` with route-aware submenu behavior, prefer passive state alignment over synthetic clicks. If the component lacks a native expanded-by-route API, use the smallest local workaround that does not intercept navigation.
 60. When a hierarchical menu gains new child sections, validate three flows before considering it stable: direct navigation into the section, switching between two parent groups, and collapsed/expanded sidebar transitions.
+61. Treat closure-review caveats, recurring TODOs, and external design-system gaps as trackable work, not conversational leftovers. If a limitation is real enough to influence planning, register it as an issue in the appropriate repository.
+62. When the current repo depends on a future Daredash improvement, open the issue in `pisandelli/daredash` and reference it from the local workaround or closure review whenever practical.
+63. When an accepted post-MVP gap belongs to Financee itself, open a Financee issue as part of the closure flow so the remaining scope is visible in backlog planning.
 
 ## Workflow
 
@@ -117,6 +120,9 @@ This skill keeps Financee backoffice screens visually and structurally consisten
 32. When an entity supports explicit generation of downstream records, guard the action with server rules and also remove or disable it in the UI once the downstream records already exist.
 33. For async edit actions in lists, treat perceived responsiveness as part of correctness. If users can double-click because the UI looks idle, the loading strategy is incomplete even if the fetch logic works.
 34. For analytics pages with shared period navigation, stabilize the period model first, then reuse it across cards, fetches, and labels. Avoid recomputing the active month in multiple disconnected places.
+35. When finishing a spec or major refactor, scan closure-review caveats, local TODOs, and explicit “waiting on Daredash” notes. Convert the real follow-up items into GitHub issues before considering the work formally wrapped.
+36. Put the issue in the repo that owns the fix: Financee product debt in `pisandelli-language-school/financee`, design-system debt in `pisandelli/daredash`.
+37. Prefer issue creation over leaving important follow-up work only in prose. Closure docs should explain the caveat; backlog issues should track the execution.
 
 ## Toolbar Pattern
 
