@@ -57,8 +57,11 @@ if (!reportsStore.filters.period) {
   })
 }
 
-const visibleMonth = computed(() => parseMonthKey(reportsStore.filters.period) ?? startOfMonth(new Date()))
-const periodLabel = computed(() => formatMonthLabel(visibleMonth.value))
+function getVisibleMonth() {
+  return parseMonthKey(reportsStore.filters.period) ?? startOfMonth(new Date())
+}
+
+const periodLabel = computed(() => formatMonthLabel(getVisibleMonth()))
 const items = computed(() => reportsStore.contracts?.items ?? [])
 const isEmpty = computed(() => !reportsStore.loading && !items.value.length)
 
@@ -115,8 +118,8 @@ async function loadContracts() {
 
   try {
     await reportsStore.fetchContracts({
-      dateFrom: toDateInput(startOfMonth(visibleMonth.value)),
-      dateTo: toDateInput(endOfMonth(visibleMonth.value)),
+      dateFrom: toDateInput(startOfMonth(getVisibleMonth())),
+      dateTo: toDateInput(endOfMonth(getVisibleMonth())),
     })
   } catch (error) {
     requestError.value = error instanceof Error ? error.message : 'Não foi possível carregar o relatório de contratos.'
@@ -147,13 +150,13 @@ async function persistPreferences() {
 
 function goToPreviousMonth() {
   reportsStore.setFilters({
-    period: toMonthKey(shiftMonth(visibleMonth.value, -1)),
+    period: toMonthKey(shiftMonth(getVisibleMonth(), -1)),
   })
 }
 
 function goToNextMonth() {
   reportsStore.setFilters({
-    period: toMonthKey(shiftMonth(visibleMonth.value, 1)),
+    period: toMonthKey(shiftMonth(getVisibleMonth(), 1)),
   })
 }
 

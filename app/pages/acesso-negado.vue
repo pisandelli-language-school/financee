@@ -12,58 +12,59 @@ async function backToLogin() {
 </script>
 
 <template lang="pug">
-main.denied
-  dd-card.denied__card
+main(:class="fin.page")
+  dd-card(:class="fin.card")
     dd-stack(spaced)
-      span.denied__icon
+      span(:class="fin.icon")
         icon(name="lucide:shield-alert")
       dd-stack(compact nogap)
-        h1.denied__title Acesso negado
-        p.denied__copy Seu usuário Google foi autenticado, mas não possui permissão para acessar o Financee. Entre em contato com um administrador.
+        h1(:class="fin.title") Acesso negado
+        p(:class="fin.copy") Seu usuário Google foi autenticado, mas não possui permissão para acessar o Financee. Entre em contato com um administrador.
       dd-button(outline icon="lucide:arrow-left" @click="backToLogin") Voltar ao login
 </template>
 
-<style scoped>
-.denied {
+<style module="fin">
+.page {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: v('space.lg');
   background:
-    radial-gradient(circle at top, rgba(220, 38, 38, 0.12), transparent 35%),
-    linear-gradient(180deg, #f6f8fc 0%, #e9edf7 100%);
+    radial-gradient(circle at top, color-mix(in srgb, v('color.danger') 12%, transparent), transparent 35%),
+    linear-gradient(180deg, v('color.bg.surface') 0%, v('color.bg.subtle') 100%);
 }
 
-.denied__card {
+.card {
   width: min(100%, 440px);
-  padding: 36px;
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  --dd-card-body-padding: v('space.xl');
+  --dd-card-border-radius: v('border-radius.lg');
+  --dd-card-box-shadow: v('shadow.xl');
   text-align: center;
 }
 
-.denied__icon {
+.icon {
   display: inline-grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  inline-size: 3.5rem;
+  min-block-size: 3.5rem;
   margin: 0 auto;
-  border-radius: 16px;
-  font-size: 26px;
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.1);
+  border-radius: v('border-radius.md');
+  background: color-mix(in srgb, v('color.danger') 10%, transparent);
+  color: v('color.danger.700');
+  font-size: v('font-size.xl');
 }
 
-.denied__title {
+.title {
   margin: 0;
-  font-size: 26px;
-  color: #151a30;
+  color: v('color.text.default');
+  font-size: v('font-size.xl');
+  line-height: v('line-height.tight');
 }
 
-.denied__copy {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #73768c;
+.copy {
+  margin: v('space.xs') 0 0;
+  color: v('color.text.soft');
+  font-size: v('font-size.sm');
+  line-height: v('line-height.snug');
 }
 </style>

@@ -37,19 +37,19 @@ dd-cluster(tag="header" between :class="fin.header")
 <style module="fin">
 .header {
   align-items: flex-start;
-  gap: 12px;
+  gap: v('space.sm');
 }
 
 h1 {
   margin: 0;
-  font-size: 28px;
-  line-height: 1.1;
+  font-size: v('font-size.xl');
+  line-height: v('line-height.tight');
 }
 
 p {
   margin: 0;
   max-width: 720px;
-  color: #73768c;
-  line-height: 1.45;
+  color: v('color.text.soft');
+  line-height: v('line-height.snug');
 }
 </style>

@@ -53,8 +53,11 @@ if (!reportsStore.filters.period) {
   })
 }
 
-const visibleMonth = computed(() => parseMonthKey(reportsStore.filters.period) ?? startOfMonth(new Date()))
-const periodLabel = computed(() => formatMonthLabel(visibleMonth.value))
+function getVisibleMonth() {
+  return parseMonthKey(reportsStore.filters.period) ?? startOfMonth(new Date())
+}
+
+const periodLabel = computed(() => formatMonthLabel(getVisibleMonth()))
 const rows = computed(() => reportsStore.cashFlow?.buckets ?? [])
 const isEmpty = computed(() => !reportsStore.loading && !rows.value.length)
 
@@ -111,8 +114,8 @@ async function loadCashFlow() {
 
   try {
     await reportsStore.fetchCashFlow({
-      dateFrom: toDateInput(startOfMonth(visibleMonth.value)),
-      dateTo: toDateInput(endOfMonth(visibleMonth.value)),
+      dateFrom: toDateInput(startOfMonth(getVisibleMonth())),
+      dateTo: toDateInput(endOfMonth(getVisibleMonth())),
     })
   } catch (error) {
     requestError.value = error instanceof Error ? error.message : 'Não foi possível carregar o fluxo de caixa.'
@@ -150,13 +153,13 @@ function setRegime(value: unknown) {
 
 function goToPreviousMonth() {
   reportsStore.setFilters({
-    period: toMonthKey(shiftMonth(visibleMonth.value, -1)),
+    period: toMonthKey(shiftMonth(getVisibleMonth(), -1)),
   })
 }
 
 function goToNextMonth() {
   reportsStore.setFilters({
-    period: toMonthKey(shiftMonth(visibleMonth.value, 1)),
+    period: toMonthKey(shiftMonth(getVisibleMonth(), 1)),
   })
 }
 

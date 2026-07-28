@@ -25,52 +25,53 @@ watch(user, () => {
 </script>
 
 <template lang="pug">
-main.confirm
-  dd-card.confirm__card
+main(:class="fin.page")
+  dd-card(:class="fin.card")
     dd-stack(compact)
       template(v-if="errorMessage")
-        h1.confirm__title Falha no login
-        p.confirm__error {{ errorMessage }}
-        nuxt-link.confirm__back(to="/login") Voltar ao login
+        h1(:class="fin.title") Falha no login
+        p(:class="fin.error") {{ errorMessage }}
+        nuxt-link(:class="fin.backLink" to="/login") Voltar ao login
       template(v-else)
         dd-loading(label="Finalizando login...")
 </template>
 
-<style scoped>
-.confirm {
+<style module="fin">
+.page {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: v('space.lg');
   background:
-    radial-gradient(circle at top, rgba(10, 81, 207, 0.16), transparent 35%),
-    linear-gradient(180deg, #f6f8fc 0%, #e9edf7 100%);
+    radial-gradient(circle at top, color-mix(in srgb, v('color.primary') 16%, transparent), transparent 35%),
+    linear-gradient(180deg, v('color.bg.surface') 0%, v('color.bg.subtle') 100%);
 }
 
-.confirm__card {
+.card {
   width: min(100%, 420px);
-  padding: 32px;
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  --dd-card-body-padding: v('space.xl');
+  --dd-card-border-radius: v('border-radius.lg');
+  --dd-card-box-shadow: v('shadow.xl');
 }
 
-.confirm__title {
+.title {
   margin: 0;
-  font-size: 24px;
-  color: #151a30;
+  color: v('color.text.default');
+  font-size: v('font-size.xl');
+  line-height: v('line-height.tight');
 }
 
-.confirm__error {
+.error {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #b91c1c;
+  color: v('color.danger.700');
+  font-size: v('font-size.sm');
+  line-height: v('line-height.snug');
 }
 
-.confirm__back {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0a51cf;
+.backLink {
+  color: v('color.primary');
+  font-size: v('font-size.sm');
+  font-weight: v('font-weight.semi-bold');
   text-decoration: none;
 }
 </style>

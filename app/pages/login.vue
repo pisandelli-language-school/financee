@@ -53,31 +53,31 @@ async function handleGoogleSignIn() {
 </script>
 
 <template lang="pug">
-main.login
+main(:class="fin.page")
   //- Brand panel
-  section.login__brand(v-once)
-    .login__brand-inner
-      img.login__logo(:src="logoUrl" alt="Financee" fetchpriority="high")
-      .login__brand-copy
-        h1.login__headline Gestão financeira sem ruído.
-        p.login__subhead O backoffice financeiro da escola — contratos, lançamentos e relatórios em um só lugar.
-      ul.login__highlights
-        li.login__highlight(v-for="item in highlights" :key="item.title")
-          span.login__highlight-icon
+  section(v-once :class="fin.brand")
+    div(:class="fin.brandInner")
+      img(:class="fin.logo" :src="logoUrl" alt="Financee" fetchpriority="high")
+      div
+        h1(:class="fin.headline") Gestão financeira sem ruído.
+        p(:class="fin.subhead") O backoffice financeiro da escola — contratos, lançamentos e relatórios em um só lugar.
+      ul(:class="fin.highlights")
+        li(v-for="item in highlights" :key="item.title" :class="fin.highlight")
+          span(:class="fin.highlightIcon")
             icon(:name="item.icon")
-          .login__highlight-text
+          div(:class="fin.highlightText")
             strong {{ item.title }}
             span {{ item.copy }}
-    .login__brand-glow(aria-hidden="true")
+    div(:class="fin.brandGlow" aria-hidden="true")
 
   //- Auth panel
-  section.login__panel
-    dd-card.login__card
+  section(:class="fin.panel")
+    dd-card(:class="fin.card")
       dd-stack(spaced)
         dd-stack(compact nogap)
-          span.login__eyebrow Acesso restrito
-          h2.login__title Entrar no Financee
-          p.login__hint Use sua conta Google Workspace da organização.
+          span(:class="fin.eyebrow") Acesso restrito
+          h2(:class="fin.title") Entrar no Financee
+          p(:class="fin.hint") Use sua conta Google Workspace da organização.
 
         dd-alert(
           v-if="authError"
@@ -97,104 +97,105 @@ main.login
           @click="handleGoogleSignIn"
         ) {{ isSigningIn ? 'Conectando...' : 'Entrar com Google' }}
 
-        p.login__legal Professores não acessam o Financee. Em caso de erro de acesso, fale com um administrador.
+        p(:class="fin.legal") Professores não acessam o Financee. Em caso de erro de acesso, fale com um administrador.
 </template>
 
-<style scoped>
-.login {
+<style module="fin">
+.page {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
   background: #0a1330;
-  color: #151a30;
+  color: v('color.text.default');
 }
 
-/* Brand side */
-.login__brand {
+.brand {
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
-  padding: 56px;
-  color: #eef2ff;
+  padding: v('space.xl');
+  color: v('color.white');
   background:
     radial-gradient(120% 120% at 0% 0%, rgba(56, 102, 255, 0.35), transparent 55%),
     radial-gradient(120% 120% at 100% 100%, rgba(14, 165, 233, 0.28), transparent 50%),
     linear-gradient(160deg, #0a1330 0%, #0f1b46 100%);
 }
 
-.login__brand-inner {
+.brandInner {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 40px;
+  gap: v('space.xl');
   max-width: 460px;
 }
 
-.login__logo {
+.logo {
   height: 36px;
   width: auto;
   filter: brightness(0) invert(1);
 }
 
-.login__headline {
+.headline {
   margin: 0;
-  font-size: 40px;
+  font-size: 2.5rem;
   line-height: 1.08;
   letter-spacing: -0.02em;
+  color: v('color.white');
 }
 
-.login__subhead {
-  margin: 12px 0 0;
-  font-size: 16px;
+.subhead {
+  margin: v('space.sm') 0 0;
+  font-size: var(--dd-font-size-base);
   line-height: 1.6;
-  color: rgba(238, 242, 255, 0.72);
+  color: v('color.gray.200');
 }
 
-.login__highlights {
+.highlights {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 18px;
+  gap: v('space.md');
 }
 
-.login__highlight {
+.highlight {
   display: flex;
-  gap: 14px;
+  gap: v('space.sm');
   align-items: flex-start;
 }
 
-.login__highlight-icon {
+.highlightIcon {
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  inline-size: 2.375rem;
+  min-block-size: 2.375rem;
+  border-radius: v('border-radius.md');
   display: grid;
   place-items: center;
-  font-size: 18px;
-  color: #bfdbff;
-  background: rgba(99, 102, 241, 0.16);
-  border: 1px solid rgba(147, 197, 253, 0.22);
+  background: color-mix(in srgb, v('color.primary.200') 16%, transparent);
+  border: v('border-width.sm') solid color-mix(in srgb, v('color.info.200') 22%, transparent);
+  color: v('color.white');
+  font-size: v('font-size.md');
 }
 
-.login__highlight-text {
+.highlightText {
   display: grid;
-  gap: 2px;
+  gap: v('space.xxs');
 }
 
-.login__highlight-text strong {
-  font-size: 15px;
-  font-weight: 600;
+.highlightText strong {
+  color: v('color.white');
+  font-size: v('font-size.sm');
+  font-weight: v('font-weight.semi-bold');
 }
 
-.login__highlight-text span {
-  font-size: 13px;
+.highlightText span {
+  font-size: v('font-size.xs');
   line-height: 1.5;
-  color: rgba(238, 242, 255, 0.64);
+  color: v('color.gray.300');
 }
 
-.login__brand-glow {
+.brandGlow {
   position: absolute;
   inset: auto -120px -160px auto;
   width: 360px;
@@ -204,55 +205,54 @@ main.login
   filter: blur(40px);
 }
 
-/* Auth side */
-.login__panel {
+.panel {
   display: grid;
   place-items: center;
-  padding: 32px;
-  background: linear-gradient(180deg, #f6f8fc 0%, #e9edf7 100%);
+  padding: v('space.xl');
+  background: linear-gradient(180deg, v('color.white') 0%, v('color.light-gray') 100%);
 }
 
-.login__card {
+.card {
   width: min(100%, 420px);
-  padding: 36px;
-  border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  --dd-card-body-padding: v('space.xl');
+  --dd-card-border-radius: v('border-radius.lg');
+  --dd-card-box-shadow: v('shadow.xl');
 }
 
-.login__eyebrow {
-  font-size: 12px;
-  font-weight: 600;
+.eyebrow {
+  color: v('color.primary');
+  font-size: v('font-size.xs');
+  font-weight: v('font-weight.semi-bold');
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #0a51cf;
 }
 
-.login__title {
-  margin: 6px 0 0;
-  font-size: 26px;
-  line-height: 1.1;
-  color: #151a30;
+.title {
+  margin: v('space.xxs') 0 0;
+  color: v('color.text.default');
+  font-size: v('font-size.xl');
+  line-height: v('line-height.tight');
 }
 
-.login__hint {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: #73768c;
+.hint {
+  margin: v('space.xxs') 0 0;
+  color: v('color.text.soft');
+  font-size: v('font-size.sm');
 }
 
-.login__legal {
+.legal {
   margin: 0;
-  font-size: 12px;
+  color: v('color.gray.500');
+  font-size: v('font-size.xs');
   line-height: 1.5;
-  color: #9296a8;
 }
 
 @media (max-width: 860px) {
-  .login {
+  .page {
     grid-template-columns: 1fr;
   }
 
-  .login__brand {
+  .brand {
     display: none;
   }
 }

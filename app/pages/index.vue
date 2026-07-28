@@ -7,15 +7,17 @@ definePageMeta({
 </script>
 
 <template lang="pug">
-main.entry
+main(:class="fin.entry")
   dd-loading(label="Carregando...")
 </template>
 
-<style scoped>
+<style module="fin">
 .entry {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: linear-gradient(180deg, #f6f8fc 0%, #e9edf7 100%);
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, v('color.primary') 10%, transparent), transparent 35%),
+    linear-gradient(180deg, v('color.bg.surface') 0%, v('color.bg.subtle') 100%);
 }
 </style>

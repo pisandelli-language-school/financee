@@ -54,11 +54,14 @@ if (!reportsStore.filters.period) {
   })
 }
 
-const visibleMonth = computed(() => parseMonthKey(reportsStore.filters.period) ?? startOfMonth(new Date()))
-const periodLabel = computed(() => formatMonthLabel(visibleMonth.value))
+function getVisibleMonth() {
+  return parseMonthKey(reportsStore.filters.period) ?? startOfMonth(new Date())
+}
+
+const periodLabel = computed(() => formatMonthLabel(getVisibleMonth()))
 const referenceDate = computed(() => {
   const today = new Date()
-  const monthEnd = endOfMonth(visibleMonth.value)
+  const monthEnd = endOfMonth(getVisibleMonth())
   return today < monthEnd ? today : monthEnd
 })
 const referenceDateLabel = computed(() => formatDate(toDateInput(referenceDate.value)))
@@ -115,8 +118,8 @@ async function loadDelinquency() {
 
   try {
     await reportsStore.fetchDelinquency({
-      dateFrom: toDateInput(startOfMonth(visibleMonth.value)),
-      dateTo: toDateInput(endOfMonth(visibleMonth.value)),
+      dateFrom: toDateInput(startOfMonth(getVisibleMonth())),
+      dateTo: toDateInput(endOfMonth(getVisibleMonth())),
       referenceDate: toDateInput(referenceDate.value),
     })
   } catch (error) {
@@ -148,13 +151,13 @@ async function persistPreferences() {
 
 function goToPreviousMonth() {
   reportsStore.setFilters({
-    period: toMonthKey(shiftMonth(visibleMonth.value, -1)),
+    period: toMonthKey(shiftMonth(getVisibleMonth(), -1)),
   })
 }
 
 function goToNextMonth() {
   reportsStore.setFilters({
-    period: toMonthKey(shiftMonth(visibleMonth.value, 1)),
+    period: toMonthKey(shiftMonth(getVisibleMonth(), 1)),
   })
 }
 
