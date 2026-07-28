@@ -19,14 +19,14 @@ const errorMessage = computed(() => {
 
 watch(user, () => {
   if (user.value) {
-    void navigateTo('/configuracoes')
+    void navigateTo('/dashboard/financeiro')
   }
 }, { immediate: true })
 </script>
 
 <template lang="pug">
 main(:class="fin.page")
-  dd-card(:class="fin.card")
+  dd-card(noborder :class="fin.card")
     dd-stack(compact)
       template(v-if="errorMessage")
         h1(:class="fin.title") Falha no login

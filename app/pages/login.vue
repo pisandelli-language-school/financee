@@ -30,7 +30,7 @@ const highlights = [
 
 watch(user, () => {
   if (user.value) {
-    void navigateTo('/configuracoes')
+    void navigateTo('/dashboard/financeiro')
   }
 }, { immediate: true })
 

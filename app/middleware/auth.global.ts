@@ -17,6 +17,6 @@ export default defineNuxtRouteMiddleware((to) => {
 
   // Authenticated → keep them out of the login/landing entry points.
   if (to.path === '/login' || to.path === '/') {
-    return navigateTo('/configuracoes')
+    return navigateTo('/dashboard/financeiro')
   }
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Entry route. The global auth middleware redirects:
-//   authenticated → /configuracoes · unauthenticated → /login
+//   authenticated → /dashboard/financeiro · unauthenticated → /login
 definePageMeta({
   layout: false,
 })
