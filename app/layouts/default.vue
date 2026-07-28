@@ -42,17 +42,59 @@ const deniedCodes = new Set([
   'DIRECTORY_LOOKUP_FAILED',
 ])
 
+if (user.value && !currentAuth.value) {
+  await syncCurrentAuth()
+} else if (!user.value) {
+  clearCurrentAuthState()
+}
+
 watch(user, async () => {
   if (!user.value) {
-    AuthCache.invalidateAll()
-    currentAuth.value = null
-    currentAuthLoading.value = false
-    preferencesStore.hydrate(null)
-    dashboardStore.hydratePreferences(null)
-    reportsStore.hydratePreferences(null)
+    clearCurrentAuthState()
     return
   }
 
+  await syncCurrentAuth()
+})
+
+watch(() => preferencesStore.preferences.sidebarCollapsed, (value) => {
+  if (collapsed.value !== value) {
+    collapsed.value = value
+  }
+}, { immediate: true })
+
+watch(collapsed, async (value) => {
+  if (!preferencesStore.hydrated || value === preferencesStore.preferences.sidebarCollapsed) {
+    return
+  }
+
+  try {
+    await preferencesStore.updatePreferences({
+      sidebarCollapsed: value,
+    })
+  } catch {
+    collapsed.value = preferencesStore.preferences.sidebarCollapsed
+  }
+})
+
+async function handleSignOut() {
+  AuthCache.invalidateAll()
+  preferencesStore.hydrate(null)
+  await supabase.auth.signOut()
+  currentAuth.value = null
+  await navigateTo('/')
+}
+
+function clearCurrentAuthState() {
+  AuthCache.invalidateAll()
+  currentAuth.value = null
+  currentAuthLoading.value = false
+  preferencesStore.hydrate(null)
+  dashboardStore.hydratePreferences(null)
+  reportsStore.hydratePreferences(null)
+}
+
+async function syncCurrentAuth() {
   currentAuthLoading.value = true
 
   try {
@@ -84,34 +126,6 @@ watch(user, async () => {
   } finally {
     currentAuthLoading.value = false
   }
-}, { immediate: true })
-
-watch(() => preferencesStore.preferences.sidebarCollapsed, (value) => {
-  if (collapsed.value !== value) {
-    collapsed.value = value
-  }
-}, { immediate: true })
-
-watch(collapsed, async (value) => {
-  if (!preferencesStore.hydrated || value === preferencesStore.preferences.sidebarCollapsed) {
-    return
-  }
-
-  try {
-    await preferencesStore.updatePreferences({
-      sidebarCollapsed: value,
-    })
-  } catch {
-    collapsed.value = preferencesStore.preferences.sidebarCollapsed
-  }
-})
-
-async function handleSignOut() {
-  AuthCache.invalidateAll()
-  preferencesStore.hydrate(null)
-  await supabase.auth.signOut()
-  currentAuth.value = null
-  await navigateTo('/')
 }
 
 function toggleSidebar() {

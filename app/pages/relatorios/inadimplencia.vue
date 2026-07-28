@@ -226,7 +226,6 @@ dd-stack
 
       dd-table(
         v-if="!isEmpty"
-        compact
         :columns="columns"
         :data="items"
         :loading="reportsStore.loading"
