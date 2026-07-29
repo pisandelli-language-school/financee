@@ -400,10 +400,12 @@ export async function listFinancialEntries(filters: FinancialEntryFilters) {
         take: filters.pageSize,
       })
 
-  const [items, total, summaryGroups] = await Promise.all([
+  // ⚡ Bolt: Removed redundant summarizeFinancialEntries computation here.
+  // The Nuxt frontend fetches the summary via a dedicated endpoint (/api/lancamentos/summary),
+  // so this saves a potentially expensive GROUP BY database query on every list fetch.
+  const [items, total] = await Promise.all([
     itemsPromise,
     prisma.financialEntry.count({ where }),
-    summarizeFinancialEntries(filters),
   ])
 
   return {
@@ -411,7 +413,6 @@ export async function listFinancialEntries(filters: FinancialEntryFilters) {
     total,
     page: filters.page,
     pageSize: filters.pageSize,
-    summary: summaryGroups,
   }
 }
 
