@@ -43,6 +43,14 @@ const sectionMap = {
     title: 'Auditoria',
     description: 'Consulte eventos críticos e ações rastreadas para investigação operacional.',
   },
+  notificacoes: {
+    title: 'Notificações',
+    description: 'Revise severidade, retenção e comportamento da central persistente do sistema.',
+  },
+  automacoes: {
+    title: 'Automações',
+    description: 'Ative regras pré-configuradas, ajuste severidade e configure destinatários internos.',
+  },
 } as const
 
 export function useBackofficeSections() {

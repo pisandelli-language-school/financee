@@ -9,7 +9,7 @@ interface MenuActionNone {
   type: 'none'
 }
 
-interface AppMenuItem {
+export interface AppMenuItem {
   key: string
   label: string
   icon?: string
@@ -124,6 +124,24 @@ export function useBackofficeNavigation() {
       active: route.path === '/configuracoes/dias-nao-uteis',
       action: { type: 'link', to: '/configuracoes/dias-nao-uteis' },
     },
+    ...(can('notificacoes.view')
+      ? [{
+          key: 'configuracoes-notificacoes',
+          label: 'Notificações',
+          icon: 'lucide:bell-ring',
+          active: route.path === '/configuracoes/notificacoes',
+          action: { type: 'link' as const, to: '/configuracoes/notificacoes' },
+        }]
+      : []),
+    ...(can('automacoes.manage')
+      ? [{
+          key: 'configuracoes-automacoes',
+          label: 'Automações',
+          icon: 'lucide:bot',
+          active: route.path === '/configuracoes/automacoes',
+          action: { type: 'link' as const, to: '/configuracoes/automacoes' },
+        }]
+      : []),
     ...(can('usuarios.manage')
       ? [{
           key: 'configuracoes-usuarios',
@@ -233,6 +251,22 @@ export function useBackofficeNavigation() {
   return {
     backofficeCards: computed(() => [
       ...backofficeCards,
+      ...(can('notificacoes.view')
+        ? [{
+            title: 'Notificações',
+            description: 'Revise severidade, retenção e entrega da central persistente.',
+            to: '/configuracoes/notificacoes',
+            icon: 'lucide:bell-ring',
+          }]
+        : []),
+      ...(can('automacoes.manage')
+        ? [{
+            title: 'Automações',
+            description: 'Ajuste regras pró-ativas, thresholds e destinatários internos.',
+            to: '/configuracoes/automacoes',
+            icon: 'lucide:bot',
+          }]
+        : []),
       ...(can('usuarios.manage')
         ? [{
             title: 'Usuários',

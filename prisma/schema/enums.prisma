@@ -54,6 +54,12 @@ enum AuditSeverity {
   CRITICAL
 }
 
+enum NotificationSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
 enum EntryDirection {
   INCOME
   EXPENSE

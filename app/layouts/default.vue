@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import logoUrl from '~/assets/images/logo-opt.svg?url'
 import { AuthCache, AuthModule } from '~/api/auth'
+import AppSidebarShell from '~/components/layout/AppSidebarShell.vue'
+import AppTopbar from '~/components/layout/AppTopbar.vue'
 import type { CurrentAuthPayload } from '~/types/auth'
 import { useDashboardStore } from '~~/stores/useDashboardStore'
+import { useNotificationsStore } from '~~/stores/useNotificationsStore'
 import { useReportsStore } from '~~/stores/useReportsStore'
 import { useUserPreferencesStore } from '~~/stores/useUserPreferencesStore'
 
@@ -23,16 +25,17 @@ const {
 const preferencesStore = useUserPreferencesStore()
 const dashboardStore = useDashboardStore()
 const reportsStore = useReportsStore()
+const notificationsStore = useNotificationsStore()
+const { showToast } = useToaster()
 
 const collapsed = ref(false)
-const menuRef = ref<{
-  collapse: () => void
-  expand: () => void
-  toggle: () => void
-} | null>(null)
+const notificationPollHandle = ref<number | null>(null)
+const notificationsReadyForToast = ref(false)
+const seenUnreadNotificationIds = ref<Set<string>>(new Set())
 
 const userName = computed(() => user.value?.email?.split('@')[0] ?? 'Perfil')
 const menuScopeKey = computed(() => route.path.split('/')[1] || 'home')
+const canViewNotifications = computed(() => currentAuth.value?.permissions.includes('notificacoes.view') ?? false)
 
 const deniedCodes = new Set([
   'TEACHER_BLOCKED',
@@ -77,9 +80,30 @@ watch(collapsed, async (value) => {
   }
 })
 
+watch(canViewNotifications, async (value) => {
+  if (!import.meta.client) {
+    return
+  }
+
+  if (!value) {
+    resetNotificationPollingState()
+    notificationsStore.reset()
+    return
+  }
+
+  await bootstrapNotifications()
+  startNotificationPolling()
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  stopNotificationPolling()
+})
+
 async function handleSignOut() {
   AuthCache.invalidateAll()
+  resetNotificationPollingState()
   preferencesStore.hydrate(null)
+  notificationsStore.reset()
   await supabase.auth.signOut()
   currentAuth.value = null
   await navigateTo('/')
@@ -89,9 +113,11 @@ function clearCurrentAuthState() {
   AuthCache.invalidateAll()
   currentAuth.value = null
   currentAuthLoading.value = false
+  resetNotificationPollingState()
   preferencesStore.hydrate(null)
   dashboardStore.hydratePreferences(null)
   reportsStore.hydratePreferences(null)
+  notificationsStore.reset()
 }
 
 async function syncCurrentAuth() {
@@ -102,6 +128,11 @@ async function syncCurrentAuth() {
     preferencesStore.hydrate(currentAuth.value.user.preferences)
     dashboardStore.hydratePreferences(currentAuth.value.user.preferences)
     reportsStore.hydratePreferences(currentAuth.value.user.preferences)
+
+    if (!currentAuth.value.permissions.includes('notificacoes.view')) {
+      resetNotificationPollingState()
+      notificationsStore.reset()
+    }
   } catch (error) {
     currentAuth.value = null
 
@@ -126,15 +157,6 @@ async function syncCurrentAuth() {
   } finally {
     currentAuthLoading.value = false
   }
-}
-
-function toggleSidebar() {
-  if (menuRef.value) {
-    menuRef.value.toggle()
-    return
-  }
-
-  collapsed.value = !collapsed.value
 }
 
 function getStatusCode(error: unknown) {
@@ -166,85 +188,117 @@ function getErrorCode(error: unknown) {
 
   return data.code
 }
+
+function stopNotificationPolling() {
+  if (!notificationPollHandle.value) {
+    return
+  }
+
+  window.clearInterval(notificationPollHandle.value)
+  notificationPollHandle.value = null
+}
+
+function resetNotificationPollingState() {
+  stopNotificationPolling()
+  notificationsReadyForToast.value = false
+  seenUnreadNotificationIds.value = new Set()
+}
+
+function collectUnreadPreviewIds() {
+  return notificationsStore.preview
+    .filter(notification => !notification.isRead)
+    .map(notification => notification.id)
+}
+
+function syncSeenUnreadNotifications() {
+  seenUnreadNotificationIds.value = new Set([
+    ...seenUnreadNotificationIds.value,
+    ...collectUnreadPreviewIds(),
+  ])
+}
+
+function getNotificationToastType(severity: string) {
+  if (severity === 'CRITICAL') {
+    return 'error'
+  }
+
+  if (severity === 'WARNING') {
+    return 'warning'
+  }
+
+  return 'info'
+}
+
+async function refreshNotifications(options?: { bootstrap?: boolean }) {
+  await Promise.all([
+    notificationsStore.fetchUnreadCount({ force: true }),
+    notificationsStore.fetchPreview({ force: true }),
+  ])
+
+  if (options?.bootstrap || !notificationsReadyForToast.value) {
+    syncSeenUnreadNotifications()
+    notificationsReadyForToast.value = true
+    return
+  }
+
+  for (const notification of notificationsStore.preview) {
+    if (
+      notification.isRead
+      || seenUnreadNotificationIds.value.has(notification.id)
+      || (notification.severity !== 'WARNING' && notification.severity !== 'CRITICAL')
+    ) {
+      continue
+    }
+
+    showToast(notification.message, {
+      title: notification.title,
+      type: getNotificationToastType(notification.severity),
+      duration: notification.severity === 'CRITICAL' ? 9000 : 7000,
+    })
+  }
+
+  syncSeenUnreadNotifications()
+}
+
+async function bootstrapNotifications() {
+  resetNotificationPollingState()
+
+  try {
+    await refreshNotifications({ bootstrap: true })
+  } catch {
+    resetNotificationPollingState()
+  }
+}
+
+function startNotificationPolling() {
+  stopNotificationPolling()
+
+  notificationPollHandle.value = window.setInterval(() => {
+    void refreshNotifications()
+  }, 45_000)
+}
 </script>
 
 <template lang="pug">
 dd-layout
   nuxt-loading-indicator(:height="3" color="#0a51cf" :throttle="0")
-  header(:class="fin.topbar")
-    dd-box
-      dd-cluster(between)
-        img(:class="fin.brandLogo" :src="logoUrl" alt="Financee")
-
-        dd-cluster(narrow)
-          dd-button(
-            ghost
-            color="var(--dd-color-dark-gray)"
-            icon-only
-            small
-            aria-label="Notificações"
-            icon="lucide:bell"
-          )
-          dd-button(
-            ghost
-            color="var(--dd-color-dark-gray)"
-            icon-only
-            small
-            aria-label="Configurações"
-            icon="lucide:settings"
-            to="/configuracoes"
-          )
-          dd-cluster(:class='fin.avatar')
-            dd-avatar(:alt='userName' small)
-            dd-stack(nogap :class="fin.userMeta")
-              strong {{ userName }}
-              span Administrador
-          dd-button(
-            ghost
-            small
-            icon="lucide:log-out"
-            @click="handleSignOut"
-          ) Sair
+  AppTopbar(
+    :user-name="userName"
+    role-label="Administrador"
+    :can-view-notifications="canViewNotifications"
+    @sign-out="handleSignOut"
+  )
 
   div(data-body)
-    dd-sidebar(fill :class="[fin.sidebarLayout, collapsed && fin.bodyCollapsed]")
-      aside(:class='fin.aside')
-        dd-stack(split-after="1" :class="fin.sidebarFlow")
-          dd-stack(compact)
-            dd-menu(
-              :key="menuScopeKey"
-              ref="menuRef"
-              :class="fin.menu"
-              :items="primaryMenuItems"
-              collapsible
-              :collapsed="collapsed"
-              @update:collapsed="collapsed = $event"
-            )
-            dd-stack(
-              v-if="currentAuthLoading && user"
-              compact
-              :class="fin.menuSkeleton"
-            )
-              dd-cluster(v-for="item in 3" :key="item" compact :class="fin.menuSkeletonRow")
-                dd-skeleton(
-                  v-if="collapsed"
-                  circle
-                  width="1.5rem"
-                  height="1.5rem"
-                )
-                template(v-else)
-                  dd-skeleton(circle width="1.5rem" height="1.5rem")
-                  dd-skeleton(height="1rem" width="8rem" radius="999px")
-          dd-center
-            dd-button(
-              ghost
-              small
-              :icon="collapsed ? 'lucide:panel-left-open' : 'lucide:panel-right-open'"
-              @click="toggleSidebar"
-            )
-              span(v-if="!collapsed") Recolher menu
-      dd-box(tag="main" :class="fin.content")
-        slot
+    AppSidebarShell(
+      :items="primaryMenuItems"
+      :menu-scope-key="menuScopeKey"
+      :collapsed="collapsed"
+      :loading="currentAuthLoading"
+      :has-user="Boolean(user)"
+      @update:collapsed="collapsed = $event"
+    )
+      slot
 
   footer(:class="fin.footer")
     dd-box
@@ -259,100 +313,15 @@ dd-layout
 </template>
 
 <style module="fin">
-.topbar {
-  border-bottom: v('border-width.sm') solid v('color.light-gray');
-}
-
-.brandLogo {
-  block-size: 3rem;
-  inline-size: auto;
-}
-
-.avatar {
-  --dd-cluster-gap: v('space.xxs');
-}
-
-.userMeta {
-  font-size: v('font-size.sm');
-  text-transform: capitalize;
-  span {
-    font-size: v('font-size.xs') 
-  }
-}
-
 .footer {
   background: v('color.bg.surface');
   border-top: v('border-width.sm') solid v('color.light-gray');
-  * {
-    color: v('color.gray');
-    font-size: v('font-size.sm');
-    text-decoration: none;
-  }
 }
 
-.sidebarLayout {
-  --dd-sidebar-column-size: 15rem;
-}
-
-.bodyCollapsed {
-  --dd-center-gap: 0;
-  --dd-sidebar-column-size: 4.5rem;
-}
-
-.aside {
-  background: v('color.bg.surface');
-  border-right: v('border-width.sm') solid v('color.light-gray');
-  min-block-size: 100%;
-  padding: v('space.sm');
-  transition: padding v('transition.slow');
-}
-
-.sidebarLayout > :first-child {
-  min-inline-size: 0;
-  transition: flex-basis v('transition.slow');
-}
-
-.sidebarFlow {
-  min-block-size: 100%;
-}
-
-.menu {
-  --dd-menu-submenu-padding-inline-start: v('space.xs');
-}
-
-.menuSkeleton {
-  padding-block-start: v('space.xs');
-}
-
-.menuSkeletonRow {
-  align-items: center;
-  min-block-size: 2rem;
-}
-
-/* TODO: Remove when Daredash restores submenu spacing by default. */
-.menu > ul > li[data-has-children] {
-  display: grid;
-  gap: v('space.xxs');
-}
-
-/* TODO: Remove when Daredash supports keeping the active parent group expanded by route. */
-.menu > ul > li[data-active][data-has-children]:not([data-float]) > div {
-  grid-template-rows: 1fr;
-}
-
-/* TODO: Remove when Daredash syncs the active route with the parent caret state. */
-.menu > ul > li[data-active][data-has-children]:not([data-float]) > :first-child [class*="chevron"] {
-  transform: rotate(90deg);
-}
-
-.menu {
-  --dd-menu-width: 100%;
-  --dd-menu-width-collapsed: 100%;
-  inline-size: 100%;
-}
-
-.content {
-  --dd-box-gap: v('space.xxl');
-  min-width: 0;
+.footer a,
+.footer span {
+  color: v('color.gray');
+  font-size: v('font-size.sm');
+  text-decoration: none;
 }
 </style>

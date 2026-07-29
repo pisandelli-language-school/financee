@@ -39,6 +39,11 @@ Use `financee-project-conventions` together with this skill whenever the edit al
 17. For versioned business entities such as renewals, amendments, or chained records, expose the chain in two places: lightweight context in the list and a full read-only history flow in a modal.
 18. Hide future integration hooks from the UI when the current product has a single source of truth, but document clearly in the spec and closure review why those fields still exist in the model.
 19. Prefer removing risky lifecycle actions from row-action menus when the same outcome can cause accidental state changes; only expose actions that are operationally safe for that screen.
+20. When styling Daredash primitives such as `dd-card`, `dd-button`, or `dd-table`, do not assume a local CSS Modules class bound on the component tag will reach the final rendered DOM root. Inspect the markup first.
+21. If a visual state already maps well to component-level tokens or attributes, prefer styling through confirmed DOM attributes plus Daredash tokens and CSS variables, instead of forcing a local root class that the primitive may not propagate.
+22. If a feature-specific list ends up needing filters, pagination, batch actions, and standard row actions, prefer converging to the same `BackofficeListPanel` table pattern used elsewhere instead of forcing a card-feed UI that becomes harder to maintain.
+23. When a visual fix depends on a structural selector or other local workaround because the design system lacks a proper token or hook, implement the smallest safe local fix and immediately register the debt as an issue in the appropriate repo.
+24. When a Daredash primitive propagates `data-*` attributes but not local classes reliably, prefer `data-*` as the styling hook for stateful variants such as read/unread, severity, active state, or compact state.
 
 ## Workflow
 
@@ -56,6 +61,9 @@ Use `financee-project-conventions` together with this skill whenever the edit al
 12. When a domain has chained lifecycle states such as original contract, renewal, and current version, reflect that relationship in both backend query shape and UI copy. Do not leave the user to infer the chain from dates alone.
 13. When an entity supports explicit generation of downstream records, guard the action with server rules and also remove or disable it in the UI once the downstream records already exist.
 14. For async edit actions in lists, treat perceived responsiveness as part of correctness. If users can double-click because the UI looks idle, the loading strategy is incomplete even if the fetch logic works.
+15. When a primitive component ignores or swallows a local root class, stop and verify the rendered DOM before continuing. If a bound `data-*` attribute is propagated correctly, it is often the safer styling hook for stateful variants such as read/unread, severity, compactness, or selected state.
+16. When a screen appears visually “correct” only because a form field reserves extra message space, treat that as a layout smell. The vertical gap should come from the shared panel layout, not from the internal height of one specific field.
+17. If you accept a local workaround because the shared component or design system is missing a better primitive, log that debt immediately in GitHub before moving on.
 
 ## Toolbar Pattern
 

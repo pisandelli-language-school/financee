@@ -96,6 +96,45 @@ const financialInstitutions = [
   { code: 'santander', name: 'Santander', logoKey: 'santander' },
 ]
 
+const automationRules = [
+  {
+    key: 'contract-ending-soon',
+    title: 'Contrato próximo do fim',
+    severity: 'WARNING',
+    config: {
+      daysBeforeEnd: 15,
+      recipientRoles: ['Admin', 'Gestor', 'Comercial'],
+    },
+  },
+  {
+    key: 'overdue-entry',
+    title: 'Lançamento vencido',
+    severity: 'CRITICAL',
+    config: {
+      daysAfterDue: 0,
+      recipientRoles: ['Admin', 'Gestor', 'Financeiro'],
+    },
+  },
+  {
+    key: 'negative-cash-flow',
+    title: 'Fluxo de caixa negativo',
+    severity: 'WARNING',
+    config: {
+      threshold: 0,
+      recipientRoles: ['Admin', 'Gestor', 'Financeiro'],
+    },
+  },
+  {
+    key: 'contract-without-generated-entries',
+    title: 'Contrato sem lançamentos gerados',
+    severity: 'WARNING',
+    config: {
+      graceDays: 3,
+      recipientRoles: ['Admin', 'Gestor', 'Financeiro', 'Comercial'],
+    },
+  },
+]
+
 function assertSafeDatabase(url) {
   const parsed = new URL(url)
   const isLocal = ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)
@@ -291,6 +330,8 @@ async function seedRbac() {
 }
 
 async function resetQaData() {
+  await prisma.notification.deleteMany()
+  await prisma.automationRule.deleteMany()
   await prisma.financialEntryTag.deleteMany()
   await prisma.financialEntry.deleteMany()
   await prisma.contract.deleteMany()
@@ -306,6 +347,27 @@ async function resetQaData() {
   await prisma.tag.deleteMany()
   await prisma.paymentMethod.deleteMany()
   await prisma.nonBusinessDay.deleteMany()
+}
+
+async function seedAutomationRules() {
+  for (const rule of automationRules) {
+    await prisma.automationRule.upsert({
+      where: { key: rule.key },
+      update: {
+        title: rule.title,
+        isEnabled: true,
+        severity: rule.severity,
+        config: rule.config,
+      },
+      create: {
+        key: rule.key,
+        title: rule.title,
+        isEnabled: true,
+        severity: rule.severity,
+        config: rule.config,
+      },
+    })
+  }
 }
 
 async function seedAdminUser() {
@@ -968,16 +1030,76 @@ async function seedAuditLogs(user) {
   })
 }
 
+async function seedNotifications(user) {
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: user.id,
+        title: 'Cobrança vencida',
+        message: 'O lançamento "Teste parcelamento" venceu e segue em aberto.',
+        type: 'financial-entry',
+        severity: 'CRITICAL',
+        isRead: false,
+        isPriority: true,
+        entityType: 'FinancialEntry',
+        entityId: 'seed-open-entry',
+        actionUrl: '/lancamentos',
+        dedupeKey: 'seed:overdue-entry:teste-parcelamento',
+        metadata: {
+          source: 'seed',
+          ruleKey: 'overdue-entry',
+        },
+      },
+      {
+        userId: user.id,
+        title: 'Contrato sem lançamentos gerados',
+        message: 'O contrato "Proposta Intensivo - Pedro Pisandelli" ainda não gerou lançamentos.',
+        type: 'contract',
+        severity: 'WARNING',
+        isRead: false,
+        isPriority: false,
+        entityType: 'Contract',
+        entityId: 'seed-contract-without-entries',
+        actionUrl: '/contratos',
+        dedupeKey: 'seed:contract-without-generated-entries:proposta-intensivo',
+        metadata: {
+          source: 'seed',
+          ruleKey: 'contract-without-generated-entries',
+        },
+      },
+      {
+        userId: user.id,
+        title: 'Preferências atualizadas',
+        message: 'Suas preferências do Financee foram sincronizadas com sucesso.',
+        type: 'system',
+        severity: 'INFO',
+        isRead: true,
+        readAt: new Date('2026-07-20T12:00:00.000Z'),
+        isPriority: false,
+        entityType: 'UserPreferences',
+        entityId: user.id,
+        actionUrl: '/configuracoes/usuarios',
+        dedupeKey: 'seed:preferences-synced',
+        metadata: {
+          source: 'seed',
+        },
+      },
+    ],
+  })
+}
+
 async function main() {
   console.log('Seeding Financee local QA database...')
 
   await seedRbac()
   await resetQaData()
   const adminUser = await seedAdminUser()
+  await seedAutomationRules()
   const context = await seedBackoffice()
   await seedContracts(context)
   await seedFinancialEntries(context)
   await seedAuditLogs(adminUser)
+  await seedNotifications(adminUser)
 
   console.log('Seed completed.')
 }
