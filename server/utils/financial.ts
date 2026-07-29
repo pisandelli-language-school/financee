@@ -400,10 +400,9 @@ export async function listFinancialEntries(filters: FinancialEntryFilters) {
         take: filters.pageSize,
       })
 
-  const [items, total, summaryGroups] = await Promise.all([
+  const [items, total] = await Promise.all([
     itemsPromise,
     prisma.financialEntry.count({ where }),
-    summarizeFinancialEntries(filters),
   ])
 
   return {
@@ -411,7 +410,6 @@ export async function listFinancialEntries(filters: FinancialEntryFilters) {
     total,
     page: filters.page,
     pageSize: filters.pageSize,
-    summary: summaryGroups,
   }
 }
 

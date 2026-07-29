@@ -153,6 +153,4 @@ export interface FinancialEntrySummary {
   net: number
 }
 
-export interface FinancialEntryListResponse extends PaginatedResponse<FinancialEntryRecord> {
-  summary: FinancialEntrySummary
-}
+export type FinancialEntryListResponse = PaginatedResponse<FinancialEntryRecord>
