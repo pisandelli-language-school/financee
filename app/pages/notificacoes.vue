@@ -205,7 +205,8 @@ dd-stack
       dd-stack(compact nogap)
         dd-cluster(compact :class="fin.titleRow")
           strong(:class="[fin.title, row.isRead && fin.titleRead]") {{ row.title }}
-          dd-badge(v-if="row.isPriority" :color="row.isRead ? 'secondary' : 'danger'") Prioridade
+          dd-badge(v-if="row.isPriority && row.isRead" secondary) Prioridade
+          dd-badge(v-else-if="row.isPriority" danger) Prioridade
         span(v-if="getContextLabel(row)" :class="[fin.context, row.isRead && fin.textRead]") {{ getContextLabel(row) }}
         span(:class="[fin.message, row.isRead && fin.textRead]") {{ row.message }}
 
@@ -213,45 +214,38 @@ dd-stack
       span(:class="[fin.date, row.isRead && fin.textRead]") {{ formatDate(row.createdAt) }}
 
     template(#cell-actions="{ row }")
-      dd-cluster(compact :class="fin.actions")
-        dd-popover(v-if="row.actionUrl" trigger="hover" placement="top" :offset="6")
-          dd-button(
-            ghost
-            tiny
-            icon-only
-            icon="lucide:square-arrow-out-up-right"
-            aria-label="Abrir contexto da notificação"
-            :disabled="notificationsStore.actionLoading"
-            @click="handleOpen(row)"
-          )
-          template(#content)
-            span Abrir contexto
-        dd-popover(v-if="!row.isRead" trigger="hover" placement="top" :offset="6")
-          dd-button(
-            ghost
-            tiny
-            icon-only
-            success
-            icon="lucide:check"
-            aria-label="Marcar notificação como lida"
-            :disabled="notificationsStore.actionLoading"
-            @click="handleMarkAsRead(row.id)"
-          )
-          template(#content)
-            span Marcar como lida
-        dd-popover(trigger="hover" placement="top" :offset="6")
-          dd-button(
-            ghost
-            tiny
-            icon-only
-            danger
-            icon="lucide:trash-2"
-            aria-label="Excluir notificação"
-            :disabled="notificationsStore.actionLoading"
-            @click="notificationsStore.deleteItem(row.id)"
-          )
-          template(#content)
-            span Excluir notificação
+      dd-cluster(narrow end :class="fin.actions")
+        dd-button(
+          v-if="row.actionUrl"
+          ghost
+          tiny
+          icon-only
+          icon="lucide:square-arrow-out-up-right"
+          aria-label="Abrir contexto da notificação"
+          :disabled="notificationsStore.actionLoading"
+          @click="handleOpen(row)"
+        )
+        dd-button(
+          v-if="!row.isRead"
+          ghost
+          tiny
+          icon-only
+          success
+          icon="lucide:check"
+          aria-label="Marcar notificação como lida"
+          :disabled="notificationsStore.actionLoading"
+          @click="handleMarkAsRead(row.id)"
+        )
+        dd-button(
+          ghost
+          tiny
+          icon-only
+          danger
+          icon="lucide:trash-2"
+          aria-label="Excluir notificação"
+          :disabled="notificationsStore.actionLoading"
+          @click="notificationsStore.deleteItem(row.id)"
+        )
 
     template(#empty)
       backoffice-empty-state(
