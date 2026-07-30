@@ -85,11 +85,26 @@ watch(() => [
   entriesStore.filters.dateTo,
   entriesStore.filters.page,
   entriesStore.filters.pageSize,
-] as const, async () => {
-  await Promise.all([
-    entriesStore.fetch(),
-    loadSummaryComparisons(),
-  ])
+] as const, async (newVal, oldVal) => {
+  const promises: Promise<unknown>[] = [entriesStore.fetch()]
+
+  // ⚡ Bolt: Prevent redundant summary API calls when only page, pageSize, or direction change
+  const shouldReloadSummary = !oldVal
+    || newVal[0] !== oldVal[0] // search
+    || newVal[2] !== oldVal[2] // status
+    || newVal[3] !== oldVal[3] // accountId
+    || newVal[4] !== oldVal[4] // paymentMethodId
+    || newVal[5] !== oldVal[5] // categoryId
+    || newVal[6] !== oldVal[6] // contactId
+    || newVal[7] !== oldVal[7] // tagId
+    || newVal[8] !== oldVal[8] // dateFrom
+    || newVal[9] !== oldVal[9] // dateTo
+
+  if (shouldReloadSummary) {
+    promises.push(loadSummaryComparisons())
+  }
+
+  await Promise.all(promises)
 })
 
 const visibleMonth = computed(() => parseDateInput(entriesStore.filters.dateFrom) ?? startOfMonth(new Date()))

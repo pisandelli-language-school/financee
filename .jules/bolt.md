@@ -1,0 +1,3 @@
+## 2024-03-24 - Prevent redundant summary API calls
+**Learning:** Found a performance bottleneck where Vue `watch` statements triggered API calls for summary data even when only pagination or direction filters changed. These changes don't affect the summary data itself, leading to redundant backend queries.
+**Action:** When watching multiple filters that trigger different API calls, use the `watch(..., (newVal, oldVal))` signature to explicitly check which specific values changed, and conditionally append promises to the `Promise.all` array to avoid fetching data that hasn't changed.
