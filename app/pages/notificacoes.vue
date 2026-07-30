@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { NotificationFilters, NotificationRecord, NotificationSeverity } from '~/types/notifications'
-import type { AppTableColumn } from '~/types/backoffice'
+import type { AppTableColumn, AppTableRowAttrs } from '~/types/backoffice'
 import { useNotificationsStore } from '~~/stores/useNotificationsStore'
 
 const notificationsStore = useNotificationsStore()
@@ -51,6 +51,14 @@ const severityMetaMap: Record<NotificationSeverity, {
     icon: 'lucide:triangle-alert',
     badge: 'danger',
   },
+}
+
+const notificationRowAttrs: AppTableRowAttrs = (row) => {
+  const notification = row as NotificationRecord
+
+  return notification.isRead
+    ? { 'data-notification-read': 'true' }
+    : undefined
 }
 
 watch(() => [
@@ -160,6 +168,7 @@ dd-stack
   backoffice-list-panel(
     :columns="columns"
     :data="notificationsStore.data"
+    :row-attrs="notificationRowAttrs"
     :loading="notificationsStore.loading"
     :is-invalid="Boolean(notificationsStore.error)"
     :error-message="notificationsStore.error?.message ?? ''"
@@ -195,11 +204,10 @@ dd-stack
         :class="fin.severityIcon"
         :data-severity="getSeverityTone(row.severity)"
         :data-is-read="row.isRead"
-        :data-notification-read="row.isRead"
         :title="getSeverityMeta(row.severity).label"
         :aria-label="getSeverityMeta(row.severity).label"
       )
-        icon(:name="getSeverityMeta(row.severity).icon")
+        icon(:name="getSeverityMeta(row.severity).icon" :class="fin.severityIconGlyph")
 
     template(#cell-title="{ row }")
       dd-stack(compact nogap)
@@ -290,6 +298,11 @@ dd-stack
   display: inline-flex;
   font-size: 1.2rem;
   justify-content: center;
+  line-height: 1;
+}
+
+.severityIconGlyph {
+  display: block;
 }
 
 .severityIcon[data-severity='danger'] {
@@ -309,7 +322,8 @@ dd-stack
   color: v('color.gray');
 }
 
-tbody tr:has([data-notification-read='true']) {
-  background-color: color-mix(in srgb, v('color.light-gray') 35%, v('color.bg.surface'));
+tbody tr[data-notification-read='true'] {
+  --local-row-bg: color-mix(in srgb, v('color.light-gray') 35%, v('color.bg.surface'));
+  --local-row-hover-bg: color-mix(in srgb, v('color.light-gray') 45%, v('color.bg.surface'));
 }
 </style>

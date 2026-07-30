@@ -278,6 +278,19 @@ export interface DeleteBlockReason {
   description: string
 }
 
+export type AppTableRowClassValue =
+  | string
+  | string[]
+  | Record<string, boolean>
+
+export type AppTableRowClass =
+  | AppTableRowClassValue
+  | ((row: unknown, index: number) => AppTableRowClassValue)
+
+export type AppTableRowAttrs =
+  | Record<string, unknown>
+  | ((row: unknown, index: number) => Record<string, unknown> | undefined)
+
 export interface AppTableColumn {
   key: string
   title?: string

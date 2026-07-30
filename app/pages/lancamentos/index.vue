@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { AccountModule, CategoryModule, ContactModule, PaymentMethodModule, TagModule } from '~/api/backoffice'
 import { FinancialEntriesModule } from '~/api/financial'
-import type { AppTableColumn } from '~/types/backoffice'
+import type { AppTableColumn, AppTableRowAttrs } from '~/types/backoffice'
 import { getAccountInitials, getInstitutionLogoByKey } from '~/utils/account-institutions'
 import {
   entryDirectionOptions,
@@ -63,6 +63,14 @@ const columns: AppTableColumn[] = [
   { key: 'status', title: 'Status', width: '5rem', align: 'center' },
   { key: 'actions', title: 'Ações', width: '5rem', align: 'center' },
 ]
+
+const entryRowAttrs: AppTableRowAttrs = (row) => {
+  const entry = row as FinancialEntryRecord
+
+  return entry.status === 'OPEN'
+    ? { 'data-entry-open': 'true' }
+    : undefined
+}
 
 syncMonthFilters(startOfMonth(new Date()))
 
@@ -660,6 +668,7 @@ dd-stack
   backoffice-list-panel(
     :columns="columns"
     :data="entriesStore.data"
+    :row-attrs="entryRowAttrs"
     :loading="entriesStore.loading"
     :is-invalid="Boolean(entriesStore.error)"
     :error-message="entriesStore.error?.message ?? ''"
@@ -1202,7 +1211,8 @@ dd-stack
   --dd-button-base-color: v('color.gray.200');
 }
 
-tbody tr:has(.statusOpenButton) {
-  background-color: color-mix(in srgb, v('color.warning.50') 35%, v('color.bg.surface'));
+tbody tr[data-entry-open='true'] {
+  --local-row-bg: color-mix(in srgb, v('color.warning.50') 35%, v('color.bg.surface'));
+  --local-row-hover-bg: color-mix(in srgb, v('color.warning.50') 45%, v('color.bg.surface'));
 }
 </style>

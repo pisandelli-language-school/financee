@@ -113,22 +113,6 @@ dd-sidebar(fill :class="[fin.layout, collapsed && fin.layoutCollapsed]")
   min-block-size: 2rem;
 }
 
-/* TODO: Remove when Daredash restores submenu spacing by default. */
-.menu > ul > li[data-has-children] {
-  display: grid;
-  gap: v('space.xxs');
-}
-
-/* TODO: Remove when Daredash supports keeping the active parent group expanded by route. */
-.menu > ul > li[data-active][data-has-children]:not([data-float]) > div {
-  grid-template-rows: 1fr;
-}
-
-/* TODO: Remove when Daredash syncs the active route with the parent caret state. */
-.menu > ul > li[data-active][data-has-children]:not([data-float]) > :first-child [class*="chevron"] {
-  transform: rotate(90deg);
-}
-
 .content {
   --dd-box-gap: v('space.xxl');
   min-width: 0;

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { backofficePageSizeOptions } from '~/types/backoffice'
-import type { AppTableColumn } from '~/types/backoffice'
+import type { AppTableColumn, AppTableRowAttrs, AppTableRowClass } from '~/types/backoffice'
 
 const props = withDefaults(defineProps<{
   columns: AppTableColumn[]
   data: unknown[]
+  rowClass?: AppTableRowClass
+  rowAttrs?: AppTableRowAttrs
   loading?: boolean
   isInvalid?: boolean
   errorMessage?: string
@@ -13,6 +15,8 @@ const props = withDefaults(defineProps<{
   total: number
   pageSize: number
 }>(), {
+  rowClass: undefined,
+  rowAttrs: undefined,
   loading: false,
   isInvalid: false,
   errorMessage: '',
@@ -70,7 +74,7 @@ dd-card
   dd-stack
     slot(name="notice")
 
-    dd-stack(nogap)
+    dd-stack(compact)
       dd-cluster(end :class="fin.toolbar")
         slot(name="toolbar")
 
@@ -81,6 +85,8 @@ dd-card
         dd-table(
           :columns="props.columns"
           :data="props.data"
+          :row-class="props.rowClass"
+          :row-attrs="props.rowAttrs"
           :loading="props.loading"
           :compact="props.compactTable"
           :is-invalid="props.isInvalid"
