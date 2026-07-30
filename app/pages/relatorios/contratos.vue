@@ -36,13 +36,13 @@ const breadcrumb = {
 }
 
 const columns: AppTableColumn[] = [
-  { key: 'title', title: 'Contrato', width: '260px' },
-  { key: 'clientName', title: 'Cliente', width: '180px' },
-  { key: 'status', title: 'Status', width: '140px', align: 'center' },
-  { key: 'startDate', title: 'Início', width: '130px' },
-  { key: 'expectedEndDate', title: 'Término', width: '130px' },
-  { key: 'finalAmount', title: 'Valor final', width: '140px' },
-  { key: 'entriesCount', title: 'Lançamentos', width: '120px', align: 'center' },
+  { key: 'title', title: 'Contrato', width: '260px', sortable: true },
+  { key: 'clientName', title: 'Cliente', width: '180px', sortable: true },
+  { key: 'status', title: 'Status', width: '140px', align: 'center', sortable: true },
+  { key: 'startDate', title: 'Início', width: '130px', sortable: true },
+  { key: 'expectedEndDate', title: 'Término', width: '130px', sortable: true },
+  { key: 'finalAmount', title: 'Valor final', width: '140px', sortable: true },
+  { key: 'entriesCount', title: 'Lançamentos', width: '120px', align: 'center', sortable: true },
 ]
 
 const statusLabelMap = new Map(contractStatusOptions.map(option => [option.value, option.label]))

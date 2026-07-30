@@ -24,10 +24,10 @@ const requestError = ref('')
 const deleteDescription = ref('Deseja excluir esta categoria? O registro será ocultado dos fluxos ativos.')
 
 const columns: AppTableColumn[] = [
-  { key: 'name', title: 'Categoria' },
-  { key: 'type', title: 'Tipo', width: '180px' },
-  { key: 'subcategory', title: 'Subcategoria de' },
-  { key: 'status', title: 'Status', width: '120px' },
+  { key: 'name', title: 'Categoria', sortable: true },
+  { key: 'type', title: 'Tipo', width: '180px', sortable: true },
+  { key: 'subcategory', title: 'Subcategoria de', sortable: true },
+  { key: 'status', title: 'Status', width: '120px', sortable: true },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 

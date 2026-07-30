@@ -28,13 +28,13 @@ const breadcrumb = {
 }
 
 const columns: AppTableColumn[] = [
-  { key: 'label', title: 'Período', width: '180px' },
-  { key: 'realizedIncome', title: 'Entradas realizadas', width: '180px' },
-  { key: 'realizedExpense', title: 'Saídas realizadas', width: '180px' },
-  { key: 'realizedNet', title: 'Saldo realizado', width: '160px' },
-  { key: 'projectedIncome', title: 'Entradas previstas', width: '180px' },
-  { key: 'projectedExpense', title: 'Saídas previstas', width: '180px' },
-  { key: 'projectedNet', title: 'Saldo previsto', width: '160px' },
+  { key: 'label', title: 'Período', width: '180px', sortable: true },
+  { key: 'realizedIncome', title: 'Entradas realizadas', width: '180px', sortable: true },
+  { key: 'realizedExpense', title: 'Saídas realizadas', width: '180px', sortable: true },
+  { key: 'realizedNet', title: 'Saldo realizado', width: '160px', sortable: true },
+  { key: 'projectedIncome', title: 'Entradas previstas', width: '180px', sortable: true },
+  { key: 'projectedExpense', title: 'Saídas previstas', width: '180px', sortable: true },
+  { key: 'projectedNet', title: 'Saldo previsto', width: '160px', sortable: true },
 ]
 
 const regimeOptions = [

@@ -296,4 +296,5 @@ export interface AppTableColumn {
   title?: string
   align?: 'left' | 'center' | 'right'
   width?: string
+  sortable?: boolean
 }

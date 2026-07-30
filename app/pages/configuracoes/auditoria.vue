@@ -21,11 +21,11 @@ const severityOptions = [
 ]
 
 const columns: AppTableColumn[] = [
-  { key: 'createdAt', title: 'Data' },
-  { key: 'severity', title: 'Severidade' },
-  { key: 'eventType', title: 'Evento' },
-  { key: 'entityType', title: 'Entidade' },
-  { key: 'userEmail', title: 'Usuário' },
+  { key: 'createdAt', title: 'Data', sortable: true },
+  { key: 'severity', title: 'Severidade', sortable: true },
+  { key: 'eventType', title: 'Evento', sortable: true },
+  { key: 'entityType', title: 'Entidade', sortable: true },
+  { key: 'userEmail', title: 'Usuário', sortable: true },
   { key: 'actions', title: 'Ações', width: '64px', align: 'right' },
 ]
 

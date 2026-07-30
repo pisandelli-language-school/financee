@@ -16,8 +16,8 @@ const deleteTarget = ref<TagRecord | null>(null)
 const requestError = ref('')
 
 const columns: AppTableColumn[] = [
-  { key: 'tag', title: 'Tag' },
-  { key: 'status', title: 'Status', width: '120px' },
+  { key: 'tag', title: 'Tag', sortable: true },
+  { key: 'status', title: 'Status', width: '120px', sortable: true },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 

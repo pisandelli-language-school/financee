@@ -53,13 +53,13 @@ const currentSummary = ref<FinancialEntrySummary>(createEmptySummary())
 const previousSummary = ref<FinancialEntrySummary>(createEmptySummary())
 
 const columns: AppTableColumn[] = [
-  { key: 'direction', title: 'Direção', width: '80px', align: 'center' },
-  { key: 'effectiveDueDate', title: 'Vencimento', width: '120px' },
-  { key: 'description', title: 'Descrição' },
-  { key: 'contactName', title: 'Contato' },
-  { key: 'accountName', title: 'Conta', width: '5rem', align: 'center' },
-  { key: 'categoryName', title: 'Categoria' },
-  { key: 'amount', title: 'Valor', width: '7rem' },
+  { key: 'direction', title: 'Direção', width: '80px', align: 'center', sortable: true },
+  { key: 'effectiveDueDate', title: 'Vencimento', width: '120px', sortable: true },
+  { key: 'description', title: 'Descrição', sortable: true },
+  { key: 'contactName', title: 'Contato', sortable: true },
+  { key: 'accountName', title: 'Conta', width: '5rem', align: 'center', sortable: true },
+  { key: 'categoryName', title: 'Categoria', sortable: true },
+  { key: 'amount', title: 'Valor', width: '7rem', sortable: true },
   { key: 'status', title: 'Status', width: '5rem', align: 'center' },
   { key: 'actions', title: 'Ações', width: '5rem', align: 'center' },
 ]

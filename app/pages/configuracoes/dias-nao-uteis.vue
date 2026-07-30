@@ -27,11 +27,11 @@ const typeFilterOptions = [
 const scopeLabels = new Map(nonBusinessDayScopeOptions.map((option) => [option.value, option.label]))
 
 const columns: AppTableColumn[] = [
-  { key: 'title', title: 'Título' },
-  { key: 'type', title: 'Tipo', width: '160px' },
-  { key: 'description', title: 'Cadastro' },
+  { key: 'title', title: 'Título', sortable: true },
+  { key: 'type', title: 'Tipo', width: '160px', sortable: true },
+  { key: 'description', title: 'Cadastro', sortable: true },
   { key: 'scope', title: 'Escopo', width: '140px' },
-  { key: 'status', title: 'Status', width: '120px' },
+  { key: 'status', title: 'Status', width: '120px', sortable: true },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 

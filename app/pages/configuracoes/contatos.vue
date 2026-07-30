@@ -17,10 +17,10 @@ const deleteTarget = ref<ContactRecord | null>(null)
 const requestError = ref('')
 
 const columns: AppTableColumn[] = [
-  { key: 'name', title: 'Nome' },
-  { key: 'roles', title: 'Papéis', width: '220px' },
+  { key: 'name', title: 'Nome', sortable: true },
+  { key: 'roles', title: 'Papéis', width: '220px', sortable: true },
   { key: 'nature', title: 'Natureza', width: '140px' },
-  { key: 'email', title: 'Contato' },
+  { key: 'email', title: 'Contato', sortable: true },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 

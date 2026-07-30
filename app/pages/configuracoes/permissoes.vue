@@ -24,10 +24,10 @@ const form = ref<RolePermissionsFormValues>({
 const permissionCatalog = ref<PermissionCatalogRecord[]>([])
 
 const columns: AppTableColumn[] = [
-  { key: 'name', title: 'Papel' },
-  { key: 'description', title: 'Descrição' },
-  { key: 'usersCount', title: 'Usuários', align: 'center' },
-  { key: 'permissions', title: 'Permissões' },
+  { key: 'name', title: 'Papel', sortable: true },
+  { key: 'description', title: 'Descrição', sortable: true },
+  { key: 'usersCount', title: 'Usuários', align: 'center', sortable: true },
+  { key: 'permissions', title: 'Permissões', sortable: true },
   { key: 'actions', title: 'Ações', width: '64px', align: 'right' },
 ]
 

@@ -34,13 +34,13 @@ const breadcrumb = {
 }
 
 const columns: AppTableColumn[] = [
-  { key: 'description', title: 'Lançamento', width: '260px' },
-  { key: 'contactName', title: 'Contato', width: '180px' },
-  { key: 'accountName', title: 'Conta', width: '160px' },
-  { key: 'effectiveDueDate', title: 'Vencimento efetivo', width: '160px' },
-  { key: 'overdueDays', title: 'Atraso', width: '100px', align: 'center' },
-  { key: 'temperature', title: 'Temperatura', width: '140px', align: 'center' },
-  { key: 'amount', title: 'Valor', width: '140px' },
+  { key: 'description', title: 'Lançamento', width: '260px', sortable: true },
+  { key: 'contactName', title: 'Contato', width: '180px', sortable: true },
+  { key: 'accountName', title: 'Conta', width: '160px', sortable: true },
+  { key: 'effectiveDueDate', title: 'Vencimento efetivo', width: '160px', sortable: true },
+  { key: 'overdueDays', title: 'Atraso', width: '100px', align: 'center', sortable: true },
+  { key: 'temperature', title: 'Temperatura', width: '140px', align: 'center', sortable: true },
+  { key: 'amount', title: 'Valor', width: '140px', sortable: true },
 ]
 
 const isPersisting = ref(false)

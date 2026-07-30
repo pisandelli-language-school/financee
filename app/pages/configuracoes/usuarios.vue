@@ -27,11 +27,11 @@ const workspaceRoleLabelMap = new Map([
 ])
 
 const columns: AppTableColumn[] = [
-  { key: 'name', title: 'Usuário' },
-  { key: 'email', title: 'E-mail' },
-  { key: 'googleWorkspaceRole', title: 'Workspace' },
-  { key: 'internalRoleName', title: 'Papel interno' },
-  { key: 'isActive', title: 'Status' },
+  { key: 'name', title: 'Usuário', sortable: true },
+  { key: 'email', title: 'E-mail', sortable: true },
+  { key: 'googleWorkspaceRole', title: 'Workspace', sortable: true },
+  { key: 'internalRoleName', title: 'Papel interno', sortable: true },
+  { key: 'isActive', title: 'Status', sortable: true },
   { key: 'actions', title: 'Ações', width: '64px', align: 'right' },
 ]
 

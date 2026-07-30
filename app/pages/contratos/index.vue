@@ -32,12 +32,12 @@ const breadcrumb = {
 }
 
 const columns: AppTableColumn[] = [
-  { key: 'title', title: 'Contrato' },
-  { key: 'clientName', title: 'Cliente' },
-  { key: 'status', title: 'Status', width: '140px' },
-  { key: 'startDate', title: 'Início', width: '140px' },
-  { key: 'expectedEndDate', title: 'Término', width: '140px' },
-  { key: 'finalAmount', title: 'Valor final', width: '160px' },
+  { key: 'title', title: 'Contrato', sortable: true },
+  { key: 'clientName', title: 'Cliente', sortable: true },
+  { key: 'status', title: 'Status', width: '140px', sortable: true },
+  { key: 'startDate', title: 'Início', width: '140px', sortable: true },
+  { key: 'expectedEndDate', title: 'Término', width: '140px', sortable: true },
+  { key: 'finalAmount', title: 'Valor final', width: '160px', sortable: true },
   { key: 'actions', title: 'Ações', width: '144px', align: 'right' },
 ]
 

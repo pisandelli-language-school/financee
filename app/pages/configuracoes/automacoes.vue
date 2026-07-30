@@ -30,8 +30,8 @@ const roleOptions = [
 ]
 
 const columns: AppTableColumn[] = [
-  { key: 'title', title: 'Regra' },
-  { key: 'severity', title: 'Severidade' },
+  { key: 'title', title: 'Regra', sortable: true },
+  { key: 'severity', title: 'Severidade', sortable: true },
   { key: 'recipients', title: 'Destinatários' },
   { key: 'isEnabled', title: 'Ativa', align: 'center', width: '5rem' },
   { key: 'actions', title: 'Ações', align: 'right', width: '64px' },

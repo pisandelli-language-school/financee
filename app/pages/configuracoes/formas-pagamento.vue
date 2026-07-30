@@ -16,8 +16,8 @@ const deleteTarget = ref<PaymentMethodRecord | null>(null)
 const requestError = ref('')
 
 const columns: AppTableColumn[] = [
-  { key: 'name', title: 'Forma de pagamento' },
-  { key: 'status', title: 'Status', width: '120px' },
+  { key: 'name', title: 'Forma de pagamento', sortable: true },
+  { key: 'status', title: 'Status', width: '120px', sortable: true },
   { key: 'actions', title: 'Ações', width: '112px', align: 'right' },
 ]
 
