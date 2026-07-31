@@ -18,7 +18,6 @@ const props = defineProps<{
   errorMessage?: string
   loading?: boolean
 }>()
-const fin = useCssModule('fin')
 
 const emit = defineEmits<{
   (event: 'update:open', value: boolean): void
@@ -59,43 +58,37 @@ const severityOptions = [
 ]
 
 const thresholdLabel = computed(() => {
-  if (props.ruleKey === 'contract-ending-soon') {
-    return 'Dias antes do término'
+  switch (props.ruleKey) {
+    case 'contract-ending-soon':
+      return 'Dias antes do término'
+    case 'entry-due-soon':
+      return 'Dias antes do vencimento'
+    case 'overdue-entry':
+      return 'Dias após o vencimento'
+    case 'negative-cash-flow':
+      return 'Threshold mínimo'
+    case 'contract-without-generated-entries':
+      return 'Janela de tolerância (dias)'
+    default:
+      return ''
   }
-
-  if (props.ruleKey === 'overdue-entry') {
-    return 'Dias após o vencimento'
-  }
-
-  if (props.ruleKey === 'negative-cash-flow') {
-    return 'Threshold mínimo'
-  }
-
-  if (props.ruleKey === 'contract-without-generated-entries') {
-    return 'Janela de tolerância (dias)'
-  }
-
-  return ''
 })
 
 const thresholdField = computed(() => {
-  if (props.ruleKey === 'contract-ending-soon') {
-    return 'daysBeforeEnd'
+  switch (props.ruleKey) {
+    case 'contract-ending-soon':
+      return 'daysBeforeEnd'
+    case 'entry-due-soon':
+      return 'daysBeforeDue'
+    case 'overdue-entry':
+      return 'daysAfterDue'
+    case 'negative-cash-flow':
+      return 'threshold'
+    case 'contract-without-generated-entries':
+      return 'graceDays'
+    default:
+      return ''
   }
-
-  if (props.ruleKey === 'overdue-entry') {
-    return 'daysAfterDue'
-  }
-
-  if (props.ruleKey === 'negative-cash-flow') {
-    return 'threshold'
-  }
-
-  if (props.ruleKey === 'contract-without-generated-entries') {
-    return 'graceDays'
-  }
-
-  return ''
 })
 
 const thresholdPlaceholder = computed(() => {

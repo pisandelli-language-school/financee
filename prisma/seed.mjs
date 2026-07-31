@@ -116,6 +116,15 @@ const automationRules = [
     },
   },
   {
+    key: 'entry-due-soon',
+    title: 'Lançamento próximo do vencimento',
+    severity: 'WARNING',
+    config: {
+      daysBeforeDue: 3,
+      recipientRoles: ['Admin', 'Gestor', 'Financeiro'],
+    },
+  },
+  {
     key: 'negative-cash-flow',
     title: 'Fluxo de caixa negativo',
     severity: 'WARNING',
@@ -130,6 +139,14 @@ const automationRules = [
     severity: 'WARNING',
     config: {
       graceDays: 3,
+      recipientRoles: ['Admin', 'Gestor', 'Financeiro', 'Comercial'],
+    },
+  },
+  {
+    key: 'contract-without-payment-condition',
+    title: 'Contrato sem condição de pagamento',
+    severity: 'WARNING',
+    config: {
       recipientRoles: ['Admin', 'Gestor', 'Financeiro', 'Comercial'],
     },
   },

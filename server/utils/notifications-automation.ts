@@ -20,6 +20,7 @@ interface NotificationDraft {
 interface AutomationRuleConfig {
   recipientRoles: string[]
   daysBeforeEnd: number
+  daysBeforeDue: number
   daysAfterDue: number
   threshold: number
   graceDays: number
@@ -364,6 +365,78 @@ async function syncOverdueEntryRule(
   }
 }
 
+async function syncEntryDueSoonRule(
+  rule: {
+    severity: NotificationSeverity
+    config: unknown
+  },
+) {
+  const config = parseRuleConfig(rule.config)
+  const recipientRoles = Array.isArray(config.recipientRoles)
+    ? config.recipientRoles.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    : []
+  const daysBeforeDue = normalizePositiveInteger(config.daysBeforeDue, 3)
+  const today = getTodayStartUtc()
+  const endLimit = addDays(today, daysBeforeDue)
+
+  const [recipients, entries] = await Promise.all([
+    resolveRecipients(recipientRoles),
+    prisma.financialEntry.findMany({
+      where: {
+        deletedAt: null,
+        status: 'OPEN',
+        effectiveDueDate: {
+          gte: today,
+          lte: endLimit,
+        },
+      },
+      select: {
+        id: true,
+        description: true,
+        amount: true,
+        effectiveDueDate: true,
+        contact: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    }),
+  ])
+
+  let createdCount = 0
+  let emailedCount = 0
+
+  for (const entry of entries) {
+    const delivery = await deliverNotification(recipients, recipient => ({
+      userId: recipient.id,
+      title: 'Lançamento próximo do vencimento',
+      message: `O lançamento "${entry.description}" de ${formatCurrency(Number(entry.amount))} vence em ${formatDateBr(entry.effectiveDueDate)}${entry.contact?.name ? ` para ${entry.contact.name}` : ''}.`,
+      severity: rule.severity,
+      dedupeKey: `entry-due-soon:${entry.id}:${toDateOnly(entry.effectiveDueDate)}:${daysBeforeDue}`,
+      actionUrl: '/lancamentos',
+      entityType: 'FinancialEntry',
+      entityId: entry.id,
+      type: 'entry-due-soon',
+      metadata: {
+        description: entry.description,
+        amount: Number(entry.amount),
+        effectiveDueDate: toDateOnly(entry.effectiveDueDate),
+        contactName: entry.contact?.name ?? null,
+        daysBeforeDue,
+      },
+    }))
+
+    createdCount += delivery.createdCount
+    emailedCount += delivery.emailedCount
+  }
+
+  return {
+    createdCount,
+    emailedCount,
+  }
+}
+
 async function syncNegativeCashFlowRule(
   rule: {
     severity: NotificationSeverity
@@ -486,6 +559,97 @@ async function syncContractWithoutEntriesRule(
   }
 }
 
+async function syncContractWithoutPaymentConditionRule(
+  rule: {
+    severity: NotificationSeverity
+    config: unknown
+  },
+) {
+  const config = parseRuleConfig(rule.config)
+  const recipientRoles = Array.isArray(config.recipientRoles)
+    ? config.recipientRoles.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    : []
+
+  const [recipients, contracts] = await Promise.all([
+    resolveRecipients(recipientRoles),
+    prisma.contract.findMany({
+      where: {
+        deletedAt: null,
+        status: 'ACTIVE',
+        paymentConditionId: null,
+      },
+      select: {
+        id: true,
+        title: true,
+        startDate: true,
+        client: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    }),
+  ])
+
+  let createdCount = 0
+  let emailedCount = 0
+
+  for (const contract of contracts) {
+    const delivery = await deliverNotification(recipients, recipient => ({
+      userId: recipient.id,
+      title: 'Contrato sem condição de pagamento',
+      message: `O contrato "${contract.title}" de ${contract.client.name} está ativo desde ${formatDateBr(contract.startDate)} e ainda não possui condição de pagamento definida.`,
+      severity: rule.severity,
+      dedupeKey: `contract-without-payment-condition:${contract.id}`,
+      actionUrl: '/contratos',
+      entityType: 'Contract',
+      entityId: contract.id,
+      type: 'contract-without-payment-condition',
+      metadata: {
+        contractTitle: contract.title,
+        clientName: contract.client.name,
+        startDate: toDateOnly(contract.startDate),
+      },
+    }))
+
+    createdCount += delivery.createdCount
+    emailedCount += delivery.emailedCount
+  }
+
+  return {
+    createdCount,
+    emailedCount,
+  }
+}
+
+async function syncRule(
+  rule: {
+    key: string
+    severity: NotificationSeverity
+    config: unknown
+  },
+) {
+  switch (rule.key) {
+    case 'contract-ending-soon':
+      return await syncContractEndingSoonRule(rule)
+    case 'overdue-entry':
+      return await syncOverdueEntryRule(rule)
+    case 'entry-due-soon':
+      return await syncEntryDueSoonRule(rule)
+    case 'negative-cash-flow':
+      return await syncNegativeCashFlowRule(rule)
+    case 'contract-without-generated-entries':
+      return await syncContractWithoutEntriesRule(rule)
+    case 'contract-without-payment-condition':
+      return await syncContractWithoutPaymentConditionRule(rule)
+    default:
+      return {
+        createdCount: 0,
+        emailedCount: 0,
+      }
+  }
+}
+
 async function executeNotificationAutomationSync() {
   const rules = await prisma.automationRule.findMany({
     where: {
@@ -502,15 +666,7 @@ async function executeNotificationAutomationSync() {
   let emailedCount = 0
 
   for (const rule of rules) {
-    const result = rule.key === 'contract-ending-soon'
-      ? await syncContractEndingSoonRule(rule)
-      : rule.key === 'overdue-entry'
-        ? await syncOverdueEntryRule(rule)
-        : rule.key === 'negative-cash-flow'
-          ? await syncNegativeCashFlowRule(rule)
-          : rule.key === 'contract-without-generated-entries'
-            ? await syncContractWithoutEntriesRule(rule)
-            : { createdCount: 0, emailedCount: 0 }
+    const result = await syncRule(rule)
 
     createdCount += result.createdCount
     emailedCount += result.emailedCount

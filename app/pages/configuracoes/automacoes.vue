@@ -18,6 +18,7 @@ const form = ref<AutomationRuleFormValues>({
   severity: 'WARNING',
   recipientRoles: [],
   daysBeforeEnd: null,
+  daysBeforeDue: null,
   daysAfterDue: null,
   threshold: null,
   graceDays: null,
@@ -41,8 +42,10 @@ const columns: AppTableColumn[] = [
 const ruleDescriptionMap: Record<string, string> = {
   'contract-ending-soon': 'Avisa equipes internas quando contratos estão próximos do término previsto.',
   'overdue-entry': 'Destaca títulos vencidos e ainda sem baixa para priorizar cobrança ou conferência.',
+  'entry-due-soon': 'Antecipa cobranças ou conferências ao avisar sobre lançamentos que vencem nos próximos dias.',
   'negative-cash-flow': 'Sinaliza quando a leitura do caixa projetado entra em território negativo.',
   'contract-without-generated-entries': 'Aponta contratos ativos sem lançamentos derivados após a janela de tolerância.',
+  'contract-without-payment-condition': 'Identifica contratos ativos sem condição de pagamento definida para evitar inconsistências.',
 }
 
 onMounted(() => {
@@ -70,9 +73,21 @@ function createFormValues(rule: AutomationRuleRecord): AutomationRuleFormValues 
     severity: rule.severity,
     recipientRoles: parseRecipientRoles(rule),
     daysBeforeEnd: parseConfigNumber(rule, 'daysBeforeEnd'),
+    daysBeforeDue: parseConfigNumber(rule, 'daysBeforeDue'),
     daysAfterDue: parseConfigNumber(rule, 'daysAfterDue'),
     threshold: parseConfigNumber(rule, 'threshold'),
     graceDays: parseConfigNumber(rule, 'graceDays'),
+  }
+}
+
+function createRuleConfigPayload(ruleKey: string, values: AutomationRuleFormValues) {
+  return {
+    recipientRoles: values.recipientRoles,
+    ...(ruleKey === 'contract-ending-soon' ? { daysBeforeEnd: values.daysBeforeEnd ?? 0 } : {}),
+    ...(ruleKey === 'entry-due-soon' ? { daysBeforeDue: values.daysBeforeDue ?? 0 } : {}),
+    ...(ruleKey === 'overdue-entry' ? { daysAfterDue: values.daysAfterDue ?? 0 } : {}),
+    ...(ruleKey === 'negative-cash-flow' ? { threshold: values.threshold ?? 0 } : {}),
+    ...(ruleKey === 'contract-without-generated-entries' ? { graceDays: values.graceDays ?? 0 } : {}),
   }
 }
 
@@ -90,18 +105,6 @@ function getSeverityLabel(value: AutomationRuleRecord['severity']) {
   }
 
   return 'Info'
-}
-
-function getSeverityColor(value: AutomationRuleRecord['severity']) {
-  if (value === 'CRITICAL') {
-    return 'danger'
-  }
-
-  if (value === 'WARNING') {
-    return 'warning'
-  }
-
-  return 'info'
 }
 
 function getRecipientsLabel(rule: AutomationRuleRecord) {
@@ -146,13 +149,7 @@ async function handleSave() {
   try {
     await automationStore.updateRule(editingRule.value.id, {
       severity: form.value.severity,
-      config: {
-        recipientRoles: form.value.recipientRoles,
-        ...(editingRule.value.key === 'contract-ending-soon' ? { daysBeforeEnd: form.value.daysBeforeEnd ?? 0 } : {}),
-        ...(editingRule.value.key === 'overdue-entry' ? { daysAfterDue: form.value.daysAfterDue ?? 0 } : {}),
-        ...(editingRule.value.key === 'negative-cash-flow' ? { threshold: form.value.threshold ?? 0 } : {}),
-        ...(editingRule.value.key === 'contract-without-generated-entries' ? { graceDays: form.value.graceDays ?? 0 } : {}),
-      },
+      config: createRuleConfigPayload(editingRule.value.key, form.value),
     })
 
     if (editingRule.value.isEnabled !== form.value.isEnabled) {
@@ -189,18 +186,15 @@ dd-stack
     :total="automationStore.data.length"
     :page-size="50"
   )
-    template(#notice)
-      dd-alert(info icon :closable="false")
-        | O MVP trabalha com regras pré-configuradas. Aqui você ajusta severidade,
-        | thresholds e destinatários sem criar novas automações arbitrárias.
-
     template(#cell-title="{ row }")
       dd-stack(compact nogap)
         strong {{ row.title }}
         span(:class="fin.helperText") {{ getRuleDescription(row) }}
 
     template(#cell-severity="{ row }")
-      dd-badge(:color="getSeverityColor(row.severity)") {{ getSeverityLabel(row.severity) }}
+      dd-badge(v-if="row.severity === 'CRITICAL'" danger) {{ getSeverityLabel(row.severity) }}
+      dd-badge(v-else-if="row.severity === 'WARNING'" warning) {{ getSeverityLabel(row.severity) }}
+      dd-badge(v-else info) {{ getSeverityLabel(row.severity) }}
 
     template(#cell-recipients="{ row }")
       span(:class="fin.recipients") {{ getRecipientsLabel(row) }}
@@ -238,7 +232,7 @@ dd-stack
 <style module="fin">
 .helperText,
 .recipients {
-  color: v('color.text.soft');
+  color: v('color.gray');
   font-size: v('font-size.sm');
 }
 </style>

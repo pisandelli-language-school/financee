@@ -44,6 +44,7 @@ export interface AutomationRuleFormValues {
   severity: NotificationSeverity
   recipientRoles: string[]
   daysBeforeEnd: number | null
+  daysBeforeDue: number | null
   daysAfterDue: number | null
   threshold: number | null
   graceDays: number | null

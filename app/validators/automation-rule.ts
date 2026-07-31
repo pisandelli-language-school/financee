@@ -9,6 +9,7 @@ const automationRuleSchema = z.object({
   }),
   recipientRoles: z.array(z.string()).min(1, 'Selecione ao menos um destinatário.'),
   daysBeforeEnd: z.number().nullable(),
+  daysBeforeDue: z.number().nullable(),
   daysAfterDue: z.number().nullable(),
   threshold: z.number().nullable(),
   graceDays: z.number().nullable(),
