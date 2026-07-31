@@ -93,11 +93,27 @@ watch(() => [
   entriesStore.filters.dateTo,
   entriesStore.filters.page,
   entriesStore.filters.pageSize,
-] as const, async () => {
-  await Promise.all([
+] as const, async (current, previous) => {
+  const tasks: Promise<unknown>[] = [
     entriesStore.fetch(),
-    loadSummaryComparisons(),
-  ])
+  ]
+
+  const shouldReloadSummary = !previous
+    || current[0] !== previous[0]
+    || current[2] !== previous[2]
+    || current[3] !== previous[3]
+    || current[4] !== previous[4]
+    || current[5] !== previous[5]
+    || current[6] !== previous[6]
+    || current[7] !== previous[7]
+    || current[8] !== previous[8]
+    || current[9] !== previous[9]
+
+  if (shouldReloadSummary) {
+    tasks.push(loadSummaryComparisons())
+  }
+
+  await Promise.all(tasks)
 })
 
 const visibleMonth = computed(() => parseDateInput(entriesStore.filters.dateFrom) ?? startOfMonth(new Date()))
