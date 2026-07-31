@@ -18,6 +18,7 @@ const props = defineProps<{
   errorMessage?: string
   loading?: boolean
 }>()
+const fin = useCssModule('fin')
 
 const emit = defineEmits<{
   (event: 'update:open', value: boolean): void
@@ -126,6 +127,14 @@ function updateThreshold(value: string) {
   updateField(field, value === '' ? null : Number(value))
 }
 
+function updateSeverity(value: string | null | undefined) {
+  const nextValue = value === 'CRITICAL' || value === 'WARNING' || value === 'INFO'
+    ? value
+    : 'INFO'
+
+  updateField('severity', nextValue)
+}
+
 function toggleRecipient(role: string, checked: boolean) {
   const next = new Set(values.recipientRoles)
 
@@ -179,7 +188,7 @@ backoffice-modal-form-shell(
       :options="severityOptions"
       :is-invalid="Boolean(getError('severity'))"
       :error-message="getError('severity')"
-      @update:model-value="updateField('severity', String($event ?? 'INFO') as AutomationRuleFormValues['severity'])"
+      @update:model-value="updateSeverity(typeof $event === 'string' ? $event : undefined)"
     )
 
     dd-input(

@@ -15,7 +15,7 @@ O módulo de Notificações, Alertas e Automações está implementado e operaci
 
 - existe central persistente de notificações no topo da aplicação
 - existe página dedicada em `/notificacoes`
-- existem páginas administrativas em `/configuracoes/notificacoes` e `/configuracoes/automacoes`
+- existe página administrativa em `/configuracoes/automacoes`
 - notificações suportam severidade, prioridade, leitura, exclusão manual e navegação contextual
 - regras pré-configuradas de automação podem ser ativadas, desativadas e ajustadas
 - eventos críticos podem disparar e-mail interno por provider abstrato
@@ -136,7 +136,6 @@ Quando o provider não está configurado:
 ## Confirmed Strengths
 
 - `/notificacoes` existe e está protegida.
-- `/configuracoes/notificacoes` existe e está protegida.
 - `/configuracoes/automacoes` existe e está protegida.
 - A central persistente está disponível no header autenticado.
 - O badge de não lidas é atualizado pelo store.
@@ -185,6 +184,24 @@ Severity: low
 Durante o ajuste de `/notificacoes`, ficou claro que parte do respiro vertical ainda é mascarada pela própria área interna dos campos de formulário, e não por um gap estrutural do `BackofficeListPanel`.
 
 Esse débito também já foi registrado para correção posterior no componente compartilhado.
+
+### 4. A rota administrativa de notificações foi mantida, mas removida da navegação principal
+
+Severity: accepted
+
+Após validação de uso real do módulo, a entrada `Configurações > Notificações` deixou de ser exposta:
+
+- no submenu de `Configurações`
+- nos cards da página `/configuracoes`
+
+Motivo:
+
+- a página ainda não oferece configuração operacional suficiente para justificar destaque na IA principal
+- as ações realmente úteis já estão distribuídas entre:
+  - `/notificacoes`, para leitura, exclusão e navegação contextual
+  - `/configuracoes/automacoes`, para thresholds, severidade e destinatários
+
+A rota foi mantida por segurança e por compatibilidade interna, mas deixou de ser promovida como área principal do produto.
 
 ## Validation
 

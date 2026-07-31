@@ -124,15 +124,6 @@ export function useBackofficeNavigation() {
       active: route.path === '/configuracoes/dias-nao-uteis',
       action: { type: 'link', to: '/configuracoes/dias-nao-uteis' },
     },
-    ...(can('notificacoes.view')
-      ? [{
-          key: 'configuracoes-notificacoes',
-          label: 'Notificações',
-          icon: 'lucide:bell-ring',
-          active: route.path === '/configuracoes/notificacoes',
-          action: { type: 'link' as const, to: '/configuracoes/notificacoes' },
-        }]
-      : []),
     ...(can('automacoes.manage')
       ? [{
           key: 'configuracoes-automacoes',
@@ -251,14 +242,6 @@ export function useBackofficeNavigation() {
   return {
     backofficeCards: computed(() => [
       ...backofficeCards,
-      ...(can('notificacoes.view')
-        ? [{
-            title: 'Notificações',
-            description: 'Revise severidade, retenção e entrega da central persistente.',
-            to: '/configuracoes/notificacoes',
-            icon: 'lucide:bell-ring',
-          }]
-        : []),
       ...(can('automacoes.manage')
         ? [{
             title: 'Automações',

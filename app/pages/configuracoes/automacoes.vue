@@ -7,6 +7,7 @@ const { getBreadcrumb, getSectionMeta } = useBackofficeSections()
 const automationStore = useAutomationRulesStore()
 const { getErrorMessage } = useBackofficeApiFeedback()
 const { showToast } = useToaster()
+const fin = useCssModule('fin')
 
 const meta = getSectionMeta('automacoes')
 const requestError = ref('')
@@ -218,7 +219,7 @@ dd-stack
         @edit="openEditModal(row)"
       )
 
-  automation-rule-modal-form(
+  backoffice-automation-rule-modal-form(
     v-if="modalOpen && editingRule"
     :open="modalOpen"
     :title="editingRule.title"
