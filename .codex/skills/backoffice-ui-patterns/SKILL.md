@@ -44,6 +44,8 @@ Use `financee-project-conventions` together with this skill whenever the edit al
 22. If a feature-specific list ends up needing filters, pagination, batch actions, and standard row actions, prefer converging to the same `BackofficeListPanel` table pattern used elsewhere instead of forcing a card-feed UI that becomes harder to maintain.
 23. When a visual fix depends on a structural selector or other local workaround because the design system lacks a proper token or hook, implement the smallest safe local fix and immediately register the debt as an issue in the appropriate repo.
 24. When a Daredash primitive propagates `data-*` attributes but not local classes reliably, prefer `data-*` as the styling hook for stateful variants such as read/unread, severity, active state, or compact state.
+25. In admin-facing automation screens, prefer a curated catalog of preconfigured rules over arbitrary rule creation. Let admins tune severity, recipients, and narrow rule-specific thresholds, but do not expose generic workflow-building UI unless the spec explicitly requires it.
+26. If an automation rule does not need a numeric threshold, do not force one into the form. Keep each rule editor honest: only render the fields that are meaningful for that specific rule key.
 
 ## Workflow
 
@@ -64,6 +66,7 @@ Use `financee-project-conventions` together with this skill whenever the edit al
 15. When a primitive component ignores or swallows a local root class, stop and verify the rendered DOM before continuing. If a bound `data-*` attribute is propagated correctly, it is often the safer styling hook for stateful variants such as read/unread, severity, compactness, or selected state.
 16. When a screen appears visually “correct” only because a form field reserves extra message space, treat that as a layout smell. The vertical gap should come from the shared panel layout, not from the internal height of one specific field.
 17. If you accept a local workaround because the shared component or design system is missing a better primitive, log that debt immediately in GitHub before moving on.
+18. When extending structured automations, add the new rule in four places together: backend executor, seed catalog, UI description map, and form/config payload mapping. Do not implement only one layer and leave the rest implicit.
 
 ## Toolbar Pattern
 

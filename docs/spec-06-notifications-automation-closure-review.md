@@ -18,6 +18,7 @@ O módulo de Notificações, Alertas e Automações está implementado e operaci
 - existe página administrativa em `/configuracoes/automacoes`
 - notificações suportam severidade, prioridade, leitura, exclusão manual e navegação contextual
 - regras pré-configuradas de automação podem ser ativadas, desativadas e ajustadas
+- o catálogo atual de automações cobre regras de vencimento, contratos, caixa e consistência contratual
 - eventos críticos podem disparar e-mail interno por provider abstrato
 - a geração evita duplicatas por usuário via `dedupeKey`
 - notificações lidas entram em janela de arquivamento de 30 dias
@@ -116,8 +117,10 @@ As regras estruturadas previstas pela spec foram entregues:
 
 - contrato próximo do fim
 - lançamento vencido
+- lançamento próximo do vencimento
 - fluxo de caixa negativo
 - contrato sem lançamentos gerados
+- contrato sem condição de pagamento
 
 Também existe camada de configuração por severidade e destinatários.
 
@@ -147,6 +150,7 @@ Quando o provider não está configurado:
 - A geração usa `@@unique([userId, dedupeKey])`.
 - Regras críticas podem disparar e-mail interno.
 - O módulo de automações respeita o escopo de regras pré-configuradas do MVP.
+- O catálogo de regras já foi ampliado com casos operacionais úteis sem abrir criação arbitrária de automações.
 - Há testes automatizados cobrindo parsing de filtros, clone de formulário e fallback seguro de e-mail.
 - O QA funcional foi aprovado.
 
@@ -205,7 +209,7 @@ A rota foi mantida por segurança e por compatibilidade interna, mas deixou de s
 
 ## Validation
 
-Executed on July 29, 2026:
+Executed on July 31, 2026:
 
 ```bash
 pnpm --dir financee typecheck
