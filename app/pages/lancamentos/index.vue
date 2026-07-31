@@ -93,11 +93,27 @@ watch(() => [
   entriesStore.filters.dateTo,
   entriesStore.filters.page,
   entriesStore.filters.pageSize,
-] as const, async () => {
-  await Promise.all([
-    entriesStore.fetch(),
-    loadSummaryComparisons(),
-  ])
+] as const, async (current, previous) => {
+  // ⚡ Bolt: Skip redundant summary API calls when only changing page, pageSize, or direction
+  // (these fields are ignored by getSummaryFilters anyway)
+  const needsSummaryReload = !previous
+    || current[0] !== previous[0] // search
+    || current[2] !== previous[2] // status
+    || current[3] !== previous[3] // accountId
+    || current[4] !== previous[4] // paymentMethodId
+    || current[5] !== previous[5] // categoryId
+    || current[6] !== previous[6] // contactId
+    || current[7] !== previous[7] // tagId
+    || current[8] !== previous[8] // dateFrom
+    || current[9] !== previous[9] // dateTo
+
+  const tasks: Promise<unknown>[] = [entriesStore.fetch()]
+
+  if (needsSummaryReload) {
+    tasks.push(loadSummaryComparisons())
+  }
+
+  await Promise.all(tasks)
 })
 
 const visibleMonth = computed(() => parseDateInput(entriesStore.filters.dateFrom) ?? startOfMonth(new Date()))
