@@ -9,12 +9,13 @@ vi.mock('~~/server/utils/prisma', () => ({
 }))
 
 const { prisma } = await import('~~/server/utils/prisma')
-const { resolveEffectiveDueDate } = await import('~~/server/utils/financial-calendar')
+const { resolveEffectiveDueDate, clearNonBusinessDaysCache } = await import('~~/server/utils/financial-calendar')
 
 describe('financial calendar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(prisma.nonBusinessDay.findMany).mockResolvedValue([])
+    clearNonBusinessDaysCache()
   })
 
   it('pushes sunday due dates to monday even without configured holidays', async () => {
