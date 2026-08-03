@@ -9,11 +9,12 @@ vi.mock('~~/server/utils/prisma', () => ({
 }))
 
 const { prisma } = await import('~~/server/utils/prisma')
-const { resolveEffectiveDueDate } = await import('~~/server/utils/financial-calendar')
+const { clearNonBusinessDaysCache, resolveEffectiveDueDate } = await import('~~/server/utils/financial-calendar')
 
 describe('financial calendar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    clearNonBusinessDaysCache()
     vi.mocked(prisma.nonBusinessDay.findMany).mockResolvedValue([])
   })
 
@@ -51,5 +52,17 @@ describe('financial calendar', () => {
     const effectiveDueDate = await resolveEffectiveDueDate(new Date('2026-07-19T00:00:00.000Z'))
 
     expect(effectiveDueDate.toISOString().slice(0, 10)).toBe('2026-07-21')
+  })
+
+  it('reuses the same non-business-day lookup for concurrent calls', async () => {
+    vi.mocked(prisma.nonBusinessDay.findMany).mockResolvedValue([])
+
+    await Promise.all([
+      resolveEffectiveDueDate(new Date('2026-07-19T00:00:00.000Z')),
+      resolveEffectiveDueDate(new Date('2026-07-20T00:00:00.000Z')),
+      resolveEffectiveDueDate(new Date('2026-07-21T00:00:00.000Z')),
+    ])
+
+    expect(prisma.nonBusinessDay.findMany).toHaveBeenCalledTimes(1)
   })
 })
