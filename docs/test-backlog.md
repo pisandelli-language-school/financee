@@ -64,14 +64,18 @@
   - fallback simples por descrição
   - contexto por período
   - ausência de contexto conhecido
+- `test/reporting-contracts.spec.ts`
+  - normalização do relatório contratual
+  - totais agregados por status
+- `test/reporting-delinquency.spec.ts`
+  - normalização de títulos em atraso
+  - agregação por temperatura e valor exposto
 
 ## Backlog prioritário
 
 ### Alta prioridade
 
 - Relatórios
-  - contratos
-  - inadimplência
   - DRE
   - fluxo de caixa
   - foco em regras de agregação e filtros de período
@@ -92,6 +96,6 @@
 
 ## Estado atual
 
-- Suíte completa: `23` arquivos
-- Total de testes: `91`
+- Suíte completa: `25` arquivos
+- Total de testes: `93`
 - Última validação: `pnpm test -- --run`
