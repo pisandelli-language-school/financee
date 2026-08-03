@@ -168,4 +168,40 @@ describe('contract entry generation', () => {
     expect(prisma.account.findFirst).not.toHaveBeenCalled()
     expect(tx.financialEntry.create).not.toHaveBeenCalled()
   })
+
+  it('rejects generation when the contract is not active', async () => {
+    prisma.contract.findFirst.mockResolvedValue({
+      id: 'contract_3',
+      clientId: 'contact_3',
+      status: 'CANCELED',
+      finalAmount: 500,
+      billingModel: 'CASH',
+      billingFrequency: null,
+      billingOccurrences: null,
+      client: {
+        isActive: true,
+        roleAssignments: [
+          { role: 'CLIENT' },
+        ],
+      },
+      entries: [],
+    })
+
+    await expect(generateContractEntries('contract_3', {
+      description: 'Contrato cancelado',
+      accountId: 'account_1',
+      paymentMethodId: '',
+      categoryId: 'category_1',
+      subcategoryId: '',
+      costCenterId: '',
+      firstDueDate: '2026-08-10',
+      notes: '',
+    })).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'Só é possível gerar lançamentos para contratos ativos.',
+    })
+
+    expect(prisma.account.findFirst).not.toHaveBeenCalled()
+    expect(tx.financialEntry.create).not.toHaveBeenCalled()
+  })
 })

@@ -28,24 +28,41 @@
 - `test/contracts-generation.spec.ts`
   - geração de lançamentos a partir de contrato parcelado
   - bloqueio de geração duplicada
+  - bloqueio para contratos fora de `ACTIVE`
 - `test/jobs.spec.ts`
   - guard rails de execução manual/automática
   - alerta interno quando um job falha
+- `test/contracts-renewal.spec.ts`
+  - renovação encadeada com atualização do contrato anterior
+  - bloqueio para status inválido
+  - validação de sobreposição de datas
+- `test/financial-transfers.spec.ts`
+  - criação do par de transferências
+  - baixa sincronizada entre origem e destino
+  - reabertura sincronizada entre origem e destino
+- `test/financial-entry-status.spec.ts`
+  - baixa manual de lançamento simples
+  - reabertura limpando vínculo de pagamento
+  - bloqueio de baixa para lançamento cancelado
+- `test/jobs-recurrence.spec.ts`
+  - extensão automática da janela de recorrências fixas
+  - metadata de execução com contagem criada
+- `test/notifications-retention.spec.ts`
+  - arquivamento após janela de retenção
+  - leitura individual sem arquivamento
+  - leitura em massa preservando itens na central
+- `test/notifications-context.spec.ts`
+  - contrato + cliente
+  - descrição + contato
+  - fallback simples por descrição
+  - contexto por período
+  - ausência de contexto conhecido
 
 ## Backlog prioritário
 
 ### Alta prioridade
 
 - Contratos
-  - renovação com validação de cadeia e datas
-  - bloqueio de geração de lançamentos para status inválidos
-- Lançamentos
-  - fluxo de baixa manual
-  - transferências com reflexo em conta origem/destino
-  - recorrência fixa e extensão por job
-- Notificações
-  - arquivamento após leitura + janela de retenção
-  - renderização de contexto por tipo de entidade
 
 ### Média prioridade
 
@@ -69,6 +86,6 @@
 
 ## Estado atual
 
-- Suíte completa: `15` arquivos
-- Total de testes: `67`
+- Suíte completa: `21` arquivos
+- Total de testes: `86`
 - Última validação: `pnpm test -- --run`

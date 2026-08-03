@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NotificationRecord } from '~/types/notifications'
+import { getNotificationContextLabel } from '~/utils/notifications'
 
 const props = withDefaults(defineProps<{
   notification: NotificationRecord
@@ -45,25 +46,7 @@ const formattedDate = computed(() => new Intl.DateTimeFormat('pt-BR', {
 }).format(new Date(props.notification.createdAt)))
 
 const contextLabel = computed(() => {
-  const metadata = props.notification.metadata ?? {}
-
-  if (typeof metadata.contractTitle === 'string' && typeof metadata.clientName === 'string') {
-    return `${metadata.contractTitle} · ${metadata.clientName}`
-  }
-
-  if (typeof metadata.description === 'string' && typeof metadata.contactName === 'string' && metadata.contactName.length > 0) {
-    return `${metadata.description} · ${metadata.contactName}`
-  }
-
-  if (typeof metadata.description === 'string') {
-    return metadata.description
-  }
-
-  if (typeof metadata.month === 'string') {
-    return `Período ${metadata.month}`
-  }
-
-  return null
+  return getNotificationContextLabel(props.notification)
 })
 
 function handleOpen() {
