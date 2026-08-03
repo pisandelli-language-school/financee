@@ -76,20 +76,28 @@
 - `test/reporting-dre.spec.ts`
   - agrupamento DRE excluindo transferências
   - totais finais e validação de intervalo inválido
+- `test/reporting-dashboard.spec.ts`
+  - composição do dashboard financeiro com fluxo de caixa + inadimplência
+  - composição do dashboard operacional com cards de volume e tons neutros/alerta
+- `test/reporting-filters.spec.ts`
+  - parse de intervalos simples
+  - default de data de referência na inadimplência
+  - bloqueio de intervalo invertido
 
 ## Backlog prioritário
 
 ### Alta prioridade
 
-- Relatórios
-- dashboard financeiro e operacional
-- filtros/parse de relatórios restantes
+- Sem gaps críticos mapeados nesta rodada de cobertura unitária
 
 ### Média prioridade
 
 - Jobs
   - histórico retornando ordenação e limite corretos
   - execução bem-sucedida dos jobs com metadata esperada
+- Páginas/UI
+  - smoke tests do dashboard financeiro e operacional
+  - smoke tests de filtros persistidos em relatórios
 
 ### Baixa prioridade
 
@@ -101,6 +109,6 @@
 
 ## Estado atual
 
-- Suíte completa: `27` arquivos
-- Total de testes: `96`
+- Suíte completa: `29` arquivos
+- Total de testes: `101`
 - Última validação: `pnpm test -- --run`
