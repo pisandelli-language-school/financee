@@ -74,7 +74,7 @@ dd-card
   dd-stack
     slot(name="notice")
 
-    dd-stack(compact)
+    dd-stack
       dd-cluster(end :class="fin.toolbar")
         slot(name="toolbar")
 
