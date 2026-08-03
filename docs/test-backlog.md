@@ -36,6 +36,13 @@
   - renovação encadeada com atualização do contrato anterior
   - bloqueio para status inválido
   - validação de sobreposição de datas
+- `test/contracts-history.spec.ts`
+  - cadeia com contrato anterior, atual e próximo
+  - tolerância a elo anterior quebrado
+  - erro 404 para contrato inexistente
+- `test/contracts-status.spec.ts`
+  - troca para status válido com retorno normalizado
+  - bloqueio de status inválido
 - `test/financial-transfers.spec.ts`
   - criação do par de transferências
   - baixa sincronizada entre origem e destino
@@ -62,16 +69,15 @@
 
 ### Alta prioridade
 
-- Contratos
-
-### Média prioridade
-
 - Relatórios
   - contratos
   - inadimplência
   - DRE
   - fluxo de caixa
   - foco em regras de agregação e filtros de período
+
+### Média prioridade
+
 - Jobs
   - histórico retornando ordenação e limite corretos
   - execução bem-sucedida dos jobs com metadata esperada
@@ -86,6 +92,6 @@
 
 ## Estado atual
 
-- Suíte completa: `21` arquivos
-- Total de testes: `86`
+- Suíte completa: `23` arquivos
+- Total de testes: `91`
 - Última validação: `pnpm test -- --run`
