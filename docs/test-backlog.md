@@ -87,6 +87,24 @@
   - parse de intervalos simples
   - default de data de referência na inadimplência
   - bloqueio de intervalo invertido
+- `test/dashboard-ui-smoke.spec.ts`
+  - render básico do dashboard financeiro
+  - render básico do dashboard operacional
+  - validação do carregamento com intervalo mensal persistido
+- `test/reporting-ui-smoke.spec.ts`
+  - smoke do fluxo de caixa com período persistido
+  - smoke do DRE com agrupamentos renderizados
+  - validação do carregamento com intervalo mensal persistido
+- `test/seed-data.spec.ts`
+  - catálogo de instituições financeiras do seed
+  - catálogo de automações do MVP
+  - catálogo de jobs seeded para QA local
+- `test/navigation-ui-smoke.spec.ts`
+  - redirecionamento do índice de dashboard para a visão correta
+  - render dos hubs de Configurações e Relatórios com links críticos
+- `test/backoffice-modal-actions.spec.ts`
+  - abertura do modal de categorias em criação e edição
+  - abertura do modal de contatos em criação e edição
 
 ## Backlog prioritário
 
@@ -96,20 +114,14 @@
 
 ### Média prioridade
 
-- Páginas/UI
-  - smoke tests do dashboard financeiro e operacional
-  - smoke tests de filtros persistidos em relatórios
+- Sem gaps médios mapeados nesta rodada
 
 ### Baixa prioridade
 
-- Páginas/UI
-  - smoke tests de navegação crítica
-  - ações principais dos modais
-- Seeds
-  - validação do seed principal para ambiente local/QA
+- Sem gaps baixos mapeados nesta rodada
 
 ## Estado atual
 
-- Suíte completa: `30` arquivos
-- Total de testes: `105`
+- Suíte completa: `35` arquivos
+- Total de testes: `120`
 - Última validação: `pnpm test -- --run`
