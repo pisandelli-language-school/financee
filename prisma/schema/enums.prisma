@@ -131,3 +131,17 @@ enum ReportRegime {
   CASH
   COMPETENCE
 }
+
+enum JobMode {
+  AUTOMATIC
+  MANUAL
+  BOTH
+}
+
+enum JobExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}

@@ -152,6 +152,51 @@ const automationRules = [
   },
 ]
 
+const jobDefinitions = [
+  {
+    key: 'check-contracts',
+    title: 'Verificar contratos próximos do fim',
+    mode: 'BOTH',
+    scheduleLabel: 'Diariamente',
+  },
+  {
+    key: 'check-overdue-entries',
+    title: 'Verificar lançamentos vencidos',
+    mode: 'BOTH',
+    scheduleLabel: 'Diariamente',
+  },
+  {
+    key: 'check-cashflow',
+    title: 'Monitorar fluxo de caixa',
+    mode: 'BOTH',
+    scheduleLabel: 'Diariamente',
+  },
+  {
+    key: 'check-contracts-without-entries',
+    title: 'Verificar contratos sem lançamentos',
+    mode: 'BOTH',
+    scheduleLabel: 'Diariamente',
+  },
+  {
+    key: 'extend-recurrence-window',
+    title: 'Estender janela de recorrências',
+    mode: 'BOTH',
+    scheduleLabel: 'Diariamente',
+  },
+  {
+    key: 'expire-notifications',
+    title: 'Arquivar notificações lidas antigas',
+    mode: 'BOTH',
+    scheduleLabel: 'Diariamente',
+  },
+  {
+    key: 'purge-integration-payloads',
+    title: 'Limpar payloads antigos de integração',
+    mode: 'BOTH',
+    scheduleLabel: 'Diariamente',
+  },
+]
+
 function assertSafeDatabase(url) {
   const parsed = new URL(url)
   const isLocal = ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)
@@ -347,6 +392,8 @@ async function seedRbac() {
 }
 
 async function resetQaData() {
+  await prisma.jobExecution.deleteMany()
+  await prisma.jobDefinition.deleteMany()
   await prisma.notification.deleteMany()
   await prisma.automationRule.deleteMany()
   await prisma.financialEntryTag.deleteMany()
@@ -385,6 +432,85 @@ async function seedAutomationRules() {
       },
     })
   }
+}
+
+async function seedJobs() {
+  for (const job of jobDefinitions) {
+    await prisma.jobDefinition.upsert({
+      where: { key: job.key },
+      update: {
+        title: job.title,
+        mode: job.mode,
+        isEnabled: true,
+        scheduleLabel: job.scheduleLabel,
+      },
+      create: {
+        key: job.key,
+        title: job.title,
+        mode: job.mode,
+        isEnabled: true,
+        scheduleLabel: job.scheduleLabel,
+      },
+    })
+  }
+
+  const [contractsJob, overdueJob, recurrenceJob] = await Promise.all([
+    prisma.jobDefinition.findUniqueOrThrow({
+      where: { key: 'check-contracts' },
+      select: { key: true },
+    }),
+    prisma.jobDefinition.findUniqueOrThrow({
+      where: { key: 'check-overdue-entries' },
+      select: { key: true },
+    }),
+    prisma.jobDefinition.findUniqueOrThrow({
+      where: { key: 'extend-recurrence-window' },
+      select: { key: true },
+    }),
+  ])
+
+  await prisma.jobExecution.createMany({
+    data: [
+      {
+        jobKey: contractsJob.key,
+        status: 'SUCCESS',
+        startedAt: new Date('2026-08-02T05:00:00.000Z'),
+        finishedAt: new Date('2026-08-02T05:00:01.280Z'),
+        durationMs: 1280,
+        metadata: {
+          scannedContracts: 4,
+          notificationsCreated: 1,
+          source: 'qa-seed',
+        },
+      },
+      {
+        jobKey: overdueJob.key,
+        status: 'PARTIAL',
+        startedAt: new Date('2026-08-02T05:02:00.000Z'),
+        finishedAt: new Date('2026-08-02T05:02:02.040Z'),
+        durationMs: 2040,
+        errorMessage: '1 lançamento sem contato definido foi ignorado.',
+        metadata: {
+          scannedEntries: 7,
+          overdueEntries: 3,
+          notificationsCreated: 2,
+          skippedEntries: 1,
+          source: 'qa-seed',
+        },
+      },
+      {
+        jobKey: recurrenceJob.key,
+        status: 'FAILED',
+        startedAt: new Date('2026-08-01T05:04:00.000Z'),
+        finishedAt: new Date('2026-08-01T05:04:01.090Z'),
+        durationMs: 1090,
+        errorMessage: 'Grupo de recorrência seed:vip-legacy sem frequência configurada.',
+        metadata: {
+          source: 'qa-seed',
+        },
+      },
+    ],
+  })
 }
 
 async function seedAdminUser() {
@@ -1111,6 +1237,7 @@ async function main() {
   await seedRbac()
   await resetQaData()
   const adminUser = await seedAdminUser()
+  await seedJobs()
   await seedAutomationRules()
   const context = await seedBackoffice()
   await seedContracts(context)

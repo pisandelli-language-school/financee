@@ -651,9 +651,24 @@ async function syncRule(
 }
 
 async function executeNotificationAutomationSync() {
+  return await executeNotificationAutomationSyncForRules()
+}
+
+async function executeNotificationAutomationSyncForRules(ruleKeys?: string[]) {
+  const ruleKeySet = ruleKeys?.length
+    ? new Set(ruleKeys)
+    : null
+
   const rules = await prisma.automationRule.findMany({
     where: {
       isEnabled: true,
+      ...(ruleKeySet
+        ? {
+            key: {
+              in: Array.from(ruleKeySet),
+            },
+          }
+        : {}),
     },
     select: {
       key: true,
@@ -676,6 +691,10 @@ async function executeNotificationAutomationSync() {
     createdCount,
     emailedCount,
   }
+}
+
+export async function syncNotificationAutomationRules(ruleKeys: string[]) {
+  return await executeNotificationAutomationSyncForRules(ruleKeys)
 }
 
 export async function syncNotificationAutomations(options?: { force?: boolean }) {

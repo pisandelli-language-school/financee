@@ -51,6 +51,10 @@ const sectionMap = {
     title: 'Automações',
     description: 'Ative regras pré-configuradas, ajuste severidade e configure destinatários internos.',
   },
+  jobs: {
+    title: 'Jobs',
+    description: 'Acompanhe rotinas agendadas, execuções manuais e falhas operacionais do sistema.',
+  },
 } as const
 
 export function useBackofficeSections() {

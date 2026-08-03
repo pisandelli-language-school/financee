@@ -160,6 +160,15 @@ export function useBackofficeNavigation() {
           action: { type: 'link' as const, to: '/configuracoes/auditoria' },
         }]
       : []),
+    ...(can('jobs.view')
+      ? [{
+          key: 'configuracoes-jobs',
+          label: 'Jobs',
+          icon: 'lucide:clock-3',
+          active: route.path === '/configuracoes/jobs',
+          action: { type: 'link' as const, to: '/configuracoes/jobs' },
+        }]
+      : []),
   ])
 
   const primaryMenuItems = computed<AppMenuItem[]>(() => [
@@ -272,6 +281,14 @@ export function useBackofficeNavigation() {
             description: 'Consulte eventos críticos, mudanças e rastros operacionais.',
             to: '/configuracoes/auditoria',
             icon: 'lucide:shield-check',
+          }]
+        : []),
+      ...(can('jobs.view')
+        ? [{
+            title: 'Jobs',
+            description: 'Monitore rotinas agendadas, reexecuções e falhas operacionais.',
+            to: '/configuracoes/jobs',
+            icon: 'lucide:clock-3',
           }]
         : []),
     ]),

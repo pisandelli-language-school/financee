@@ -1,0 +1,36 @@
+model JobDefinition {
+  id            String         @id @default(cuid())
+  key           String         @unique
+  title         String
+  mode          JobMode
+  isEnabled     Boolean        @default(true)
+  disabledAt    DateTime?
+  disabledById  String?
+  disabledBy    User?          @relation("JobDefinitionDisabledBy", fields: [disabledById], references: [id], onDelete: SetNull)
+  scheduleLabel String?
+  executions    JobExecution[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([isEnabled])
+  @@index([mode])
+  @@index([disabledAt])
+  @@index([disabledById])
+}
+
+model JobExecution {
+  id           String             @id @default(cuid())
+  jobKey        String
+  job           JobDefinition      @relation(fields: [jobKey], references: [key], onDelete: Cascade)
+  status        JobExecutionStatus
+  startedAt     DateTime
+  finishedAt    DateTime?
+  durationMs    Int?
+  errorMessage  String?
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+
+  @@index([jobKey, createdAt])
+  @@index([status])
+  @@index([startedAt])
+}

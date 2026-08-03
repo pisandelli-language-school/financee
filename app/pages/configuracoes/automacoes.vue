@@ -201,6 +201,7 @@ dd-stack
 
     template(#cell-isEnabled="{ row }")
       dd-toggle(
+        :id="`automation-enabled-${row.id}`"
         :model-value="row.isEnabled"
         aria-label="Ativar ou desativar regra"
         @update:model-value="handleToggle(row, Boolean($event))"
