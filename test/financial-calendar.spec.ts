@@ -9,11 +9,12 @@ vi.mock('~~/server/utils/prisma', () => ({
 }))
 
 const { prisma } = await import('~~/server/utils/prisma')
-const { resolveEffectiveDueDate } = await import('~~/server/utils/financial-calendar')
+const { resolveEffectiveDueDate, clearNonBusinessDaysCache } = await import('~~/server/utils/financial-calendar')
 
 describe('financial calendar', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    clearNonBusinessDaysCache()
     vi.mocked(prisma.nonBusinessDay.findMany).mockResolvedValue([])
   })
 

@@ -76,13 +76,39 @@ function isConfiguredNonBusinessDay(record: NonBusinessDay, date: Date) {
   }
 }
 
+let nonBusinessDaysPromise: Promise<NonBusinessDay[]> | null = null
+let nonBusinessDaysPromiseTimestamp = 0
+
+export function clearNonBusinessDaysCache() {
+  nonBusinessDaysPromise = null
+  nonBusinessDaysPromiseTimestamp = 0
+}
+
+async function getNonBusinessDays() {
+  const now = Date.now()
+  const TTL = 60 * 1000 // 1 minute TTL
+
+  if (!nonBusinessDaysPromise || (now - nonBusinessDaysPromiseTimestamp > TTL)) {
+    // Cache the promise itself to prevent N+1 query bottlenecks in concurrent
+    // operations (e.g., Promise.all inside server/utils/financial.ts).
+    nonBusinessDaysPromise = prisma.nonBusinessDay.findMany({
+      where: {
+        deletedAt: null,
+        isActive: true,
+      },
+    }).catch(error => {
+      // Clear the cache upon promise rejection to prevent transient errors from lingering
+      clearNonBusinessDaysCache()
+      throw error
+    })
+    nonBusinessDaysPromiseTimestamp = now
+  }
+
+  return nonBusinessDaysPromise
+}
+
 export async function resolveEffectiveDueDate(scheduledDueDate: Date) {
-  const configuredDays = await prisma.nonBusinessDay.findMany({
-    where: {
-      deletedAt: null,
-      isActive: true,
-    },
-  })
+  const configuredDays = await getNonBusinessDays()
 
   let cursor = startOfUtcDay(scheduledDueDate)
 
