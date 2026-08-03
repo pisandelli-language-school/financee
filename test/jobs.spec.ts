@@ -53,6 +53,9 @@ vi.stubGlobal('createError', (input: { message?: string, statusCode?: number, da
 })
 
 const { runAutomaticJob, runJobNow } = await import('~~/server/utils/jobs')
+const { syncNotificationAutomationRules } = await import('~~/server/utils/notifications-automation')
+const { createAuditLog } = await import('~~/server/utils/audit')
+const { sendInternalNotificationEmail } = await import('~~/server/utils/email')
 
 describe('jobs runtime guards', () => {
   beforeEach(() => {
@@ -119,5 +122,83 @@ describe('jobs runtime guards', () => {
       message: 'Este job não permite execução manual.',
       statusCode: 400,
     })
+  })
+
+  it('registers failure alerts when a manual job execution crashes', async () => {
+    prisma.jobDefinition.findUnique.mockResolvedValue({
+      id: 'job-4',
+      key: 'check-contracts',
+      title: 'Verificar contratos',
+      mode: 'BOTH',
+      isEnabled: true,
+      scheduleLabel: 'Diariamente',
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+      updatedAt: new Date('2026-08-03T10:00:00.000Z'),
+    })
+    prisma.jobExecution.create.mockResolvedValue({
+      id: 'exec-1',
+      jobKey: 'check-contracts',
+      status: 'RUNNING',
+      startedAt: new Date('2026-08-03T10:00:00.000Z'),
+      finishedAt: null,
+      durationMs: null,
+      errorMessage: null,
+      metadata: null,
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+    })
+    prisma.jobExecution.update.mockResolvedValue({
+      id: 'exec-1',
+      jobKey: 'check-contracts',
+      status: 'FAILED',
+      startedAt: new Date('2026-08-03T10:00:00.000Z'),
+      finishedAt: new Date('2026-08-03T10:00:05.000Z'),
+      durationMs: 5000,
+      errorMessage: 'Falha SMTP',
+      metadata: null,
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+    })
+    prisma.user.findMany.mockResolvedValue([
+      {
+        id: 'user-1',
+        email: 'admin@financee.test',
+        name: 'Admin',
+      },
+    ])
+    prisma.notification.findUnique.mockResolvedValue(null)
+    prisma.notification.create.mockResolvedValue({
+      id: 'notification-1',
+    })
+    vi.mocked(syncNotificationAutomationRules).mockRejectedValue(new Error('Falha SMTP'))
+    vi.mocked(sendInternalNotificationEmail).mockResolvedValue({
+      delivered: true,
+    })
+
+    await expect(runJobNow('check-contracts')).rejects.toMatchObject({
+      statusCode: 500,
+      message: 'Falha SMTP',
+    })
+
+    expect(createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
+      severity: 'CRITICAL',
+      eventType: 'job.execution.failed',
+      entityType: 'JobDefinition',
+      entityId: 'job-4',
+      entityLabel: 'Verificar contratos',
+    }))
+    expect(prisma.notification.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        title: 'Falha no job: Verificar contratos',
+        severity: 'CRITICAL',
+        actionUrl: '/configuracoes/jobs',
+        entityType: 'JobDefinition',
+        entityId: 'job-4',
+      }),
+    }))
+    expect(sendInternalNotificationEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'admin@financee.test',
+      title: 'Falha no job: Verificar contratos',
+      ctaUrl: '/configuracoes/jobs',
+    }))
   })
 })
