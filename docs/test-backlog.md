@@ -70,15 +70,20 @@
 - `test/reporting-delinquency.spec.ts`
   - normalização de títulos em atraso
   - agregação por temperatura e valor exposto
+- `test/reporting-cashflow.spec.ts`
+  - separação de realizados e previstos por regime
+  - totais mensais agregados
+- `test/reporting-dre.spec.ts`
+  - agrupamento DRE excluindo transferências
+  - totais finais e validação de intervalo inválido
 
 ## Backlog prioritário
 
 ### Alta prioridade
 
 - Relatórios
-  - DRE
-  - fluxo de caixa
-  - foco em regras de agregação e filtros de período
+- dashboard financeiro e operacional
+- filtros/parse de relatórios restantes
 
 ### Média prioridade
 
@@ -96,6 +101,6 @@
 
 ## Estado atual
 
-- Suíte completa: `25` arquivos
-- Total de testes: `93`
+- Suíte completa: `27` arquivos
+- Total de testes: `96`
 - Última validação: `pnpm test -- --run`
