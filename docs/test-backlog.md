@@ -54,6 +54,10 @@
 - `test/jobs-recurrence.spec.ts`
   - extensão automática da janela de recorrências fixas
   - metadata de execução com contagem criada
+- `test/jobs-history.spec.ts`
+  - último histórico por job na listagem
+  - ordenação descendente com limite aplicado
+  - último status isolado com fallback nulo
 - `test/notifications-retention.spec.ts`
   - arquivamento após janela de retenção
   - leitura individual sem arquivamento
@@ -92,9 +96,6 @@
 
 ### Média prioridade
 
-- Jobs
-  - histórico retornando ordenação e limite corretos
-  - execução bem-sucedida dos jobs com metadata esperada
 - Páginas/UI
   - smoke tests do dashboard financeiro e operacional
   - smoke tests de filtros persistidos em relatórios
@@ -109,6 +110,6 @@
 
 ## Estado atual
 
-- Suíte completa: `29` arquivos
-- Total de testes: `101`
+- Suíte completa: `30` arquivos
+- Total de testes: `105`
 - Última validação: `pnpm test -- --run`

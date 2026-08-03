@@ -7,6 +7,8 @@ const prisma = {
   jobExecution: {
     create: vi.fn(),
     update: vi.fn(),
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
   },
   user: {
     findMany: vi.fn(),
@@ -121,6 +123,69 @@ describe('jobs runtime guards', () => {
     await expect(runJobNow('check-cashflow')).rejects.toMatchObject({
       message: 'Este job não permite execução manual.',
       statusCode: 400,
+    })
+  })
+
+  it('stores success metadata when a manual execution completes normally', async () => {
+    prisma.jobDefinition.findUnique.mockResolvedValue({
+      id: 'job-5',
+      key: 'check-contracts-without-entries',
+      title: 'Contratos sem lançamentos',
+      mode: 'BOTH',
+      isEnabled: true,
+      scheduleLabel: 'Diariamente',
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+      updatedAt: new Date('2026-08-03T10:00:00.000Z'),
+    })
+    prisma.jobExecution.create.mockResolvedValue({
+      id: 'exec-5',
+      jobKey: 'check-contracts-without-entries',
+      status: 'RUNNING',
+      startedAt: new Date('2026-08-03T10:00:00.000Z'),
+      finishedAt: null,
+      durationMs: null,
+      errorMessage: null,
+      metadata: null,
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+    })
+    prisma.jobExecution.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+      id: 'exec-5',
+      jobKey: 'check-contracts-without-entries',
+      status: data.status,
+      startedAt: new Date('2026-08-03T10:00:00.000Z'),
+      finishedAt: new Date('2026-08-03T10:00:02.000Z'),
+      durationMs: 2000,
+      errorMessage: null,
+      metadata: data.metadata,
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+    }))
+    vi.mocked(syncNotificationAutomationRules).mockResolvedValue({
+      createdCount: 4,
+      emailedCount: 1,
+    })
+
+    const execution = await runJobNow('check-contracts-without-entries')
+
+    expect(syncNotificationAutomationRules).toHaveBeenCalledWith([
+      'contract-without-generated-entries',
+    ])
+    expect(prisma.jobExecution.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        status: 'SUCCESS',
+        metadata: {
+          createdCount: 4,
+          emailedCount: 1,
+          rules: ['contract-without-generated-entries'],
+        },
+      }),
+    }))
+    expect(execution).toMatchObject({
+      status: 'SUCCESS',
+      metadata: {
+        createdCount: 4,
+        emailedCount: 1,
+        rules: ['contract-without-generated-entries'],
+      },
     })
   })
 
