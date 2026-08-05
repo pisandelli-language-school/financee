@@ -15,8 +15,8 @@ importers:
         specifier: ^0.11.3
         version: 0.11.3(magic-string@1.1.0)(magicast@0.5.3)(oxc-parser@0.140.0)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.40(typescript@5.9.3)))(rolldown@1.2.0)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.0)(rollup@4.62.2)(vite@8.1.5(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)))
       '@pisandelli/daredash':
-        specifier: ^0.0.35-beta
-        version: 0.0.35-beta(986744ee17a2791e144b9a1658a107eb)
+        specifier: ^0.0.36-beta
+        version: 0.0.36-beta(986744ee17a2791e144b9a1658a107eb)
       '@prisma/adapter-mariadb':
         specifier: ^7.8.0
         version: 7.8.0
@@ -1417,8 +1417,8 @@ packages:
     peerDependencies:
       pinia: ^3.0.4
 
-  '@pisandelli/daredash@0.0.35-beta':
-    resolution: {integrity: sha512-dzhG4qyPWhqzM6sNbf79+8hgp7ZWoenpa6mecdo8cPswZpkdco9skhrTc8qr3CVEkvXvZNHL8NM13p6B2/Bnjw==}
+  '@pisandelli/daredash@0.0.36-beta':
+    resolution: {integrity: sha512-xDRpU2b4a1kekt575VZekHs0OPBI6NoHA2aBZDnPtXJrGioPm5dJynEB4vNg5y6gwd1VsJfnuC3tJEb37+qzdw==}
     peerDependencies:
       nuxt: ^4.3.0
 
@@ -7718,7 +7718,7 @@ snapshots:
       - rolldown
       - unplugin
 
-  '@pisandelli/daredash@0.0.35-beta(986744ee17a2791e144b9a1658a107eb)':
+  '@pisandelli/daredash@0.0.36-beta(986744ee17a2791e144b9a1658a107eb)':
     dependencies:
       '@iconify-json/lucide': 1.2.114
       '@iconify-json/svg-spinners': 1.2.4
