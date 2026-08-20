@@ -55,6 +55,10 @@ const sectionMap = {
     title: 'Jobs',
     description: 'Acompanhe rotinas agendadas, execuções manuais e falhas operacionais do sistema.',
   },
+  integracoes: {
+    title: 'Integrações',
+    description: 'Gerencie consumidores da API, escopos e credenciais externas.',
+  },
 } as const
 
 export function useBackofficeSections() {

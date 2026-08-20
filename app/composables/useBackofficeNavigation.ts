@@ -169,6 +169,15 @@ export function useBackofficeNavigation() {
           action: { type: 'link' as const, to: '/configuracoes/jobs' },
         }]
       : []),
+    ...(can('integracoes.manage')
+      ? [{
+          key: 'configuracoes-integracoes',
+          label: 'Integrações',
+          icon: 'lucide:plug-zap',
+          active: route.path === '/configuracoes/integracoes',
+          action: { type: 'link' as const, to: '/configuracoes/integracoes' },
+        }]
+      : []),
   ])
 
   const primaryMenuItems = computed<AppMenuItem[]>(() => [
@@ -289,6 +298,14 @@ export function useBackofficeNavigation() {
             description: 'Monitore rotinas agendadas, reexecuções e falhas operacionais.',
             to: '/configuracoes/jobs',
             icon: 'lucide:clock-3',
+          }]
+        : []),
+      ...(can('integracoes.manage')
+        ? [{
+            title: 'Integrações',
+            description: 'Gerencie consumidores externos, escopos e credenciais da API.',
+            to: '/configuracoes/integracoes',
+            icon: 'lucide:plug-zap',
           }]
         : []),
     ]),
