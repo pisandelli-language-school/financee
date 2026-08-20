@@ -275,7 +275,7 @@ dd-stack
 }
 
 .referenceInfo {
-  color: v('color.gray.700');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
@@ -285,7 +285,7 @@ dd-stack
 }
 
 .summaryCard {
-  --dd-card-border-color: v('color.border.standard');
+  --dd-card-border-color: v('color.border.default');
   background: v('color.bg.surface');
   border: v('border-width.sm') solid var(--dd-card-border-color);
   border-radius: v('border-radius.lg');
@@ -294,28 +294,28 @@ dd-stack
 }
 
 .summarySuccess {
-  --dd-card-border-color: v('color.success.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .summaryDanger {
-  --dd-card-border-color: v('color.danger.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .summaryWarning {
-  --dd-card-border-color: v('color.warning.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .summaryInfo {
-  --dd-card-border-color: v('color.info.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .summaryLabel {
-  color: v('color.gray.700');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
 .summaryDescription {
-  color: v('color.gray.600');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
@@ -333,12 +333,12 @@ dd-stack
 }
 
 .supportText {
-  color: v('color.gray.600');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
 .overdueDays {
-  color: v('color.gray.800');
+  color: v('color.text.default');
   font-size: v('font-size.sm');
 }
 </style>

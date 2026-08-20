@@ -19,6 +19,15 @@ type JobDefinitionRecord = Prisma.JobDefinitionGetPayload<{
   }
 }>
 
+const jobDefinitionInclude = {
+  disabledBy: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+} satisfies Prisma.JobDefinitionInclude
+
 interface JobExecutorResult {
   status?: Exclude<JobExecutionStatus, 'PENDING' | 'RUNNING'>
   errorMessage?: string | null
@@ -467,14 +476,7 @@ async function registerJobFailureAlerts(
 export async function listJobs() {
   const [definitions, executions] = await Promise.all([
     prisma.jobDefinition.findMany({
-      include: {
-        disabledBy: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      include: jobDefinitionInclude,
       orderBy: {
         title: 'asc',
       },
@@ -501,14 +503,7 @@ export async function listJobs() {
 
 export async function toggleJob(jobKey: string, isEnabled: boolean, actorId?: string | null) {
   const record = await prisma.jobDefinition.update({
-    include: {
-      disabledBy: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
+    include: jobDefinitionInclude,
     where: {
       key: jobKey,
     },
@@ -551,6 +546,7 @@ export async function getLastExecution(jobKey: string) {
 
 export async function runJobNow(jobKey: string) {
   const definition = await prisma.jobDefinition.findUnique({
+    include: jobDefinitionInclude,
     where: {
       key: jobKey,
     },
@@ -575,6 +571,7 @@ export async function runJobNow(jobKey: string) {
 
 export async function runAutomaticJob(jobKey: string) {
   const definition = await prisma.jobDefinition.findUnique({
+    include: jobDefinitionInclude,
     where: {
       key: jobKey,
     },

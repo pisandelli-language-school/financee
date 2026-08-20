@@ -26,7 +26,7 @@ nuxt-link(
   align-items: center;
   background: v('color.bg.surface');
   border: v('border-width.sm') solid;
-  border-color: v('color.light-gray');
+  border-color: v('color.border.default');
   border-radius: v('border-radius.lg');
   color: inherit;
   cursor: pointer;
@@ -75,13 +75,13 @@ nuxt-link(
 }
 
 .description {
-  color: v('color.gray');
+  color: v('color.text.muted');
   line-height: v('line-height.snug');
   font-size: v('font-size.sm');
 }
 
 .chevron {
-  color: v('color.gray');
+  color: v('color.text.muted');
   aspect-ratio: 1 / 1;
 }
 </style>

@@ -233,7 +233,7 @@ dd-stack
 <style module="fin">
 .helperText,
 .recipients {
-  color: v('color.gray');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 </style>

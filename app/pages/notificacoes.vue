@@ -274,18 +274,18 @@ dd-stack
 }
 
 .titleRead {
-  color: v('color.gray');
+  color: v('color.text.muted');
 }
 
 .context,
 .message,
 .date {
-  color: v('color.gray');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
 .textRead {
-  color: v('color.gray');
+  color: v('color.text.muted');
 }
 
 .actions {
@@ -318,8 +318,8 @@ dd-stack
 }
 
 .severityIcon[data-is-read='true'] {
-  --dd-badge-base-color: v('color.gray');
-  color: v('color.gray');
+  --dd-badge-base-color: v('color.text.muted');
+  color: v('color.text.muted');
 }
 
 tbody tr[data-notification-read='true'] {

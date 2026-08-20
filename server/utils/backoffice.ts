@@ -7,9 +7,7 @@ import type {
   NonBusinessDayScope,
   NonBusinessDayType,
 } from '@prisma/client'
-import {
-  Prisma,
-} from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import type { H3Event } from 'h3'
 import type {
   AccountFormValues,

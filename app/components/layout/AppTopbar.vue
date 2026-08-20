@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import logoUrl from '~/assets/images/logo-opt.svg?url'
 import AppNotificationBell from '~/components/layout/AppNotificationBell.vue'
+import AppBrandLogo from '~/components/layout/AppBrandLogo.vue'
 import AppUserSummary from '~/components/layout/AppUserSummary.vue'
 
 defineProps<{
@@ -18,13 +18,12 @@ defineEmits<{
 header(:class="fin.topbar")
   dd-box
     dd-cluster(between)
-      img(:class="fin.brandLogo" :src="logoUrl" alt="Financee")
+      AppBrandLogo(block-size="3rem")
 
-      dd-cluster(narrow)
+      dd-cluster(narrow :class="fin.actions")
         AppNotificationBell(:visible="canViewNotifications")
         dd-button(
           ghost
-          color="var(--dd-color-dark-gray)"
           icon-only
           small
           aria-label="Configurações"
@@ -45,11 +44,11 @@ header(:class="fin.topbar")
 
 <style module="fin">
 .topbar {
-  border-bottom: v('border-width.sm') solid v('color.light-gray');
+  background: v('color.bg.surface-subtle');
+  border-bottom: v('border-width.sm') solid v('color.border.default');
 }
 
-.brandLogo {
-  block-size: 3rem;
-  inline-size: auto;
+.actions {
+  align-items: center;
 }
 </style>

@@ -340,7 +340,7 @@ dd-stack
 }
 
 .helpText {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   margin: 0;
 }
 </style>

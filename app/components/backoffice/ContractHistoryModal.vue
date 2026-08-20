@@ -126,7 +126,7 @@ dd-modal(
 
 <style module="fin">
 .meta {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
@@ -135,7 +135,7 @@ dd-modal(
 }
 
 .timelineConnector {
-  color: v('color.gray.500');
+  color: v('color.text.muted');
   min-block-size: v('space.xs');
 }
 </style>

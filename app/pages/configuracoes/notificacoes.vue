@@ -80,7 +80,7 @@ dd-stack
 }
 
 .cardText {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   margin: 0;
 }
 

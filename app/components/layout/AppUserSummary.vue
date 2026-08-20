@@ -16,15 +16,23 @@ dd-cluster(narrow :class="fin.root")
 <style module="fin">
 .root {
   --dd-cluster-gap: v('space.xxs');
+  color: v('color.text.default');
 }
 
 .meta {
+  color: inherit;
   font-size: v('font-size.sm');
   text-transform: capitalize;
 }
 
+.meta strong {
+  color: inherit;
+  font-weight: v('font-weight.semi-bold');
+}
+
 .meta span {
-  color: v('color.gray');
+  color: v('color.text.muted');
   font-size: v('font-size.xs');
+  line-height: v('line-height.tight');
 }
 </style>

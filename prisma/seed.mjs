@@ -6,6 +6,7 @@ import {
   automationRules,
   financialInstitutions,
   jobDefinitions,
+  paymentConditions,
 } from './seed-data.mjs'
 
 const connectionString = process.env.DATABASE_URL
@@ -347,7 +348,7 @@ async function seedJobs() {
     })
   }
 
-  const [contractsJob, overdueJob, recurrenceJob] = await Promise.all([
+  const [contractsJob, overdueJob, recurrenceJob, cashflowJob, notificationsJob, withoutEntriesJob] = await Promise.all([
     prisma.jobDefinition.findUniqueOrThrow({
       where: { key: 'check-contracts' },
       select: { key: true },
@@ -358,6 +359,18 @@ async function seedJobs() {
     }),
     prisma.jobDefinition.findUniqueOrThrow({
       where: { key: 'extend-recurrence-window' },
+      select: { key: true },
+    }),
+    prisma.jobDefinition.findUniqueOrThrow({
+      where: { key: 'check-cashflow' },
+      select: { key: true },
+    }),
+    prisma.jobDefinition.findUniqueOrThrow({
+      where: { key: 'expire-notifications' },
+      select: { key: true },
+    }),
+    prisma.jobDefinition.findUniqueOrThrow({
+      where: { key: 'check-contracts-without-entries' },
       select: { key: true },
     }),
   ])
@@ -399,6 +412,41 @@ async function seedJobs() {
         durationMs: 1090,
         errorMessage: 'Grupo de recorrência seed:vip-legacy sem frequência configurada.',
         metadata: {
+          source: 'qa-seed',
+        },
+      },
+      {
+        jobKey: cashflowJob.key,
+        status: 'SUCCESS',
+        startedAt: new Date('2026-08-03T05:06:00.000Z'),
+        finishedAt: new Date('2026-08-03T05:06:00.840Z'),
+        durationMs: 840,
+        metadata: {
+          month: '2026-08',
+          projectedBalance: 13877.10,
+          source: 'qa-seed',
+        },
+      },
+      {
+        jobKey: notificationsJob.key,
+        status: 'SUCCESS',
+        startedAt: new Date('2026-08-04T05:10:00.000Z'),
+        finishedAt: new Date('2026-08-04T05:10:00.610Z'),
+        durationMs: 610,
+        metadata: {
+          archivedNotifications: 3,
+          source: 'qa-seed',
+        },
+      },
+      {
+        jobKey: withoutEntriesJob.key,
+        status: 'SUCCESS',
+        startedAt: new Date('2026-08-05T05:15:00.000Z'),
+        finishedAt: new Date('2026-08-05T05:15:01.170Z'),
+        durationMs: 1170,
+        metadata: {
+          scannedContracts: 7,
+          pendingContracts: 1,
           source: 'qa-seed',
         },
       },
@@ -609,6 +657,18 @@ async function seedBackoffice() {
     prisma.paymentMethod.create({ data: { name: 'Transferência bancária' } }),
   ])
 
+  const paymentConditionRecords = new Map()
+
+  for (const conditionName of paymentConditions) {
+    const record = await prisma.paymentCondition.create({
+      data: {
+        name: conditionName,
+      },
+    })
+
+    paymentConditionRecords.set(conditionName, record)
+  }
+
   await Promise.all([
     prisma.nonBusinessDay.create({
       data: {
@@ -645,7 +705,7 @@ async function seedBackoffice() {
     }),
   ])
 
-  const [pedro, jessica, hatus, simplifica, googleWorkspace] = await Promise.all([
+  const [pedro, jessica, hatus, raphaela, cassia, simplifica, googleWorkspace, owlBooks] = await Promise.all([
     prisma.contact.create({
       data: {
         name: 'Pedro Pisandelli',
@@ -699,6 +759,32 @@ async function seedBackoffice() {
     }),
     prisma.contact.create({
       data: {
+        name: 'Raphaela Vianna',
+        document: '654.321.987-00',
+        documentType: 'CPF',
+        nature: 'INDIVIDUAL',
+        email: 'raphaela@example.com',
+        phone: '(85) 98888-0003',
+        roleAssignments: {
+          create: [{ role: 'CLIENT' }],
+        },
+      },
+    }),
+    prisma.contact.create({
+      data: {
+        name: 'Cássia Inglês',
+        document: '789.654.123-55',
+        documentType: 'CPF',
+        nature: 'INDIVIDUAL',
+        email: 'cassia@example.com',
+        phone: '(85) 98888-0004',
+        roleAssignments: {
+          create: [{ role: 'CLIENT' }, { role: 'OTHER' }],
+        },
+      },
+    }),
+    prisma.contact.create({
+      data: {
         name: 'Simplifica CRM',
         tradeName: 'Simplifica',
         document: '12.ABC.345/0001-90',
@@ -729,6 +815,27 @@ async function seedBackoffice() {
         email: 'billing@google.example',
         roleAssignments: {
           create: [{ role: 'SUPPLIER' }],
+        },
+      },
+    }),
+    prisma.contact.create({
+      data: {
+        name: 'Owl Books Ltd.',
+        document: 'AB-778899',
+        documentType: 'FOREIGN_DOCUMENT',
+        nature: 'FOREIGN',
+        email: 'billing@owlbooks.example',
+        phone: '+44 20 7000 1000',
+        roleAssignments: {
+          create: [{ role: 'SUPPLIER' }],
+        },
+        address: {
+          create: {
+            country: 'UNITED KINGDOM',
+            city: 'London',
+            street: '221B Baker Street',
+            number: '221B',
+          },
         },
       },
     }),
@@ -766,12 +873,22 @@ async function seedBackoffice() {
       cartaoCredito,
       transferenciaBancaria,
     },
+    paymentConditions: {
+      avista: paymentConditionRecords.get('À vista'),
+      mensal: paymentConditionRecords.get('Mensal'),
+      trimestral: paymentConditionRecords.get('Trimestral'),
+      seisX: paymentConditionRecords.get('6x'),
+      dozeX: paymentConditionRecords.get('12x'),
+    },
     contacts: {
       pedro,
       jessica,
       hatus,
+      raphaela,
+      cassia,
       simplifica,
       googleWorkspace,
+      owlBooks,
     },
   }
 }
@@ -789,12 +906,15 @@ async function seedContracts(context) {
       weeklyHours: 6,
       startDate: date('2026-07-01'),
       expectedEndDate: date('2026-12-31'),
+      billingModel: 'INSTALLMENT',
+      paymentConditionId: context.paymentConditions.seisX?.id,
+      firstDueDate: date('2026-07-01'),
       notes: 'Contrato ativo de acompanhamento VIP com desconto promocional de 10%.',
       source: 'LOCAL',
     },
   })
 
-  await prisma.contract.create({
+  const propostaIntensivo = await prisma.contract.create({
     data: {
       title: 'Proposta Intensivo - Pedro Pisandelli',
       clientId: context.contacts.pedro.id,
@@ -806,12 +926,14 @@ async function seedContracts(context) {
       weeklyHours: 4,
       startDate: date('2026-08-03'),
       expectedEndDate: date('2026-09-11'),
+      billingModel: 'CASH',
+      paymentConditionId: context.paymentConditions.avista?.id,
       notes: 'Proposta comercial em análise.',
       source: 'LOCAL',
     },
   })
 
-  await prisma.contract.create({
+  const contratoCorporativo = await prisma.contract.create({
     data: {
       title: 'Contrato Corporativo - Hatus',
       clientId: context.contacts.hatus.id,
@@ -823,12 +945,17 @@ async function seedContracts(context) {
       weeklyHours: 8,
       startDate: date('2026-06-01'),
       expectedEndDate: date('2026-11-30'),
+      billingModel: 'RECURRING',
+      billingFrequency: 'QUARTERLY',
+      billingOccurrences: 2,
+      firstDueDate: date('2026-06-05'),
+      paymentConditionId: context.paymentConditions.trimestral?.id,
       notes: 'Contrato corporativo com faturamento trimestral.',
       source: 'LOCAL',
     },
   })
 
-  await prisma.contract.create({
+  const renovacaoVip = await prisma.contract.create({
     data: {
       title: 'Renovação VIP - Jéssika Basílio',
       clientId: context.contacts.jessica.id,
@@ -841,13 +968,132 @@ async function seedContracts(context) {
       startDate: date('2027-01-05'),
       expectedEndDate: date('2027-06-30'),
       renewalOfContractId: contratoVip.id,
+      billingModel: 'INSTALLMENT',
+      paymentConditionId: context.paymentConditions.seisX?.id,
+      firstDueDate: date('2027-01-05'),
       notes: 'Renovação já registrada para o próximo ciclo.',
       source: 'LOCAL',
     },
   })
+
+  const contratoRaphaela = await prisma.contract.create({
+    data: {
+      title: 'Contrato Regular - Raphaela Vianna',
+      clientId: context.contacts.raphaela.id,
+      status: 'ACTIVE',
+      originalAmount: '5280.00',
+      discountAmount: '0.00',
+      finalAmount: '5280.00',
+      totalHours: 48,
+      weeklyHours: 3,
+      startDate: date('2026-08-01'),
+      expectedEndDate: date('2026-12-20'),
+      billingModel: 'RECURRING',
+      billingFrequency: 'MONTHLY',
+      billingOccurrences: 5,
+      firstDueDate: date('2026-08-04'),
+      paymentConditionId: context.paymentConditions.mensal?.id,
+      notes: 'Contrato mensal com geração recorrente esperada.',
+      source: 'LOCAL',
+    },
+  })
+
+  const contratoCassiaTrancado = await prisma.contract.create({
+    data: {
+      title: 'Contrato Trancado - Cássia Inglês',
+      clientId: context.contacts.cassia.id,
+      status: 'LOCKED',
+      originalAmount: '3600.00',
+      discountAmount: '0.00',
+      finalAmount: '3600.00',
+      totalHours: 32,
+      weeklyHours: 2,
+      startDate: date('2026-05-01'),
+      expectedEndDate: date('2026-10-31'),
+      billingModel: 'RECURRING',
+      billingFrequency: 'MONTHLY',
+      billingOccurrences: 6,
+      firstDueDate: date('2026-05-05'),
+      paymentConditionId: context.paymentConditions.mensal?.id,
+      notes: 'Contrato pausado temporariamente por solicitação da aluna.',
+      source: 'LOCAL',
+    },
+  })
+
+  const contratoEncerrado = await prisma.contract.create({
+    data: {
+      title: 'Contrato Encerrado - Pedro Pisandelli',
+      clientId: context.contacts.pedro.id,
+      status: 'CLOSED',
+      originalAmount: '2280.00',
+      discountAmount: '0.00',
+      finalAmount: '2280.00',
+      totalHours: 24,
+      weeklyHours: 4,
+      startDate: date('2026-01-15'),
+      expectedEndDate: date('2026-04-15'),
+      billingModel: 'INSTALLMENT',
+      paymentConditionId: context.paymentConditions.avista?.id,
+      notes: 'Contrato antigo encerrado após conclusão do ciclo.',
+      source: 'LOCAL',
+    },
+  })
+
+  const contratoCancelado = await prisma.contract.create({
+    data: {
+      title: 'Proposta Cancelada - Pedro Pisandelli',
+      clientId: context.contacts.pedro.id,
+      status: 'CANCELED',
+      originalAmount: '1800.00',
+      discountAmount: '0.00',
+      finalAmount: '1800.00',
+      totalHours: 20,
+      weeklyHours: 4,
+      startDate: date('2026-07-10'),
+      expectedEndDate: date('2026-08-28'),
+      billingModel: 'CASH',
+      paymentConditionId: context.paymentConditions.avista?.id,
+      notes: 'Proposta cancelada pelo cliente antes da assinatura.',
+      source: 'LOCAL',
+    },
+  })
+
+  const rascunhoCorporativo = await prisma.contract.create({
+    data: {
+      title: 'Rascunho Corporativo - Owl Books',
+      clientId: context.contacts.hatus.id,
+      status: 'DRAFT',
+      originalAmount: '6400.00',
+      discountAmount: '7.50',
+      finalAmount: '5920.00',
+      totalHours: 40,
+      weeklyHours: 2,
+      startDate: date('2026-09-01'),
+      expectedEndDate: date('2026-12-15'),
+      billingModel: 'RECURRING',
+      billingFrequency: 'MONTHLY',
+      billingOccurrences: 4,
+      firstDueDate: date('2026-09-05'),
+      paymentConditionId: context.paymentConditions.mensal?.id,
+      notes: 'Rascunho comercial para expansão internacional.',
+      source: 'LOCAL',
+    },
+  })
+
+  return {
+    contratoVip,
+    propostaIntensivo,
+    contratoCorporativo,
+    renovacaoVip,
+    contratoRaphaela,
+    contratoCassiaTrancado,
+    contratoEncerrado,
+    contratoCancelado,
+    rascunhoCorporativo,
+  }
 }
 
-async function seedFinancialEntries(context) {
+async function seedFinancialEntries(context, contracts) {
   const transferGroupId = randomUUID()
 
   await prisma.financialEntry.create({
@@ -865,6 +1111,7 @@ async function seedFinancialEntries(context) {
       paymentAccountId: context.accounts.contaPrincipal.id,
       paymentMethodId: context.paymentMethods.pix.id,
       contactId: context.contacts.jessica.id,
+      contractId: contracts.contratoVip.id,
       categoryId: context.categories.mensalidades.id,
       subcategoryId: context.categories.vip.id,
       costCenterId: context.costCenters.comercial.id,
@@ -890,6 +1137,7 @@ async function seedFinancialEntries(context) {
       accountId: context.accounts.contaPrincipal.id,
       paymentMethodId: context.paymentMethods.boleto.id,
       contactId: context.contacts.pedro.id,
+      contractId: contracts.propostaIntensivo.id,
       categoryId: context.categories.mensalidades.id,
       subcategoryId: context.categories.turmaRegular.id,
       costCenterId: context.costCenters.comercial.id,
@@ -938,6 +1186,7 @@ async function seedFinancialEntries(context) {
       paymentAccountId: context.accounts.contaPrincipal.id,
       paymentMethodId: context.paymentMethods.transferenciaBancaria.id,
       contactId: context.contacts.simplifica.id,
+      contractId: contracts.contratoCorporativo.id,
       categoryId: context.categories.software.id,
       costCenterId: context.costCenters.operacional.id,
     },
@@ -1029,6 +1278,82 @@ async function seedFinancialEntries(context) {
         subcategoryId: context.categories.folha.id,
         costCenterId: context.costCenters.administrativo.id,
       },
+      {
+        direction: 'INCOME',
+        type: 'NORMAL',
+        status: 'OPEN',
+        description: 'Mensalidade agosto - Raphaela Vianna',
+        amount: '1056.00',
+        competenceDate: date('2026-08-01'),
+        scheduledDueDate: date('2026-08-04'),
+        effectiveDueDate: date('2026-08-04'),
+        accountId: context.accounts.contaPrincipal.id,
+        paymentMethodId: context.paymentMethods.pix.id,
+        contactId: context.contacts.raphaela.id,
+        contractId: contracts.contratoRaphaela.id,
+        categoryId: context.categories.mensalidades.id,
+        subcategoryId: context.categories.turmaRegular.id,
+        costCenterId: context.costCenters.comercial.id,
+        recurrenceType: 'FIXED',
+        recurrenceFrequency: 'MONTHLY',
+        recurrenceGroupId: 'seed:raphaela-2026',
+        recurrenceIndex: 1,
+        recurrenceTotal: 5,
+      },
+      {
+        direction: 'INCOME',
+        type: 'NORMAL',
+        status: 'OPEN',
+        description: 'Mensalidade setembro - Raphaela Vianna',
+        amount: '1056.00',
+        competenceDate: date('2026-09-01'),
+        scheduledDueDate: date('2026-09-04'),
+        effectiveDueDate: date('2026-09-04'),
+        accountId: context.accounts.contaPrincipal.id,
+        paymentMethodId: context.paymentMethods.pix.id,
+        contactId: context.contacts.raphaela.id,
+        contractId: contracts.contratoRaphaela.id,
+        categoryId: context.categories.mensalidades.id,
+        subcategoryId: context.categories.turmaRegular.id,
+        costCenterId: context.costCenters.comercial.id,
+        recurrenceType: 'FIXED',
+        recurrenceFrequency: 'MONTHLY',
+        recurrenceGroupId: 'seed:raphaela-2026',
+        recurrenceIndex: 2,
+        recurrenceTotal: 5,
+      },
+      {
+        direction: 'EXPENSE',
+        type: 'NORMAL',
+        status: 'OPEN',
+        description: 'Imposto DAS agosto',
+        amount: '680.50',
+        competenceDate: date('2026-08-01'),
+        scheduledDueDate: date('2026-08-20'),
+        effectiveDueDate: date('2026-08-20'),
+        accountId: context.accounts.contaPrincipal.id,
+        paymentMethodId: context.paymentMethods.boleto.id,
+        categoryId: context.categories.impostos.id,
+        costCenterId: context.costCenters.administrativo.id,
+        notes: 'Despesa fiscal aguardando pagamento.',
+      },
+      {
+        direction: 'EXPENSE',
+        type: 'NORMAL',
+        status: 'PAID',
+        description: 'Material didático importado',
+        amount: '312.40',
+        competenceDate: date('2026-07-22'),
+        scheduledDueDate: date('2026-07-22'),
+        effectiveDueDate: date('2026-07-22'),
+        paymentDate: date('2026-07-22'),
+        accountId: context.accounts.carteiraDigital.id,
+        paymentAccountId: context.accounts.carteiraDigital.id,
+        paymentMethodId: context.paymentMethods.cartaoCredito.id,
+        contactId: context.contacts.owlBooks.id,
+        categoryId: context.categories.software.id,
+        costCenterId: context.costCenters.operacional.id,
+      },
     ],
   })
 }
@@ -1084,6 +1409,7 @@ async function seedNotifications(user) {
         metadata: {
           source: 'seed',
           ruleKey: 'overdue-entry',
+          contextLabel: 'Transferência para reserva',
         },
       },
       {
@@ -1101,6 +1427,7 @@ async function seedNotifications(user) {
         metadata: {
           source: 'seed',
           ruleKey: 'contract-without-generated-entries',
+          contextLabel: 'Proposta Intensivo - Pedro Pisandelli',
         },
       },
       {
@@ -1120,6 +1447,42 @@ async function seedNotifications(user) {
           source: 'seed',
         },
       },
+      {
+        userId: user.id,
+        title: 'Contrato próximo do fim',
+        message: 'O contrato "Contrato VIP - Jéssika Basílio" entrará na janela de renovação nos próximos 15 dias.',
+        type: 'contract',
+        severity: 'WARNING',
+        isRead: true,
+        readAt: new Date('2026-08-01T09:15:00.000Z'),
+        isPriority: false,
+        entityType: 'Contract',
+        entityId: 'seed-contract-ending-soon',
+        actionUrl: '/contratos',
+        dedupeKey: 'seed:contract-ending-soon:jessika-vip',
+        metadata: {
+          source: 'seed',
+          ruleKey: 'contract-ending-soon',
+          contextLabel: 'Contrato VIP - Jéssika Basílio',
+        },
+      },
+      {
+        userId: user.id,
+        title: 'Fluxo monitorado',
+        message: 'A central de notificações está pronta para acompanhar alertas operacionais.',
+        type: 'system',
+        severity: 'INFO',
+        isRead: false,
+        isPriority: false,
+        entityType: 'Dashboard',
+        entityId: 'financeiro',
+        actionUrl: '/dashboard/financeiro',
+        dedupeKey: 'seed:info:notification-center-ready',
+        metadata: {
+          source: 'seed',
+          contextLabel: 'Dashboard financeiro',
+        },
+      },
     ],
   })
 }
@@ -1133,8 +1496,8 @@ async function main() {
   await seedJobs()
   await seedAutomationRules()
   const context = await seedBackoffice()
-  await seedContracts(context)
-  await seedFinancialEntries(context)
+  const contracts = await seedContracts(context)
+  await seedFinancialEntries(context, contracts)
   await seedAuditLogs(adminUser)
   await seedNotifications(adminUser)
 

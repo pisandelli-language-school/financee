@@ -144,7 +144,7 @@ backoffice-modal-form-shell(
 
 .clearSwatch {
   aspect-ratio: auto;
-  background: v('color.white');
+  background: v('color.bg.surface');
   border-color: v('color.border.default');
   color: v('color.text.muted');
   inline-size: auto;

@@ -68,7 +68,7 @@ const entryRowAttrs: AppTableRowAttrs = (row) => {
   const entry = row as FinancialEntryRecord
 
   return entry.status === 'OPEN'
-    ? { 'data-entry-open': 'true' }
+    ? { 'data-warning': '' }
     : undefined
 }
 
@@ -1015,13 +1015,15 @@ dd-stack
   align-items: center;
   display: grid;
   gap: v('space.sm');
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
 .toolbarStart {
   align-items: center;
-  flex-wrap: wrap;
+  display: grid;
   gap: v('space.sm');
+  grid-template-columns: auto minmax(16rem, 1fr);
+  min-inline-size: 0;
 }
 
 .toolbarEnd {
@@ -1030,8 +1032,7 @@ dd-stack
 }
 
 .searchField {
-  flex: 1 1 18rem;
-  min-inline-size: 16rem;
+  min-inline-size: 0;
 }
 
 .periodNav {
@@ -1048,7 +1049,7 @@ dd-stack
 }
 
 .filterHint {
-  color: var(--dd-color-gray);
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
@@ -1062,7 +1063,7 @@ dd-stack
 }
 
 .summaryCard {
-  --dd-card-border-color: v('color.light-gray');
+  --dd-card-border-color: v('color.border.default');
   --summary-card-bg: v('color.info.50');
   --summary-card-border: v('color.info.300');
 
@@ -1093,7 +1094,7 @@ dd-stack
 }
 
 .summaryLabel {
-  color: var(--dd-color-gray);
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
@@ -1137,7 +1138,7 @@ dd-stack
 
 .summaryTrend {
   align-items: center;
-  color: var(--dd-color-gray);
+  color: v('color.text.muted');
   display: inline-flex;
   font-size: v('font-size.xs');
   gap: v('space.xxs');
@@ -1154,7 +1155,7 @@ dd-stack
 }
 
 .notes {
-  color: var(--dd-color-gray);
+  color: v('color.text.muted');
   font-size: v('font-size.xs');
 }
 
@@ -1225,10 +1226,5 @@ dd-stack
 
 .statusOpenButton {
   --dd-button-base-color: v('color.gray.200');
-}
-
-tbody tr[data-entry-open='true'] {
-  --local-row-bg: color-mix(in srgb, v('color.warning.50') 35%, v('color.bg.surface'));
-  --local-row-hover-bg: color-mix(in srgb, v('color.warning.50') 45%, v('color.bg.surface'));
 }
 </style>

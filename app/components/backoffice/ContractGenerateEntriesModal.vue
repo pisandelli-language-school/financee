@@ -411,7 +411,7 @@ backoffice-modal-form-shell(
 
 .subcopy,
 .label {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 

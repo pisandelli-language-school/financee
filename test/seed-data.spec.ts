@@ -3,6 +3,7 @@ import {
   automationRules,
   financialInstitutions,
   jobDefinitions,
+  paymentConditions,
 } from '../prisma/seed-data.mjs'
 
 describe('seed data', () => {
@@ -49,5 +50,15 @@ describe('seed data', () => {
 
     expect(jobDefinitions.every(job => job.mode === 'BOTH')).toBe(true)
     expect(jobDefinitions.every(job => job.scheduleLabel === 'Diariamente')).toBe(true)
+  })
+
+  it('defines a stable payment condition catalog for contracts QA', () => {
+    expect(paymentConditions).toEqual([
+      'À vista',
+      'Mensal',
+      'Trimestral',
+      '6x',
+      '12x',
+    ])
   })
 })

@@ -113,7 +113,7 @@ dd-modal(
 <style module="fin">
 .jsonBlock {
   background: v('color.bg.subtle');
-  border: v('border-width.sm') solid v('color.border.standard');
+  border: v('border-width.sm') solid v('color.border.default');
   border-radius: v('radius.md');
   font-size: v('font-size.sm');
   margin: 0;

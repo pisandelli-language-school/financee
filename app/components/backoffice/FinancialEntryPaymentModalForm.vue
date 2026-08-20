@@ -106,6 +106,6 @@ backoffice-modal-form-shell(
 }
 
 .hint {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
 }
 </style>

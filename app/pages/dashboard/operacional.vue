@@ -166,7 +166,7 @@ dd-stack
 }
 
 .metricCard {
-  --dd-card-border-color: v('color.border.standard');
+  --dd-card-border-color: v('color.border.default');
   background: v('color.bg.surface');
   border: v('border-width.sm') solid var(--dd-card-border-color);
   border-radius: v('border-radius.lg');
@@ -175,23 +175,23 @@ dd-stack
 }
 
 .metricSuccess {
-  --dd-card-border-color: v('color.success.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .metricDanger {
-  --dd-card-border-color: v('color.danger.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .metricWarning {
-  --dd-card-border-color: v('color.warning.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .metricInfo {
-  --dd-card-border-color: v('color.info.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .metricLabel {
-  color: v('color.gray.700');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 

@@ -280,8 +280,8 @@ function startNotificationPolling() {
 </script>
 
 <template lang="pug">
-dd-layout
-  nuxt-loading-indicator(:height="3" color="#0a51cf" :throttle="0")
+dd-layout(canvas data-theme='darker')
+  nuxt-loading-indicator(:height="3" color="var(--dd-color-primary)" :throttle="0")
   AppTopbar(
     :user-name="userName"
     role-label="Administrador"
@@ -314,13 +314,13 @@ dd-layout
 
 <style module="fin">
 .footer {
-  background: v('color.bg.surface');
-  border-top: v('border-width.sm') solid v('color.light-gray');
+  background: v('color.bg.surface-subtle');
+  border-top: v('border-width.sm') solid v('color.border.default');
 }
 
 .footer a,
 .footer span {
-  color: v('color.gray');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
   text-decoration: none;
 }

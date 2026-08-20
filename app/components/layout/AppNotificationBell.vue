@@ -25,6 +25,6 @@ dd-popover(v-if="visible" trigger="click" placement="bottom-end")
 
 <style module="fin">
 .trigger {
-  color: v('color.dark-gray');
+  color: v('color.text.muted');
 }
 </style>

@@ -181,7 +181,7 @@ dd-card(
 }
 
 .date {
-  color: v('color.gray');
+  color: v('color.text.muted');
   flex: 0 0 auto;
   font-size: v('font-size.xs');
 }
@@ -193,12 +193,12 @@ dd-card(
 }
 
 .context {
-  color: v('color.gray');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
 .message {
-  color: v('color.gray');
+  color: v('color.text.muted');
   white-space: pre-line;
   font-size: v('font-size.sm');
 }
@@ -214,20 +214,20 @@ dd-card(
 }
 
 [data-isRead="true"] {
-  --dd-card-background-color: color-mix(in srgb, v('color.light-gray') 35%, #fff);;
-  --dd-card-border-color: color-mix(in srgb, v('color.gray') 8%, v('color.light-gray'));
-  --dd-card-color: v('color.gray');
+  --dd-card-background-color: v('color.bg.surface-subtle');
+  --dd-card-border-color: v('color.border.default');
+  --dd-card-color: v('color.text.muted');
   * {
     color: inherit;
   }
   
   :where(.badge) {
-    --dd-badge-base-color: v('color.gray');
+    --dd-badge-base-color: v('color.text.muted');
   }
 
   .iconWrap {
-    background: v('color.light-gray');
-    color: v('color.gray');
+    background: v('color.bg.surface-elevated');
+    color: v('color.text.muted');
   }
 }
 

@@ -12,6 +12,7 @@ import {
   type RecurrenceFrequency,
   type RecurrenceType,
 } from '~/types/financial'
+import { formatCurrencyInput, parseLocalizedNumber } from '~/utils/number-input'
 
 const entryDirectionValues = entryDirectionOptions.map((option) => option.value) as [EntryDirection, ...EntryDirection[]]
 const entryTypeValues = entryTypeOptions.map((option) => option.value) as [EntryType, ...EntryType[]]
@@ -80,7 +81,7 @@ export const financialEntrySchema = z.object({
     })
   }
 
-  const amount = Number(value.amount)
+  const amount = parseLocalizedNumber(value.amount)
 
   if (!value.amount.trim()) {
     ctx.addIssue({
@@ -88,7 +89,7 @@ export const financialEntrySchema = z.object({
       path: ['amount'],
       message: 'Informe o valor do lançamento.',
     })
-  } else if (!Number.isFinite(amount) || amount <= 0) {
+  } else if (amount == null || amount <= 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['amount'],
@@ -241,7 +242,7 @@ export function createFinancialEntryFormFromRecord(record: FinancialEntryRecord)
     direction: record.direction,
     type: record.type === 'TRANSFER' ? 'NORMAL' : record.type,
     description: record.description,
-    amount: String(record.amount),
+    amount: formatCurrencyInput(record.amount),
     competenceDate: record.competenceDate,
     scheduledDueDate: record.scheduledDueDate,
     accountId: record.accountId,

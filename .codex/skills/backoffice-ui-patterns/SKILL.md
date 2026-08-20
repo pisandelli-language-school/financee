@@ -46,6 +46,7 @@ Use `financee-project-conventions` together with this skill whenever the edit al
 24. When a Daredash primitive propagates `data-*` attributes but not local classes reliably, prefer `data-*` as the styling hook for stateful variants such as read/unread, severity, active state, or compact state.
 25. In admin-facing automation screens, prefer a curated catalog of preconfigured rules over arbitrary rule creation. Let admins tune severity, recipients, and narrow rule-specific thresholds, but do not expose generic workflow-building UI unless the spec explicitly requires it.
 26. If an automation rule does not need a numeric threshold, do not force one into the form. Keep each rule editor honest: only render the fields that are meaningful for that specific rule key.
+27. If a visual state must adapt across themes, treat the theme token as the source of truth. Do not “fix” dark mode with page-local `:global` selectors or `color-mix(...)` overrides when the semantic token itself should be adjusted in the theme.
 
 ## Workflow
 
@@ -67,6 +68,7 @@ Use `financee-project-conventions` together with this skill whenever the edit al
 16. When a screen appears visually “correct” only because a form field reserves extra message space, treat that as a layout smell. The vertical gap should come from the shared panel layout, not from the internal height of one specific field.
 17. If you accept a local workaround because the shared component or design system is missing a better primitive, log that debt immediately in GitHub before moving on.
 18. When extending structured automations, add the new rule in four places together: backend executor, seed catalog, UI description map, and form/config payload mapping. Do not implement only one layer and leave the rest implicit.
+19. When a component already exposes a semantic state hook such as `data-warning`, `data-danger`, or `data-success`, prefer changing the corresponding theme token before adding local CSS to restyle that state. Theme behavior should stay centralized.
 
 ## Toolbar Pattern
 

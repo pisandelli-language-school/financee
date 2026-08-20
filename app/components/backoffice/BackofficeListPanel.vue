@@ -92,6 +92,9 @@ dd-card
           :is-invalid="props.isInvalid"
           :error-message="props.errorMessage"
         )
+          template(#loading)
+            dd-loading Carregando dados
+
           template(v-for="name in tableSlotNames" :key="name" #[name]="slotProps")
             slot(:name="name" v-bind="slotProps")
 
@@ -155,12 +158,12 @@ dd-card
 }
 
 .rangeLabel {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
 .pageSizeButton {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
 }
 
 .pageSizeMenu {
@@ -168,8 +171,8 @@ dd-card
 }
 
 .pageSizeHeading {
-  border-block-end: 1px solid v('color.border.standard');
-  color: v('color.text.soft');
+  border-block-end: 1px solid v('color.border.default');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
   margin: 0;
   padding-block-end: v('space.xs');

@@ -16,6 +16,7 @@ import type {
   RecurrenceFrequency,
   RecurrenceType,
 } from '~~/app/types/financial'
+import { parseLocalizedNumber } from '~~/app/utils/number-input'
 import { resolveEffectiveDueDate } from '~~/server/utils/financial-calendar'
 import { prisma } from '~~/server/utils/prisma'
 
@@ -124,9 +125,9 @@ function parseDateOnly(value: string, fieldLabel: string) {
 }
 
 function parsePositiveAmount(value: string) {
-  const parsed = Number(value)
+  const parsed = parseLocalizedNumber(value)
 
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  if (parsed == null || parsed <= 0) {
     throw createError({
       statusCode: 400,
       message: 'Informe um valor maior que zero.',

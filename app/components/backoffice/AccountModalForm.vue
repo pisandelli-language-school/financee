@@ -319,7 +319,7 @@ backoffice-modal-form-shell(
 .stepHint,
 .institutionType,
 .previewMeta {
-  color: var(--dd-color-gray);
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 

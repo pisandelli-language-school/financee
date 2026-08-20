@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import logoUrl from '~/assets/images/logo-opt.svg?url'
+import AppBrandLogo from '~/components/layout/AppBrandLogo.vue'
 
 definePageMeta({
   layout: false,
@@ -7,17 +7,6 @@ definePageMeta({
 
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
-
-useHead({
-  link: [
-    {
-      rel: 'preload',
-      as: 'image',
-      href: logoUrl,
-      fetchpriority: 'high',
-    },
-  ],
-})
 
 const authError = ref('')
 const isSigningIn = ref(false)
@@ -57,7 +46,7 @@ main(:class="fin.page")
   //- Brand panel
   section(v-once :class="fin.brand")
     div(:class="fin.brandInner")
-      img(:class="fin.logo" :src="logoUrl" alt="Financee" fetchpriority="high")
+      AppBrandLogo(inverted block-size="36px")
       div
         h1(:class="fin.headline") Gestão financeira sem ruído.
         p(:class="fin.subhead") O backoffice financeiro da escola — contratos, lançamentos e relatórios em um só lugar.
@@ -105,7 +94,7 @@ main(:class="fin.page")
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  background: #0a1330;
+  background: v('color.bg.subtle');
   color: v('color.text.default');
 }
 
@@ -115,11 +104,15 @@ main(:class="fin.page")
   display: flex;
   align-items: center;
   padding: v('space.xl');
-  color: v('color.white');
+  color: v('color.text.inverted');
   background:
-    radial-gradient(120% 120% at 0% 0%, rgba(56, 102, 255, 0.35), transparent 55%),
-    radial-gradient(120% 120% at 100% 100%, rgba(14, 165, 233, 0.28), transparent 50%),
-    linear-gradient(160deg, #0a1330 0%, #0f1b46 100%);
+    radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, v('color.primary') 35%, transparent) 0%, transparent 55%),
+    radial-gradient(120% 120% at 100% 100%, color-mix(in srgb, v('color.info') 28%, transparent) 0%, transparent 50%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, v('color.primary') 42%, v('color.black')) 0%,
+      color-mix(in srgb, v('color.info') 18%, v('color.black')) 100%
+    );
 }
 
 .brandInner {
@@ -130,25 +123,19 @@ main(:class="fin.page")
   max-width: 460px;
 }
 
-.logo {
-  height: 36px;
-  width: auto;
-  filter: brightness(0) invert(1);
-}
-
 .headline {
   margin: 0;
   font-size: 2.5rem;
   line-height: 1.08;
   letter-spacing: -0.02em;
-  color: v('color.white');
+  color: v('color.text.inverted');
 }
 
 .subhead {
   margin: v('space.sm') 0 0;
   font-size: var(--dd-font-size-base);
   line-height: 1.6;
-  color: v('color.gray.200');
+  color: color-mix(in srgb, v('color.text.inverted') 78%, transparent);
 }
 
 .highlights {
@@ -174,7 +161,7 @@ main(:class="fin.page")
   place-items: center;
   background: color-mix(in srgb, v('color.primary.200') 16%, transparent);
   border: v('border-width.sm') solid color-mix(in srgb, v('color.info.200') 22%, transparent);
-  color: v('color.white');
+  color: v('color.text.inverted');
   font-size: v('font-size.md');
 }
 
@@ -184,7 +171,7 @@ main(:class="fin.page")
 }
 
 .highlightText strong {
-  color: v('color.white');
+  color: v('color.text.inverted');
   font-size: v('font-size.sm');
   font-weight: v('font-weight.semi-bold');
 }
@@ -192,7 +179,7 @@ main(:class="fin.page")
 .highlightText span {
   font-size: v('font-size.xs');
   line-height: 1.5;
-  color: v('color.gray.300');
+  color: color-mix(in srgb, v('color.text.inverted') 68%, transparent);
 }
 
 .brandGlow {
@@ -201,7 +188,7 @@ main(:class="fin.page")
   width: 360px;
   height: 360px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(56, 102, 255, 0.55), transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, v('color.primary') 55%, transparent), transparent 70%);
   filter: blur(40px);
 }
 
@@ -209,7 +196,7 @@ main(:class="fin.page")
   display: grid;
   place-items: center;
   padding: v('space.xl');
-  background: linear-gradient(180deg, v('color.white') 0%, v('color.light-gray') 100%);
+  background: linear-gradient(180deg, v('color.bg.surface') 0%, v('color.bg.subtle') 100%);
 }
 
 .card {
@@ -236,13 +223,13 @@ main(:class="fin.page")
 
 .hint {
   margin: v('space.xxs') 0 0;
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
 .legal {
   margin: 0;
-  color: v('color.gray.500');
+  color: v('color.text.muted');
   font-size: v('font-size.xs');
   line-height: 1.5;
 }

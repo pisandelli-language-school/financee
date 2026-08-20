@@ -33,6 +33,7 @@ import {
   createFinancialEntryFormFromRecord,
   financialEntryValidationSchema,
 } from '~/validators/financial-entry'
+import { formatCurrencyInput } from '~/utils/number-input'
 
 const props = defineProps<{
   open: boolean
@@ -291,6 +292,10 @@ function updateStringField(field: keyof FinancialEntryFormValues, value: unknown
   updateField(field, getSelectValue(value) as never)
 }
 
+function updateAmount(value: unknown) {
+  updateField('amount', formatCurrencyInput(String(value ?? '')))
+}
+
 function addTag(value: unknown) {
   const tagId = getSelectValue(value)
 
@@ -407,18 +412,12 @@ backoffice-modal-form-shell(
         )
 
         dd-grid
-          dd-input(
-            :model-value="values.amount"
-            label="Valor"
-            required
-            type="number"
-            step="0.01"
-            min="0.01"
-            placeholder="0.00"
-            :is-invalid="Boolean(getError('amount'))"
-            :error-message="getError('amount')"
-            @update:model-value="updateStringField('amount', $event)"
-          )
+          dd-input-group(label="Valor *" pre="R$" :error="getError('amount') || undefined")
+            dd-input(
+              :model-value="values.amount"
+              placeholder="0,00"
+              @update:model-value="updateAmount"
+            )
 
           dd-select(
             :model-value="values.accountId"

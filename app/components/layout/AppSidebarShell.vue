@@ -30,7 +30,7 @@ function toggleSidebar() {
 </script>
 
 <template lang="pug">
-dd-sidebar(fill :class="[fin.layout, collapsed && fin.layoutCollapsed]")
+dd-sidebar(fill subtle :class="[fin.layout, collapsed && fin.layoutCollapsed]")
   aside(:class="fin.aside")
     dd-stack(split-after="1" :class="fin.flow")
       dd-stack(compact)
@@ -81,8 +81,8 @@ dd-sidebar(fill :class="[fin.layout, collapsed && fin.layoutCollapsed]")
 }
 
 .aside {
-  background: v('color.bg.surface');
-  border-right: v('border-width.sm') solid v('color.light-gray');
+  background: v('color.bg.surface-subtle');
+  border-right: v('border-width.sm') solid v('color.border.default');
   min-block-size: 100%;
   padding: v('space.sm');
   transition: padding v('transition.slow');
@@ -115,6 +115,8 @@ dd-sidebar(fill :class="[fin.layout, collapsed && fin.layoutCollapsed]")
 
 .content {
   --dd-box-gap: v('space.xxl');
+  background: v('color.bg.canvas');
+  color: v('color.text.default');
   min-width: 0;
 }
 </style>

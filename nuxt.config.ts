@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxtjs/supabase',
     'nuxt-echarts',
-    '@pisandelli/daredash'
+    ['@pisandelli/daredash', {tokens: './app/assets/tokens/custom-theme.tokens.json'}],
   ],
 
   eslint: {},

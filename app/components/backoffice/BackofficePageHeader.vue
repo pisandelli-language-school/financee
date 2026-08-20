@@ -49,7 +49,7 @@ h1 {
 p {
   margin: 0;
   max-width: 720px;
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   line-height: v('line-height.snug');
 }
 </style>

@@ -21,7 +21,7 @@ dd-modal(
 )
   dd-stack(compact)
     h3 {{ title }}
-    p.delete-description {{ description }}
+    p(:class="fin.description") {{ description }}
 
   template(#footer)
     dd-cluster(end)
@@ -34,8 +34,8 @@ dd-modal(
       ) {{ confirmLabel ?? 'Excluir' }}
 </template>
 
-<style scoped>
-.delete-description {
-  color: v('color.gray');
+<style module="fin">
+.description {
+  color: v('color.text.muted');
 }
 </style>

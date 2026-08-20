@@ -445,11 +445,11 @@ dd-modal(
   color: v('color.primary');
   padding-block-end: v('space.xs');
   margin-block-end: v('space.xs');
-  border-bottom: 1px solid v('color.border.default');
+  border-bottom: v('border-width.sm') solid v('color.border.default');
 }
 
 .lookupInfo {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
 }
 
 .lookupError,

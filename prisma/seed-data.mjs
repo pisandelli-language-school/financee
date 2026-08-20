@@ -9,6 +9,14 @@ export const financialInstitutions = [
   { code: 'santander', name: 'Santander', logoKey: 'santander' },
 ]
 
+export const paymentConditions = [
+  'À vista',
+  'Mensal',
+  'Trimestral',
+  '6x',
+  '12x',
+]
+
 export const automationRules = [
   {
     key: 'contract-ending-soon',

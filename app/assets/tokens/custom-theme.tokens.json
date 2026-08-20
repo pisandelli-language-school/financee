@@ -1,0 +1,68 @@
+{
+  "$description": "Custom theme tokens for Financee",
+  "customs": {
+    "logo": {
+      "fill": {
+        "$value": "#1c2f48"
+      }
+    }
+  },
+  "themes": {
+    "dark": {
+      "logo": {
+        "fill": {
+          "$value": "#FFFFFF"
+        }
+      },
+      "state": {
+        "warning": {
+          "surface": {
+            "$value": "#B38A2C1C"
+          },
+          "surface-hover": {
+            "$value": "#B38A2C2A"
+          },
+          "border": {
+            "$value": "#D0A33D52"
+          },
+          "on-surface": {
+            "$value": "#E7D7B0"
+          }
+        }
+      },
+      "border": {
+        "default": {
+          "$value": "{color.gray.100}"
+        }
+      }
+    },
+    "darker": {
+      "logo": {
+        "fill": {
+          "$value": "#FFFFFF"
+        }
+      },
+      "state": {
+        "warning": {
+          "surface": {
+            "$value": "#B38A2C24"
+          },
+          "surface-hover": {
+            "$value": "#B38A2C33"
+          },
+          "border": {
+            "$value": "#D0A33D5E"
+          },
+          "on-surface": {
+            "$value": "#F0E0B8"
+          }
+        }
+      },
+      "border": {
+        "default": {
+          "$value": "{color.gray.100}"
+        }
+      }
+    }
+  }
+}

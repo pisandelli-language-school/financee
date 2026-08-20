@@ -16,7 +16,7 @@ div(:class="fin.card" aria-hidden="true")
   align-items: center;
   background: v('color.bg.surface');
   border: v('border-width.sm') solid;
-  border-color: v('color.light-gray');
+  border-color: v('color.border.default');
   border-radius: v('border-radius.lg');
   display: flex;
   gap: v('space.sm');

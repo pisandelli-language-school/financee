@@ -288,7 +288,7 @@ dd-stack
 }
 
 .summaryCard {
-  --dd-card-border-color: v('color.border.standard');
+  --dd-card-border-color: v('color.border.default');
   align-items: flex-start;
   background: v('color.bg.surface');
   border: v('border-width.sm') solid var(--dd-card-border-color);
@@ -301,28 +301,28 @@ dd-stack
 }
 
 .summarySuccess {
-  --dd-card-border-color: v('color.success.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .summaryDanger {
-  --dd-card-border-color: v('color.danger.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .summaryWarning {
-  --dd-card-border-color: v('color.warning.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .summaryInfo {
-  --dd-card-border-color: v('color.info.200');
+  --dd-card-border-color: v('color.border.default');
 }
 
 .summaryLabel {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
 .summaryDescription {
-  color: v('color.text.soft');
+  color: v('color.text.muted');
   font-size: v('font-size.xs');
   line-height: v('line-height.snug');
 }
