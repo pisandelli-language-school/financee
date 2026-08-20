@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { Prisma } from '@prisma/client'
 
 const prisma = {
   jobDefinition: {
@@ -16,6 +17,9 @@ const prisma = {
   notification: {
     findUnique: vi.fn(),
     create: vi.fn(),
+  },
+  integrationLog: {
+    updateMany: vi.fn(),
   },
 }
 
@@ -62,6 +66,10 @@ const { sendInternalNotificationEmail } = await import('~~/server/utils/email')
 describe('jobs runtime guards', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('skips automatic execution when the job is disabled', async () => {
@@ -185,6 +193,67 @@ describe('jobs runtime guards', () => {
         createdCount: 4,
         emailedCount: 1,
         rules: ['contract-without-generated-entries'],
+      },
+    })
+  })
+
+  it('purges only raw integration payloads older than 90 days', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-20T12:00:00.000Z'))
+    prisma.jobDefinition.findUnique.mockResolvedValue({
+      id: 'job-purge-1',
+      key: 'purge-integration-payloads',
+      title: 'Limpar payloads antigos de integração',
+      mode: 'BOTH',
+      isEnabled: true,
+      scheduleLabel: 'Diariamente',
+      createdAt: new Date('2026-08-03T10:00:00.000Z'),
+      updatedAt: new Date('2026-08-03T10:00:00.000Z'),
+    })
+    prisma.jobExecution.create.mockResolvedValue({
+      id: 'exec-purge-1',
+      jobKey: 'purge-integration-payloads',
+      status: 'RUNNING',
+      startedAt: new Date('2026-08-20T12:00:00.000Z'),
+      finishedAt: null,
+      durationMs: null,
+      errorMessage: null,
+      metadata: null,
+      createdAt: new Date('2026-08-20T12:00:00.000Z'),
+    })
+    prisma.jobExecution.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+      id: 'exec-purge-1',
+      jobKey: 'purge-integration-payloads',
+      status: data.status,
+      startedAt: new Date('2026-08-20T12:00:00.000Z'),
+      finishedAt: new Date('2026-08-20T12:00:01.000Z'),
+      durationMs: 1000,
+      errorMessage: null,
+      metadata: data.metadata,
+      createdAt: new Date('2026-08-20T12:00:00.000Z'),
+    }))
+    prisma.integrationLog.updateMany.mockResolvedValue({ count: 3 })
+
+    const execution = await runJobNow('purge-integration-payloads')
+
+    expect(prisma.integrationLog.updateMany).toHaveBeenCalledWith({
+      where: {
+        createdAt: {
+          lt: new Date('2026-05-22T12:00:00.000Z'),
+        },
+        rawPayload: {
+          not: Prisma.JsonNull,
+        },
+      },
+      data: {
+        rawPayload: Prisma.JsonNull,
+      },
+    })
+    expect(execution).toMatchObject({
+      status: 'SUCCESS',
+      metadata: {
+        purgedCount: 3,
+        cutoff: '2026-05-22T12:00:00.000Z',
       },
     })
   })

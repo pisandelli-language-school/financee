@@ -1,0 +1,64 @@
+model IntegrationClient {
+  id          String                        @id @default(cuid())
+  name        String
+  clientId    String                        @unique
+  isActive    Boolean                       @default(true)
+  scopes      IntegrationClientScope[]
+  credentials IntegrationClientCredential[]
+  logs        IntegrationLog[]
+  createdAt   DateTime                      @default(now())
+  updatedAt   DateTime                      @updatedAt
+
+  @@index([isActive])
+}
+
+model IntegrationClientCredential {
+  id         String            @id @default(cuid())
+  clientId   String
+  tokenHash  String            @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime          @default(now())
+  client     IntegrationClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+model IntegrationClientScope {
+  id        String            @id @default(cuid())
+  clientId  String
+  scopeKey  String
+  createdAt DateTime          @default(now())
+  client    IntegrationClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, scopeKey])
+  @@index([scopeKey])
+}
+
+model IntegrationLog {
+  id              String               @id @default(cuid())
+  provider        String
+  operation       String
+  direction       IntegrationDirection
+  status          IntegrationStatus
+  requestSummary  Json?
+  responseSummary Json?
+  rawPayload      Json?
+  errorMessage    String?
+  entityType      String?
+  entityId        String?
+  clientId        String?
+  client          IntegrationClient?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdAt       DateTime             @default(now())
+
+  @@index([provider])
+  @@index([operation])
+  @@index([direction])
+  @@index([status])
+  @@index([entityType, entityId])
+  @@index([clientId])
+  @@index([createdAt])
+}

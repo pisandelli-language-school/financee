@@ -41,6 +41,7 @@ interface JobCatalogEntry {
 
 const DEFAULT_JOB_EXECUTIONS_LIMIT = 20
 const RECURRENCE_WINDOW_MONTHS = 12
+const INTEGRATION_PAYLOAD_RETENTION_DAYS = 90
 
 function serializeJobDefinition(record: JobDefinitionRecord, lastExecution?: JobExecutionRecord | null) {
   return {
@@ -206,17 +207,34 @@ function getJobCatalog(): JobCatalogEntry[] {
     },
     {
       key: 'purge-integration-payloads',
-      run: async () => {
-        return {
-          status: 'SUCCESS',
-          metadata: {
-            purgedCount: 0,
-            skippedReason: 'IntegrationLog ainda não existe no MVP atual.',
-          },
-        }
-      },
+      run: purgeIntegrationPayloadsJob,
     },
   ]
+}
+
+async function purgeIntegrationPayloadsJob(): Promise<JobExecutorResult> {
+  const cutoff = addDays(new Date(), -INTEGRATION_PAYLOAD_RETENTION_DAYS)
+  const result = await prisma.integrationLog.updateMany({
+    where: {
+      createdAt: {
+        lt: cutoff,
+      },
+      rawPayload: {
+        not: Prisma.JsonNull,
+      },
+    },
+    data: {
+      rawPayload: Prisma.JsonNull,
+    },
+  })
+
+  return {
+    status: 'SUCCESS',
+    metadata: {
+      purgedCount: result.count,
+      cutoff: cutoff.toISOString(),
+    },
+  }
 }
 
 function getJobRunner(jobKey: string) {

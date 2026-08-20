@@ -15,6 +15,7 @@
     "prisma:validate": "prisma validate",
     "prisma:db:push": "prisma db push",
     "prisma:migrate": "prisma db push",
+    "integration:issue-test-token": "node scripts/issue-hoppscotch-integration-token.mjs",
     "seed": "node prisma/seed.mjs",
     "db:setup": "pnpm prisma:generate && pnpm prisma:db:push && pnpm seed"
   },

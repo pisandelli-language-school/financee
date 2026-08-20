@@ -1,0 +1,138 @@
+{
+  "info": {
+    "_postman_id": "73e73816-0862-4ec0-8f55-52b5cc6e7b12",
+    "name": "Financee — Integration API v1 (local)",
+    "description": "Read-only integration API. Set integrationToken after running the local test-token script.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "integrationToken",
+      "value": ""
+    },
+    {
+      "key": "contactId",
+      "value": ""
+    },
+    {
+      "key": "contractId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Contacts",
+      "item": [
+        {
+          "name": "List contacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{integrationToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/integrations/v1/contacts?page=1&pageSize=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "integrations", "v1", "contacts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "50" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get contact",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{integrationToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/integrations/v1/contacts/{{contactId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "integrations", "v1", "contacts", "{{contactId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Contracts",
+      "item": [
+        {
+          "name": "List contracts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{integrationToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/integrations/v1/contracts?page=1&pageSize=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "integrations", "v1", "contracts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "50" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get contract",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{integrationToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/integrations/v1/contracts/{{contractId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "integrations", "v1", "contracts", "{{contractId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

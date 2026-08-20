@@ -145,3 +145,16 @@ enum JobExecutionStatus {
   FAILED
   PARTIAL
 }
+
+enum IntegrationDirection {
+  OUTBOUND
+  INBOUND
+  EXPOSED_API
+}
+
+enum IntegrationStatus {
+  SUCCESS
+  FAILED
+  PENDING
+  IGNORED
+}

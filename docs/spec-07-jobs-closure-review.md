@@ -53,20 +53,14 @@ A tela entrega o que a spec pede para o MVP:
 
 Não existe ainda uma camada analítica mais densa com tendências, comparação entre execuções ou drill-down operacional avançado.
 
-### 3. O job de purge de integrações ficou preparado, mas em modo seguro
+### 3. O job de purge de integrações foi ativado com retenção de 90 dias
 
 Severity: accepted
 
-A spec cita limpeza de payloads antigos de integração, mas o módulo de integrações ainda não foi implementado como domínio concluído.
-
-Por isso, o job `purge-integration-payloads` foi entregue de forma segura:
-
-- existe no catálogo
-- pode ser executado
-- registra execução
-- não tenta operar sobre uma infraestrutura ainda não consolidada
-
-Isso evita comportamento enganoso ou acoplamento prematuro.
+Com a consolidação da SPEC 08, o job `purge-integration-payloads` remove
+`rawPayload` de `IntegrationLog` com mais de 90 dias, preservando summaries e
+metadados para investigação histórica. A operação é idempotente e registra a
+quantidade removida e a data de corte na execução.
 
 ## Findings Resolved During Closure
 
@@ -176,11 +170,12 @@ A aplicação já entrega:
 
 Mas a orquestração efetiva em produção ainda depende da configuração do ambiente hospedeiro, como Vercel Cron.
 
-### 2. O purge de payloads de integração está em modo compatível com futuro domínio de integrações
+### 2. O purge de payloads de integração segue a política de retenção da SPEC 08
 
 Severity: low
 
-Como o domínio completo de Integrações ainda não foi fechado, o job correspondente foi mantido seguro e conservador, evitando assumir uma tabela ou ciclo de retenção que ainda pode evoluir na SPEC 08.
+O job remove somente o conteúdo de `rawPayload` em logs com mais de 90 dias. Os
+summaries redigidos e os metadados do log são preservados para auditoria.
 
 ### 3. A cobertura de testes é focada nas regras de execução, não no módulo inteiro
 
