@@ -32,59 +32,81 @@ function toggleSidebar() {
 <template lang="pug">
 dd-sidebar(fill subtle :class="[fin.layout, collapsed && fin.layoutCollapsed]")
   aside(:class="fin.aside")
-    dd-stack(split-after="1" :class="fin.flow")
-      dd-stack(compact)
-        dd-menu(
-          :key="menuScopeKey"
-          ref="menuRef"
-          :class="fin.menu"
-          :items="items"
-          collapsible
-          :collapsed="collapsed"
-          @update:collapsed="emit('update:collapsed', $event)"
-        )
-        dd-stack(
-          v-if="loading && hasUser"
-          compact
-          :class="fin.menuSkeleton"
-        )
-          dd-cluster(v-for="item in 3" :key="item" compact :class="fin.menuSkeletonRow")
-            dd-skeleton(
-              v-if="collapsed"
-              circle
-              width="1.5rem"
-              height="1.5rem"
-            )
-            template(v-else)
-              dd-skeleton(circle width="1.5rem" height="1.5rem")
-              dd-skeleton(height="1rem" width="8rem" radius="999px")
-      dd-center
-        dd-button(
-          ghost
-          small
-          :icon="collapsed ? 'lucide:panel-left-open' : 'lucide:panel-right-open'"
-          @click="toggleSidebar"
-        )
-          span(v-if="!collapsed") Recolher menu
+    dd-card(:class="fin.menuShell" elevated)
+      dd-stack(split-after="1" :class="fin.flow")
+        dd-stack(compact)
+          dd-menu(
+            :key="menuScopeKey"
+            ref="menuRef"
+            :class="fin.menu"
+            :items="items"
+            collapsible
+            :collapsed="collapsed"
+            @update:collapsed="emit('update:collapsed', $event)"
+          )
+          div(
+            v-if="loading && hasUser"
+            :class="fin.menuSkeleton"
+          )
+            dd-cluster(v-for="item in 3" :key="item" compact :class="fin.menuSkeletonRow")
+              dd-skeleton(
+                v-if="collapsed"
+                circle
+                width="1.5rem"
+                height="1.5rem"
+              )
+              template(v-else)
+                dd-skeleton(circle width="1.5rem" height="1.5rem")
+                dd-skeleton(height="1rem" width="8rem" radius="999px")
+        dd-center(:class="fin.menuToggle")
+          dd-button(
+            ghost
+            small
+            :icon="collapsed ? 'lucide:panel-left-open' : 'lucide:panel-right-open'"
+            @click="toggleSidebar"
+          )
+            span(v-if="!collapsed") Recolher menu
   dd-box(tag="main" :class="fin.content")
     slot
 </template>
 
 <style module="fin">
+.menuToggle {
+  position: sticky;
+  bottom: 0;
+  margin-block-start: auto;
+  padding-block: v('space.sm');
+}
+.menuShell {
+  --dd-card-body-padding: v('space.xs');
+  flex: 1;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .layout {
   --dd-sidebar-column-size: 15rem;
+  --dd-sidebar-gap: 0;
+  block-size: 100%;
+  min-block-size: 0;
+  padding-inline: v('space.md');
 }
 
 .layoutCollapsed {
   --dd-center-gap: 0;
   --dd-sidebar-column-size: 4.5rem;
+  .menuShell {
+    overflow: visible !important;
+  }
 }
 
 .aside {
-  background: v('color.bg.surface-subtle');
-  border-right: v('border-width.sm') solid v('color.border.default');
-  min-block-size: 100%;
-  padding: v('space.sm');
+  block-size: 100%;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  padding-block: v('space.sm');
   transition: padding v('transition.slow');
 }
 
@@ -94,7 +116,8 @@ dd-sidebar(fill subtle :class="[fin.layout, collapsed && fin.layoutCollapsed]")
 }
 
 .flow {
-  min-block-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
 }
 
 .menu {
@@ -114,9 +137,13 @@ dd-sidebar(fill subtle :class="[fin.layout, collapsed && fin.layoutCollapsed]")
 }
 
 .content {
-  --dd-box-gap: v('space.xxl');
+  --dd-box-gap: v('space.md');
   background: v('color.bg.canvas');
+  block-size: 100%;
   color: v('color.text.default');
+  min-block-size: 0;
   min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 </style>

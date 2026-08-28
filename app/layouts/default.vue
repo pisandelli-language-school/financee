@@ -291,7 +291,11 @@ function startNotificationPolling() {
 </script>
 
 <template lang="pug">
-dd-layout(canvas :data-theme="isDarkerTheme ? 'darker' : ''")
+dd-layout(
+  canvas
+  :class="fin.shell"
+  :data-theme="isDarkerTheme ? 'darker' : ''"
+)
   nuxt-loading-indicator(:height="3" color="var(--dd-color-primary)" :throttle="0")
   AppTopbar(
     :user-name="userName"
@@ -302,7 +306,7 @@ dd-layout(canvas :data-theme="isDarkerTheme ? 'darker' : ''")
     @update:is-darker-theme="isDarkerTheme = $event"
   )
 
-  div(data-body)
+  div(data-body :class="fin.body")
     AppSidebarShell(
       :items="primaryMenuItems"
       :menu-scope-key="menuScopeKey"
@@ -326,6 +330,16 @@ dd-layout(canvas :data-theme="isDarkerTheme ? 'darker' : ''")
 </template>
 
 <style module="fin">
+.shell {
+  block-size: 100dvh;
+  overflow: hidden;
+}
+
+.body {
+  min-block-size: 0;
+  overflow: hidden;
+}
+
 .footer {
   background: v('color.bg.surface-subtle');
   border-top: v('border-width.sm') solid v('color.border.default');
