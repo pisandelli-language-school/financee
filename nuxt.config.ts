@@ -16,6 +16,12 @@ export default defineNuxtConfig({
     ['@pisandelli/daredash', {tokens: './app/assets/tokens/custom-theme.tokens.json'}],
   ],
 
+  echarts: {
+    renderer: 'svg',
+    charts: ['BarChart', 'LineChart', 'PieChart'],
+    components: ['GridComponent', 'LegendComponent', 'TooltipComponent'],
+  },
+
   eslint: {},
 
   typescript: {

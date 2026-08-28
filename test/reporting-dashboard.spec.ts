@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const prisma = {
   contract: {
     count: vi.fn(),
+    findMany: vi.fn(),
   },
   financialEntry: {
     findMany: vi.fn(),
@@ -69,6 +70,8 @@ describe('reporting dashboards', () => {
           paymentDate: null,
         },
       ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: 'entry_1',
@@ -96,7 +99,7 @@ describe('reporting dashboards', () => {
       dateTo: '2026-07-31',
     })
 
-    expect(prisma.financialEntry.findMany).toHaveBeenCalledTimes(3)
+    expect(prisma.financialEntry.findMany).toHaveBeenCalledTimes(5)
     expect(dashboard.cashFlowTotals).toEqual({
       realizedIncome: 1200,
       realizedExpense: 200,
@@ -112,6 +115,15 @@ describe('reporting dashboards', () => {
       medium: 2,
       high: 0,
     })
+    expect(dashboard.cashFlowHistory).toHaveLength(6)
+    expect(dashboard.cashFlowHistory.map(bucket => bucket.periodKey)).toEqual([
+      '2026-02',
+      '2026-03',
+      '2026-04',
+      '2026-05',
+      '2026-06',
+      '2026-07',
+    ])
     expect(dashboard.cards).toEqual([
       {
         key: 'realized-net',
@@ -150,6 +162,41 @@ describe('reporting dashboards', () => {
       .mockResolvedValueOnce(3)
       .mockResolvedValueOnce(7)
 
+    prisma.contract.findMany.mockResolvedValueOnce([
+      {
+        status: 'ACTIVE',
+        startDate: new Date('2026-03-01T00:00:00.000Z'),
+        expectedEndDate: null,
+      },
+      {
+        status: 'RENEWED',
+        startDate: new Date('2026-06-01T00:00:00.000Z'),
+        expectedEndDate: new Date('2026-08-31T00:00:00.000Z'),
+      },
+    ])
+    prisma.financialEntry.findMany.mockResolvedValueOnce([
+      {
+        status: 'OPEN',
+        effectiveDueDate: new Date('2026-06-10T00:00:00.000Z'),
+        paymentDate: null,
+      },
+      {
+        status: 'OPEN',
+        effectiveDueDate: new Date('2026-07-12T00:00:00.000Z'),
+        paymentDate: null,
+      },
+      {
+        status: 'PAID',
+        effectiveDueDate: new Date('2026-05-08T00:00:00.000Z'),
+        paymentDate: new Date('2026-05-09T00:00:00.000Z'),
+      },
+      {
+        status: 'PAID',
+        effectiveDueDate: new Date('2026-07-15T00:00:00.000Z'),
+        paymentDate: new Date('2026-07-18T00:00:00.000Z'),
+      },
+    ])
+
     const dashboard = await generateOperationalDashboard({
       dateFrom: '2026-07-01',
       dateTo: '2026-07-31',
@@ -157,6 +204,16 @@ describe('reporting dashboards', () => {
 
     expect(prisma.contract.count).toHaveBeenCalledTimes(3)
     expect(prisma.financialEntry.count).toHaveBeenCalledTimes(2)
+    expect(prisma.contract.findMany).toHaveBeenCalledTimes(1)
+    expect(prisma.financialEntry.findMany).toHaveBeenCalledTimes(1)
+    expect(dashboard.history).toEqual([
+      { periodKey: '2026-02', label: 'Fevereiro de 2026', activeContracts: 0, renewedContracts: 0, openEntries: 0, paidEntries: 0 },
+      { periodKey: '2026-03', label: 'Março de 2026', activeContracts: 1, renewedContracts: 0, openEntries: 0, paidEntries: 0 },
+      { periodKey: '2026-04', label: 'Abril de 2026', activeContracts: 1, renewedContracts: 0, openEntries: 0, paidEntries: 0 },
+      { periodKey: '2026-05', label: 'Maio de 2026', activeContracts: 1, renewedContracts: 0, openEntries: 0, paidEntries: 1 },
+      { periodKey: '2026-06', label: 'Junho de 2026', activeContracts: 2, renewedContracts: 1, openEntries: 1, paidEntries: 0 },
+      { periodKey: '2026-07', label: 'Julho de 2026', activeContracts: 2, renewedContracts: 0, openEntries: 1, paidEntries: 1 },
+    ])
     expect(dashboard.cards).toEqual([
       {
         key: 'active-contracts',

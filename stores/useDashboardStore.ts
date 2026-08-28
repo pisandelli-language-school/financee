@@ -11,6 +11,8 @@ import type {
 
 const defaultFilters = (): DashboardFilters => ({
   period: '',
+  dateFrom: '',
+  dateTo: '',
   regime: 'CASH',
 })
 

@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { EChartsOption } from 'echarts'
 import { useDashboardStore } from '~~/stores/useDashboardStore'
 import { useUserPreferencesStore } from '~~/stores/useUserPreferencesStore'
+import { useDashboardChartColors } from '~/composables/useDashboardChartColors'
 import {
   endOfMonth,
   formatMonthLabel,
@@ -14,6 +16,7 @@ import {
 const dashboardStore = useDashboardStore()
 const preferencesStore = useUserPreferencesStore()
 const { showToast } = useToaster()
+const chartColors = useDashboardChartColors()
 const finCurrency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
@@ -45,7 +48,11 @@ if (!dashboardStore.filters.period) {
 }
 
 const visibleMonth = computed(() => parseMonthKey(dashboardStore.filters.period) ?? startOfMonth(new Date()))
-const periodLabel = computed(() => formatMonthLabel(visibleMonth.value))
+const selectedRange = computed(() => ({
+  start: dashboardStore.filters.dateFrom || toDateInput(startOfMonth(visibleMonth.value)),
+  end: dashboardStore.filters.dateTo || toDateInput(endOfMonth(visibleMonth.value)),
+}))
+const periodLabel = computed(() => formatPeriodLabel(selectedRange.value))
 const cards = computed(() => dashboardStore.financial?.cards ?? [])
 const cashFlowTotals = computed(() => dashboardStore.financial?.cashFlowTotals ?? {
   realizedIncome: 0,
@@ -62,12 +69,148 @@ const delinquencyTotals = computed(() => dashboardStore.financial?.delinquencyTo
   medium: 0,
   high: 0,
 })
+const hasDelinquency = computed(() => delinquencyTotals.value.count > 0)
+const delinquencyChartOption = computed<EChartsOption | undefined>(() => {
+  if (!hasDelinquency.value) {
+    return undefined
+  }
+
+  return {
+    color: [
+      chartColors.value.delinquencyHigh,
+      chartColors.value.delinquencyMedium,
+      chartColors.value.delinquencyLow,
+    ],
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} título(s) em atraso ({d}%)',
+    },
+    legend: {
+      bottom: 0,
+      textStyle: {
+        color: chartColors.value.muted,
+      },
+    },
+    series: [
+      {
+        name: 'Temperatura da inadimplência',
+        type: 'pie',
+        radius: ['48%', '72%'],
+        center: ['50%', '44%'],
+        label: { show: false },
+        data: [
+          { name: 'Alta', value: delinquencyTotals.value.high },
+          { name: 'Média', value: delinquencyTotals.value.medium },
+          { name: 'Baixa', value: delinquencyTotals.value.low },
+        ],
+      },
+    ],
+  }
+})
+const delinquencySummary = computed(() => {
+  if (!hasDelinquency.value) {
+    return ''
+  }
+
+  const { count, amount, high, medium, low } = delinquencyTotals.value
+  const titleLabel = count === 1 ? 'título em atraso' : 'títulos em atraso'
+
+  return `Há ${count} ${titleLabel}, com exposição de ${formatCurrency(amount)}: ${high} em temperatura alta, ${medium} em temperatura média e ${low} em temperatura baixa.`
+})
+const cashFlowHistory = computed(() => dashboardStore.financial?.cashFlowHistory ?? [])
+const hasCashFlowHistory = computed(() => cashFlowHistory.value.some(bucket => (
+  bucket.realizedIncome !== 0 || bucket.realizedExpense !== 0 || bucket.realizedNet !== 0
+)))
+const cashFlowChartOption = computed<EChartsOption | undefined>(() => {
+  if (!hasCashFlowHistory.value) {
+    return undefined
+  }
+
+  return {
+    color: [
+      chartColors.value.financialIncome,
+      chartColors.value.financialExpense,
+      chartColors.value.financialNet,
+    ],
+    tooltip: {
+      trigger: 'axis',
+      valueFormatter: value => formatCurrency(Number(value)),
+    },
+    legend: {
+      bottom: 0,
+      textStyle: {
+        color: chartColors.value.muted,
+      },
+    },
+    grid: {
+      top: 24,
+      right: 16,
+      bottom: 48,
+      left: 64,
+    },
+    xAxis: {
+      type: 'category',
+      data: cashFlowHistory.value.map(bucket => bucket.label),
+      axisLine: {
+        lineStyle: {
+          color: chartColors.value.grid,
+        },
+      },
+      axisTick: { show: false },
+      axisLabel: {
+        color: chartColors.value.muted,
+        formatter: value => String(value).slice(0, 3),
+      },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        color: chartColors.value.muted,
+        formatter: value => formatCurrency(Number(value)),
+      },
+      splitLine: {
+        lineStyle: {
+          color: chartColors.value.grid,
+          type: 'dashed',
+        },
+      },
+    },
+    series: [
+      {
+        name: 'Entradas realizadas',
+        type: 'bar',
+        data: cashFlowHistory.value.map(bucket => bucket.realizedIncome),
+      },
+      {
+        name: 'Saídas realizadas',
+        type: 'bar',
+        data: cashFlowHistory.value.map(bucket => bucket.realizedExpense),
+      },
+      {
+        name: 'Resultado líquido',
+        type: 'line',
+        smooth: true,
+        data: cashFlowHistory.value.map(bucket => bucket.realizedNet),
+      },
+    ],
+  }
+})
+const cashFlowHistorySummary = computed(() => {
+  const firstBucket = cashFlowHistory.value[0]
+  const lastBucket = cashFlowHistory.value.at(-1)
+
+  if (!firstBucket || !lastBucket) {
+    return ''
+  }
+
+  return `De ${firstBucket.label} a ${lastBucket.label}, as entradas realizadas somaram ${formatCurrency(cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedIncome, 0))}, as saídas realizadas somaram ${formatCurrency(cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedExpense, 0))} e o resultado líquido foi de ${formatCurrency(cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedNet, 0))}.`
+})
 
 await loadDashboard()
 void persistPreferences()
 
-watch(() => [dashboardStore.filters.period, dashboardStore.filters.regime] as const, async (current, previous) => {
-  if (current[0] === previous?.[0] && current[1] === previous?.[1]) {
+watch(() => [dashboardStore.filters.dateFrom, dashboardStore.filters.dateTo, dashboardStore.filters.regime] as const, async (current, previous) => {
+  if (current[0] === previous?.[0] && current[1] === previous?.[1] && current[2] === previous?.[2]) {
     return
   }
 
@@ -80,8 +223,8 @@ async function loadDashboard() {
 
   try {
     await dashboardStore.fetchFinancial({
-      dateFrom: toDateInput(startOfMonth(visibleMonth.value)),
-      dateTo: toDateInput(endOfMonth(visibleMonth.value)),
+      dateFrom: selectedRange.value.start,
+      dateTo: selectedRange.value.end,
     })
   } catch (error) {
     requestError.value = error instanceof Error ? error.message : 'Não foi possível carregar o dashboard financeiro.'
@@ -116,15 +259,43 @@ function setRegime(value: unknown) {
 }
 
 function goToPreviousMonth() {
-  dashboardStore.setFilters({
-    period: toMonthKey(shiftMonth(visibleMonth.value, -1)),
-  })
+  setMonthRange(shiftMonth(visibleMonth.value, -1))
 }
 
 function goToNextMonth() {
+  setMonthRange(shiftMonth(visibleMonth.value, 1))
+}
+
+function setMonthRange(month: Date) {
   dashboardStore.setFilters({
-    period: toMonthKey(shiftMonth(visibleMonth.value, 1)),
+    period: toMonthKey(month),
+    dateFrom: toDateInput(startOfMonth(month)),
+    dateTo: toDateInput(endOfMonth(month)),
   })
+}
+
+function applyDateRange(range: { start: string, end: string }) {
+  dashboardStore.setFilters({
+    period: range.start.slice(0, 7),
+    dateFrom: range.start,
+    dateTo: range.end,
+  })
+}
+
+function resetDateRange() {
+  setMonthRange(startOfMonth(new Date()))
+}
+
+function formatPeriodLabel(range: { start: string, end: string }) {
+  const start = new Date(`${range.start}T00:00:00.000Z`)
+  const end = new Date(`${range.end}T00:00:00.000Z`)
+
+  if (start.getUTCFullYear() === end.getUTCFullYear() && start.getUTCMonth() === end.getUTCMonth()) {
+    return formatMonthLabel(start)
+  }
+
+  const formatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
+  return `${formatter.format(start)} – ${formatter.format(end)}`
 }
 
 function formatCurrency(value: number) {
@@ -140,42 +311,35 @@ dd-stack
     description="Tenha uma leitura executiva do resultado, do previsto firme e da exposição em atraso."
   )
 
-  dd-card
+  dd-card(elevated)
     dd-stack
-      dd-cluster(between :class="fin.toolbar")
-        dd-cluster(compact :class="fin.viewTabs")
-          dd-button(
-            v-for="view in viewOptions"
-            :key="view.to"
-            :primary="view.active"
-            :outline="!view.active"
-            :to="view.to"
-          ) {{ view.label }}
+      reporting-date-range-toolbar(
+        :label="periodLabel"
+        :model-value="selectedRange"
+        @previous="goToPreviousMonth"
+        @next="goToNextMonth"
+        @confirm="applyDateRange"
+        @reset="resetDateRange"
+      )
+        template(#start)
+          dd-cluster(compact :class="fin.viewTabs")
+            dd-button(
+              v-for="view in viewOptions"
+              :key="view.to"
+              small
+              :primary="view.active"
+              :outline="!view.active"
+              :to="view.to"
+            ) {{ view.label }}
 
-        dd-cluster(compact :class="fin.periodNav")
-          dd-button(
-            outline
-            icon="lucide:chevron-left"
-            icon-only
-            aria-label="Mês anterior"
-            @click="goToPreviousMonth"
-          )
-          dd-button(outline :class="fin.periodButton") {{ periodLabel }}
-          dd-button(
-            outline
-            icon="lucide:chevron-right"
-            icon-only
-            aria-label="Próximo mês"
-            @click="goToNextMonth"
-          )
-
-        dd-select(
-          :model-value="dashboardStore.filters.regime"
-          :options="regimeOptions"
-          placeholder="Selecione o regime"
-          no-message
-          @update:model-value="setRegime"
-        )
+        template(#end)
+          dd-select(
+            :model-value="dashboardStore.filters.regime"
+            :options="regimeOptions"
+            placeholder="Selecione o regime"
+            no-message
+            @update:model-value="setRegime"
+      )
 
       dd-grid(:class="fin.cardsGrid")
         button(
@@ -185,12 +349,35 @@ dd-stack
           :class="[fin.metricCard, { [fin.metricSuccess]: card.tone === 'success', [fin.metricDanger]: card.tone === 'danger', [fin.metricWarning]: card.tone === 'warning', [fin.metricInfo]: card.tone === 'info' }]"
         )
           dd-stack(compact nogap)
-            span(:class="fin.metricLabel") {{ card.title }}
             strong(
               :class="[fin.metricValue, { [fin.amountPositive]: card.tone === 'success', [fin.amountNegative]: card.tone === 'danger' }]"
             ) {{ typeof card.value === 'number' ? formatCurrency(card.value) : card.value }}
+            span(:class="fin.metricLabel") {{ card.title }}
 
       dd-alert(v-if="requestError" danger title="Dashboard") {{ requestError }}
+
+      dd-grid(:class="fin.chartsGrid")
+        dashboard-chart-panel(
+          title="Entradas, saídas e resultado líquido"
+          description="Valores realizados nos últimos seis meses."
+          :option="cashFlowChartOption"
+          :loading="dashboardStore.loading"
+          :empty="!hasCashFlowHistory"
+          :error-message="requestError"
+        )
+          template(#summary)
+            p(v-if="cashFlowHistorySummary" :class="fin.chartSummary") {{ cashFlowHistorySummary }}
+
+        dashboard-chart-panel(
+          title="Temperatura da inadimplência"
+          description="Distribuição dos títulos em atraso no período selecionado."
+          :option="delinquencyChartOption"
+          :loading="dashboardStore.loading"
+          :empty="!hasDelinquency"
+          :error-message="requestError"
+        )
+          template(#summary)
+            p(v-if="delinquencySummary" :class="fin.chartSummary") {{ delinquencySummary }}
 
       dd-grid(:class="fin.panelsGrid")
         dd-card(:class="fin.panel")
@@ -230,22 +417,22 @@ dd-stack
 </template>
 
 <style module="fin">
-.toolbar {
-  gap: v('space.md');
-}
-
-.viewTabs,
-.periodNav {
+.viewTabs {
   gap: v('space.xs');
 }
 
-.periodButton {
-  min-inline-size: 12rem;
-}
-
-.cardsGrid,
 .panelsGrid {
   --dd-grid-column-min-width: 16rem;
+  --dd-grid-gap: v('space.md');
+}
+
+.cardsGrid {
+  --dd-grid-column-min-width: 10rem;
+  --dd-grid-gap: v('space.md');
+}
+
+.chartsGrid {
+  --dd-grid-column-min-width: 32rem;
   --dd-grid-gap: v('space.md');
 }
 
@@ -255,7 +442,7 @@ dd-stack
   border: v('border-width.sm') solid var(--dd-card-border-color);
   border-radius: v('border-radius.lg');
   padding: v('space.md');
-  text-align: start;
+  text-align: center;
 }
 
 .metricSuccess {
@@ -295,5 +482,11 @@ dd-stack
 
 .panel {
   padding: v('space.md');
+}
+
+.chartSummary {
+  color: v('color.text.muted');
+  font-size: v('font-size.sm');
+  margin: 0;
 }
 </style>

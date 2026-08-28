@@ -7,10 +7,12 @@ defineProps<{
   userName: string
   roleLabel?: string
   canViewNotifications: boolean
+  isDarkerTheme: boolean
 }>()
 
 defineEmits<{
   (event: 'sign-out'): void
+  (event: 'update:is-darker-theme', value: boolean): void
 }>()
 </script>
 
@@ -22,24 +24,41 @@ header(:class="fin.topbar")
 
       dd-cluster(narrow :class="fin.actions")
         AppNotificationBell(:visible="canViewNotifications")
-        dd-button(
-          ghost
-          icon-only
-          small
-          aria-label="Configurações"
-          icon="lucide:settings"
-          to="/configuracoes"
-        )
         AppUserSummary(
           :user-name="userName"
           :role-label="roleLabel"
         )
-        dd-button(
-          ghost
-          small
-          icon="lucide:log-out"
-          @click="$emit('sign-out')"
-        ) Sair
+        dd-popover(trigger="click" placement="bottom-end")
+          dd-button(
+            ghost
+            icon-only
+            small
+            aria-label="Abrir menu do perfil"
+            icon="lucide:ellipsis-vertical"
+          )
+
+          template(#content)
+            dd-stack(compact :class="fin.profileMenu")
+              div(:class="fin.themeToggle")
+                dd-toggle(
+                  small
+                  :model-value="isDarkerTheme"
+                  label="Tema escuro"
+                  @update:model-value="$emit('update:is-darker-theme', Boolean($event))"
+                )
+              hr(:class="fin.divider")
+              dd-button(
+                ghost
+                small
+                icon="lucide:settings"
+                to="/configuracoes"
+              ) Configurações
+              dd-button(
+                ghost
+                small
+                icon="lucide:log-out"
+                @click="$emit('sign-out')"
+              ) Sair
 </template>
 
 <style module="fin">
@@ -50,5 +69,20 @@ header(:class="fin.topbar")
 
 .actions {
   align-items: center;
+}
+
+.profileMenu {
+  min-inline-size: 12rem;
+}
+
+.divider {
+  border: 0;
+  border-top: v('border-width.sm') solid v('color.border.default');
+  inline-size: 100%;
+  margin: 0;
+}
+
+.themeToggle {
+  padding-inline-start: v('space.xs');
 }
 </style>

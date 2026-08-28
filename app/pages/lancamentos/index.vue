@@ -52,6 +52,13 @@ const statusActionLoading = ref('')
 const currentSummary = ref<FinancialEntrySummary>(createEmptySummary())
 const previousSummary = ref<FinancialEntrySummary>(createEmptySummary())
 
+interface DateRangeValue {
+  start: string
+  end: string
+}
+
+const pendingDateRange = ref<DateRangeValue | null>(null)
+
 const columns: AppTableColumn[] = [
   { key: 'direction', title: 'Direção', width: '80px', align: 'center', sortable: true },
   { key: 'effectiveDueDate', title: 'Vencimento', width: '120px', sortable: true },
@@ -116,15 +123,24 @@ watch(() => [
   await Promise.all(tasks)
 })
 
-const visibleMonth = computed(() => parseDateInput(entriesStore.filters.dateFrom) ?? startOfMonth(new Date()))
+const visibleMonth = computed(() => {
+  const dateFrom = parseDateInput(entriesStore.filters.dateFrom)
+  return dateFrom ? startOfMonth(dateFrom) : startOfMonth(new Date())
+})
 
-const periodLabel = computed(() => capitalizeMonthLabel(
-  new Intl.DateTimeFormat('pt-BR', {
-    month: 'long',
-    timeZone: 'UTC',
-    year: 'numeric',
-  }).format(visibleMonth.value),
-))
+const dateRangeValue = computed<DateRangeValue | null>({
+  get: () => entriesStore.filters.dateFrom && entriesStore.filters.dateTo
+    ? {
+        start: entriesStore.filters.dateFrom,
+        end: entriesStore.filters.dateTo,
+      }
+    : null,
+  set: (value) => {
+    pendingDateRange.value = value
+  },
+})
+
+const periodLabel = computed(() => formatPeriodLabel(dateRangeValue.value))
 
 const activeFilterCount = computed(() => [
   entriesStore.filters.direction,
@@ -169,9 +185,9 @@ const summaryCards = computed(() => {
 })
 
 async function loadSummaryComparisons() {
-  const month = parseDateInput(entriesStore.filters.dateFrom) ?? startOfMonth(new Date())
-  const currentFilters = getSummaryFilters(month)
-  const previousFilters = getSummaryFilters(shiftMonth(month, -1))
+  const currentRange = getCurrentDateRange()
+  const currentFilters = getSummaryFilters(currentRange)
+  const previousFilters = getSummaryFilters(getPreviousDateRange(currentRange))
 
   const [current, previous] = await Promise.all([
     FinancialEntriesModule.summary(currentFilters),
@@ -439,19 +455,79 @@ function goToNextMonth() {
 }
 
 function syncMonthFilters(value: Date) {
+  const range = {
+    start: toDateInput(startOfMonth(value)),
+    end: toDateInput(endOfMonth(value)),
+  }
+
+  pendingDateRange.value = range
   entriesStore.setFilters({
-    dateFrom: toDateInput(startOfMonth(value)),
-    dateTo: toDateInput(endOfMonth(value)),
+    dateFrom: range.start,
+    dateTo: range.end,
     page: 1,
   })
 }
 
-function getSummaryFilters(value: Date): FinancialEntryFilters {
+function applyDateRange() {
+  const range = pendingDateRange.value ?? dateRangeValue.value
+
+  if (!range) {
+    return
+  }
+
+  entriesStore.setFilters({
+    dateFrom: range.start,
+    dateTo: range.end,
+    page: 1,
+  })
+}
+
+function resetDateRange() {
+  syncMonthFilters(startOfMonth(new Date()))
+}
+
+function getCurrentDateRange(): DateRangeValue {
+  const dateFrom = parseDateInput(entriesStore.filters.dateFrom)
+  const dateTo = parseDateInput(entriesStore.filters.dateTo)
+
+  if (dateFrom && dateTo) {
+    return {
+      start: toDateInput(dateFrom),
+      end: toDateInput(dateTo),
+    }
+  }
+
+  const month = startOfMonth(new Date())
+  return {
+    start: toDateInput(month),
+    end: toDateInput(endOfMonth(month)),
+  }
+}
+
+function getPreviousDateRange(range: DateRangeValue): DateRangeValue {
+  const start = parseDateInput(range.start)
+  const end = parseDateInput(range.end)
+
+  if (!start || !end) {
+    return range
+  }
+
+  const duration = end.valueOf() - start.valueOf() + 86_400_000
+  const previousEnd = new Date(start.valueOf() - 86_400_000)
+  const previousStart = new Date(previousEnd.valueOf() - duration + 86_400_000)
+
+  return {
+    start: toDateInput(previousStart),
+    end: toDateInput(previousEnd),
+  }
+}
+
+function getSummaryFilters(range: DateRangeValue): FinancialEntryFilters {
   return {
     ...entriesStore.filters,
     direction: '',
-    dateFrom: toDateInput(startOfMonth(value)),
-    dateTo: toDateInput(endOfMonth(value)),
+    dateFrom: range.start,
+    dateTo: range.end,
     page: 1,
     pageSize: 0,
   }
@@ -479,7 +555,41 @@ function parseDateInput(value: string) {
   }
 
   const parsed = new Date(`${value}T00:00:00.000Z`)
-  return Number.isNaN(parsed.valueOf()) ? null : startOfMonth(parsed)
+  return Number.isNaN(parsed.valueOf()) ? null : parsed
+}
+
+function formatPeriodLabel(range: DateRangeValue | null) {
+  if (!range) {
+    return capitalizeMonthLabel(new Intl.DateTimeFormat('pt-BR', {
+      month: 'long',
+      timeZone: 'UTC',
+      year: 'numeric',
+    }).format(visibleMonth.value))
+  }
+
+  const start = parseDateInput(range.start)
+  const end = parseDateInput(range.end)
+
+  if (!start || !end) {
+    return ''
+  }
+
+  if (start.getUTCFullYear() === end.getUTCFullYear() && start.getUTCMonth() === end.getUTCMonth()) {
+    return capitalizeMonthLabel(new Intl.DateTimeFormat('pt-BR', {
+      month: 'long',
+      timeZone: 'UTC',
+      year: 'numeric',
+    }).format(start))
+  }
+
+  const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+
+  return `${dateFormatter.format(start)} – ${dateFormatter.format(end)}`
 }
 
 function capitalizeMonthLabel(value: string) {
@@ -696,8 +806,28 @@ dd-stack
   )
     template(#notice)
       dd-stack(compact)
-        dd-grid(:class="fin.topControls")
-          dd-cluster(compact :class="fin.toolbarStart")
+        reporting-period-toolbar(
+          :label="periodLabel"
+          @previous="goToPreviousMonth"
+          @next="goToNextMonth"
+        )
+          template(#period)
+            dd-date-range(
+              v-model="dateRangeValue"
+              :initial-date="entriesStore.filters.dateFrom"
+              locale="pt-BR"
+              :year-range="10"
+              @confirm="applyDateRange"
+              @reset="resetDateRange"
+            )
+              dd-button(
+                ghost
+                small
+                type="button"
+                aria-label="Selecionar período"
+              ) {{ periodLabel }}
+
+          template(#start)
             dd-popover(trigger="click" placement="bottom-start")
               dd-button(
                 outline
@@ -780,40 +910,15 @@ dd-stack
               @update:model-value="handleSearch"
             )
 
-          dd-cluster(compact :class="fin.periodNav")
-            dd-button(
-              outline
-              small
-              icon-only
-              icon="lucide:chevron-left"
-              type="button"
-              aria-label="Mês anterior"
-              @click="goToPreviousMonth"
-            )
-            dd-button(
-              outline
-              small
-              type="button"
-              :class="fin.periodButton"
-            ) {{ periodLabel }}
-            dd-button(
-              outline
-              small
-              icon-only
-              icon="lucide:chevron-right"
-              type="button"
-              aria-label="Próximo mês"
-              @click="goToNextMonth"
-            )
-
-          dd-cluster(end :class="fin.toolbarEnd")
-            dd-button(
-              v-if="canCreateEntries"
-              primary
-              icon="lucide:plus"
-              type="button"
-              @click="openCreateEntry"
-            ) Novo lançamento
+          template(#end)
+            dd-cluster(end :class="fin.toolbarEnd")
+              dd-button(
+                v-if="canCreateEntries"
+                primary
+                icon="lucide:plus"
+                type="button"
+                @click="openCreateEntry"
+              ) Novo lançamento
 
         dd-grid(:class="fin.summaryGrid")
           button(
@@ -1011,21 +1116,6 @@ dd-stack
 </template>
 
 <style module="fin">
-.topControls {
-  align-items: center;
-  display: grid;
-  gap: v('space.sm');
-  grid-template-columns: minmax(0, 1fr) auto auto;
-}
-
-.toolbarStart {
-  align-items: center;
-  display: grid;
-  gap: v('space.sm');
-  grid-template-columns: auto minmax(16rem, 1fr);
-  min-inline-size: 0;
-}
-
 .toolbarEnd {
   align-items: center;
   justify-self: end;
@@ -1033,15 +1123,6 @@ dd-stack
 
 .searchField {
   min-inline-size: 0;
-}
-
-.periodNav {
-  align-items: center;
-  justify-self: center;
-}
-
-.periodButton {
-  min-inline-size: 12rem;
 }
 
 .filterPopover {

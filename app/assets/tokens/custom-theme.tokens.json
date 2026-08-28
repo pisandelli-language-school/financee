@@ -5,6 +5,21 @@
       "fill": {
         "$value": "#1c2f48"
       }
+    },
+    "chart": {
+      "financial": {
+        "income": { "$value": "#2e7d32" },
+        "expense": { "$value": "#db0000" },
+        "net": { "$value": "#0a51cf" }
+      },
+      "delinquency": {
+        "high": { "$value": "#db0000" },
+        "medium": { "$value": "#b25e00" },
+        "low": { "$value": "#0277bd" }
+      },
+      "text": { "$value": "#171717" },
+      "muted": { "$value": "#737373" },
+      "grid": { "$value": "#e5e5e5" }
     }
   },
   "themes": {
@@ -13,6 +28,21 @@
         "fill": {
           "$value": "#FFFFFF"
         }
+      },
+      "chart": {
+        "financial": {
+          "income": { "$value": "#89d590" },
+          "expense": { "$value": "#dc8d93" },
+          "net": { "$value": "#4895f6" }
+        },
+        "delinquency": {
+          "high": { "$value": "#dc8d93" },
+          "medium": { "$value": "#ff9c16" },
+          "low": { "$value": "#9ab6cd" }
+        },
+        "text": { "$value": "#fafafa" },
+        "muted": { "$value": "#a3a3a3" },
+        "grid": { "$value": "#404040" }
       },
       "state": {
         "warning": {
@@ -41,6 +71,21 @@
         "fill": {
           "$value": "#FFFFFF"
         }
+      },
+      "chart": {
+        "financial": {
+          "income": { "$value": "#61c66a" },
+          "expense": { "$value": "#d0656d" },
+          "net": { "$value": "#0e69f1" }
+        },
+        "delinquency": {
+          "high": { "$value": "#d0656d" },
+          "medium": { "$value": "#ff9c16" },
+          "low": { "$value": "#769ebc" }
+        },
+        "text": { "$value": "#fafafa" },
+        "muted": { "$value": "#737373" },
+        "grid": { "$value": "#404040" }
       },
       "state": {
         "warning": {

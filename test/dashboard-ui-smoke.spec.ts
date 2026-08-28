@@ -30,6 +30,28 @@ function createDashboardStore() {
         projectedExpense: 100,
         projectedNet: 200,
       },
+      cashFlowHistory: [
+        {
+          periodKey: '2026-03',
+          label: 'Março de 2026',
+          realizedIncome: 800,
+          realizedExpense: 300,
+          realizedNet: 500,
+          projectedIncome: 0,
+          projectedExpense: 0,
+          projectedNet: 0,
+        },
+        {
+          periodKey: '2026-08',
+          label: 'Agosto de 2026',
+          realizedIncome: 1000,
+          realizedExpense: 200,
+          realizedNet: 800,
+          projectedIncome: 0,
+          projectedExpense: 0,
+          projectedNet: 0,
+        },
+      ],
       delinquencyTotals: {
         count: 2,
         amount: 500,
@@ -41,6 +63,24 @@ function createDashboardStore() {
     operational: {
       cards: [
         { key: 'contracts', title: 'Contratos ativos', value: '4', tone: 'info' },
+      ],
+      history: [
+        {
+          periodKey: '2026-07',
+          label: 'Julho de 2026',
+          activeContracts: 3,
+          renewedContracts: 1,
+          openEntries: 2,
+          paidEntries: 4,
+        },
+        {
+          periodKey: '2026-08',
+          label: 'Agosto de 2026',
+          activeContracts: 4,
+          renewedContracts: 0,
+          openEntries: 1,
+          paidEntries: 3,
+        },
       ],
     },
     loading: false,
@@ -115,6 +155,11 @@ const globalStubs = {
     emits: ['click'],
     template: '<button :aria-label="ariaLabel" @click="$emit(\'click\', $event)"><slot /></button>',
   },
+  'dashboard-chart-panel': {
+    name: 'DashboardChartPanel',
+    props: ['title', 'description', 'option', 'loading', 'empty', 'errorMessage'],
+    template: '<section><h2>{{ title }}</h2><p>{{ description }}</p><slot name="summary" /></section>',
+  },
 }
 
 async function mountPage(component: unknown) {
@@ -152,9 +197,35 @@ describe('dashboard pages smoke', () => {
 
     expect(wrapper.text()).toContain('Dashboard financeiro')
     expect(wrapper.text()).toContain('Agosto de 2026')
+    expect(wrapper.text()).toContain('Entradas, saídas e resultado líquido')
+    expect(wrapper.text()).toContain('De Março de 2026 a Agosto de 2026')
+    expect(wrapper.text()).toContain('Temperatura da inadimplência')
+    expect(wrapper.text()).toContain('Há 2 títulos em atraso, com exposição de R$ 500,00')
     expect(fetchFinancial).toHaveBeenCalledWith({
       dateFrom: '2026-08-01',
       dateTo: '2026-08-31',
+    })
+
+    const [cashFlowChart, delinquencyChart] = wrapper.findAllComponents({ name: 'DashboardChartPanel' })
+    expect(cashFlowChart.props('option')).toMatchObject({
+      series: [
+        { name: 'Entradas realizadas', type: 'bar', data: [800, 1000] },
+        { name: 'Saídas realizadas', type: 'bar', data: [300, 200] },
+        { name: 'Resultado líquido', type: 'line', data: [500, 800] },
+      ],
+    })
+    expect(delinquencyChart.props('option')).toMatchObject({
+      series: [
+        {
+          name: 'Temperatura da inadimplência',
+          type: 'pie',
+          data: [
+            { name: 'Alta', value: 0 },
+            { name: 'Média', value: 1 },
+            { name: 'Baixa', value: 1 },
+          ],
+        },
+      ],
     })
   })
 
@@ -163,9 +234,44 @@ describe('dashboard pages smoke', () => {
 
     expect(wrapper.text()).toContain('Dashboard operacional')
     expect(wrapper.text()).toContain('Contratos ativos')
+    expect(wrapper.text()).toContain('Distribuição dos indicadores operacionais')
+    expect(wrapper.text()).toContain('No período selecionado: Contratos ativos: 4.')
+    expect(wrapper.text()).toContain('Evolução de contratos')
+    expect(wrapper.text()).toContain('Em Agosto de 2026, havia 4 contratos ativos e 0 renovações.')
+    expect(wrapper.text()).toContain('Evolução de lançamentos')
+    expect(wrapper.text()).toContain('Em Agosto de 2026, foram identificados 1 lançamento em aberto e 3 lançamentos pagos.')
     expect(fetchOperational).toHaveBeenCalledWith({
       dateFrom: '2026-08-01',
       dateTo: '2026-08-31',
+    })
+
+    const [distributionChart, contractsChart, entriesChart] = wrapper.findAllComponents({ name: 'DashboardChartPanel' })
+    expect(distributionChart.props('option')).toMatchObject({
+      yAxis: { data: ['Contratos ativos'] },
+      series: [
+        {
+          name: 'Indicadores',
+          type: 'bar',
+          data: [
+            {
+              value: '4',
+              itemStyle: { color: '#0277bd' },
+            },
+          ],
+        },
+      ],
+    })
+    expect(contractsChart.props('option')).toMatchObject({
+      series: [
+        { name: 'Contratos ativos', type: 'line', data: [3, 4] },
+        { name: 'Renovações', type: 'line', data: [1, 0] },
+      ],
+    })
+    expect(entriesChart.props('option')).toMatchObject({
+      series: [
+        { name: 'Lançamentos em aberto', type: 'line', data: [2, 1] },
+        { name: 'Lançamentos pagos', type: 'line', data: [4, 3] },
+      ],
     })
   })
 })

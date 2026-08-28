@@ -12,6 +12,8 @@ export type DreGroupKey =
 
 export interface DashboardFilters {
   period: string
+  dateFrom: string
+  dateTo: string
   regime: ReportRegime
 }
 
@@ -28,6 +30,7 @@ export interface FinancialDashboardData {
   dateTo: string
   cards: DashboardSummaryRecord[]
   cashFlowTotals: CashFlowReport['totals']
+  cashFlowHistory: CashFlowBucket[]
   delinquencyTotals: DelinquencyReport['totals']
 }
 
@@ -35,10 +38,13 @@ export interface OperationalDashboardData {
   dateFrom: string
   dateTo: string
   cards: DashboardSummaryRecord[]
+  history: OperationalHistoryBucket[]
 }
 
 export interface ReportFilters {
   period: string
+  dateFrom: string
+  dateTo: string
   regime: ReportRegime
   search: string
 }
@@ -69,6 +75,15 @@ export interface CashFlowBucket {
   projectedIncome: number
   projectedExpense: number
   projectedNet: number
+}
+
+export interface OperationalHistoryBucket {
+  periodKey: string
+  label: string
+  activeContracts: number
+  renewedContracts: number
+  openEntries: number
+  paidEntries: number
 }
 
 export interface CashFlowReport {

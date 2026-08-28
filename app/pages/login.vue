@@ -95,7 +95,7 @@ main(:class="fin.page")
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
   background: v('color.bg.subtle');
-  color: v('color.text.default');
+  color: v('color.text.light');
 }
 
 .brand {
@@ -128,14 +128,14 @@ main(:class="fin.page")
   font-size: 2.5rem;
   line-height: 1.08;
   letter-spacing: -0.02em;
-  color: v('color.text.inverted');
+  /* color: v('color.text.inverted'); */
 }
 
 .subhead {
   margin: v('space.sm') 0 0;
   font-size: var(--dd-font-size-base);
   line-height: 1.6;
-  color: color-mix(in srgb, v('color.text.inverted') 78%, transparent);
+  /* color: color-mix(in srgb, v('color.text.inverted') 78%, transparent); */
 }
 
 .highlights {

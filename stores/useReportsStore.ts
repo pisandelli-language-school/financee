@@ -13,6 +13,8 @@ import type {
 
 const defaultFilters = (): ReportFilters => ({
   period: '',
+  dateFrom: '',
+  dateTo: '',
   regime: 'CASH',
   search: '',
 })

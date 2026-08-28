@@ -29,6 +29,11 @@ const notificationsStore = useNotificationsStore()
 const { showToast } = useToaster()
 
 const collapsed = ref(false)
+const theme = useCookie<'light' | 'darker'>('financee-theme', {
+  default: () => 'light',
+  maxAge: 60 * 60 * 24 * 365 * 10,
+  sameSite: 'lax',
+})
 const notificationPollHandle = ref<number | null>(null)
 const notificationsReadyForToast = ref(false)
 const seenUnreadNotificationIds = ref<Set<string>>(new Set())
@@ -36,6 +41,12 @@ const seenUnreadNotificationIds = ref<Set<string>>(new Set())
 const userName = computed(() => user.value?.email?.split('@')[0] ?? 'Perfil')
 const menuScopeKey = computed(() => route.path.split('/')[1] || 'home')
 const canViewNotifications = computed(() => currentAuth.value?.permissions.includes('notificacoes.view') ?? false)
+const isDarkerTheme = computed({
+  get: () => theme.value === 'darker',
+  set: (value: boolean) => {
+    theme.value = value ? 'darker' : 'light'
+  },
+})
 
 const deniedCodes = new Set([
   'TEACHER_BLOCKED',
@@ -280,13 +291,15 @@ function startNotificationPolling() {
 </script>
 
 <template lang="pug">
-dd-layout(canvas data-theme='darker')
+dd-layout(canvas :data-theme="isDarkerTheme ? 'darker' : ''")
   nuxt-loading-indicator(:height="3" color="var(--dd-color-primary)" :throttle="0")
   AppTopbar(
     :user-name="userName"
     role-label="Administrador"
     :can-view-notifications="canViewNotifications"
+    :is-darker-theme="isDarkerTheme"
     @sign-out="handleSignOut"
+    @update:is-darker-theme="isDarkerTheme = $event"
   )
 
   div(data-body)

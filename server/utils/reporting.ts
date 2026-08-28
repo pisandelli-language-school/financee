@@ -16,6 +16,7 @@ import { prisma } from '~~/server/utils/prisma'
 import {
   buildCashFlowBuckets,
   buildDreGroups,
+  buildOperationalHistoryBuckets,
   calculateOverdueDays,
   deriveDelinquencyTemperature,
 } from '~~/server/utils/reporting-helpers'
@@ -48,6 +49,29 @@ function parseDateOnly(value: string, fieldLabel: string) {
 
 function formatDateOnly(value: Date) {
   return value.toISOString().slice(0, 10)
+}
+
+function getDashboardHistoryFilters(filters: ReportingFilters): ReportingFilters {
+  const referenceDate = parseDateOnly(filters.dateTo, 'Data final')
+  const dateFrom = new Date(Date.UTC(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth() - 5, 1))
+  const dateTo = new Date(Date.UTC(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth() + 1, 0))
+
+  return {
+    regime: filters.regime,
+    dateFrom: formatDateOnly(dateFrom),
+    dateTo: formatDateOnly(dateTo),
+  }
+}
+
+function getDashboardHistoryDateRange(filters: ReportingDateRangeFilters): ReportingDateRangeFilters {
+  const referenceDate = parseDateOnly(filters.dateTo, 'Data final')
+  const dateFrom = new Date(Date.UTC(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth() - 5, 1))
+  const dateTo = new Date(Date.UTC(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth() + 1, 0))
+
+  return {
+    dateFrom: formatDateOnly(dateFrom),
+    dateTo: formatDateOnly(dateTo),
+  }
 }
 
 function parseReportRegime(value: unknown): ReportRegime {
@@ -335,8 +359,9 @@ export async function generateDre(filters: ReportingFilters): Promise<DreReport>
 }
 
 export async function generateFinancialDashboard(filters: ReportingFilters): Promise<FinancialDashboardData> {
-  const [cashFlow, delinquency] = await Promise.all([
+  const [cashFlow, cashFlowHistory, delinquency] = await Promise.all([
     generateCashFlow(filters),
+    generateCashFlow(getDashboardHistoryFilters(filters)),
     generateDelinquencyReport({
       dateFrom: filters.dateFrom,
       dateTo: filters.dateTo,
@@ -349,6 +374,7 @@ export async function generateFinancialDashboard(filters: ReportingFilters): Pro
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
     cashFlowTotals: cashFlow.totals,
+    cashFlowHistory: cashFlowHistory.buckets,
     delinquencyTotals: delinquency.totals,
     cards: [
       {
@@ -380,7 +406,8 @@ export async function generateFinancialDashboard(filters: ReportingFilters): Pro
 }
 
 export async function generateOperationalDashboard(filters: ReportingDateRangeFilters): Promise<OperationalDashboardData> {
-  const [activeContracts, renewedContracts, lockedContracts, openEntries, paidEntries] = await Promise.all([
+  const historyFilters = getDashboardHistoryDateRange(filters)
+  const [activeContracts, renewedContracts, lockedContracts, openEntries, paidEntries, historyContracts, historyEntries] = await Promise.all([
     prisma.contract.count({
       where: {
         deletedAt: null,
@@ -432,11 +459,61 @@ export async function generateOperationalDashboard(filters: ReportingDateRangeFi
         },
       },
     }),
+    prisma.contract.findMany({
+      where: {
+        deletedAt: null,
+        status: {
+          in: ['ACTIVE', 'RENEWED'],
+        },
+        startDate: {
+          lte: new Date(`${historyFilters.dateTo}T23:59:59.999Z`),
+        },
+        OR: [
+          { expectedEndDate: null },
+          { expectedEndDate: { gte: new Date(`${historyFilters.dateFrom}T00:00:00.000Z`) } },
+        ],
+      },
+      select: {
+        status: true,
+        startDate: true,
+        expectedEndDate: true,
+      },
+    }),
+    prisma.financialEntry.findMany({
+      where: {
+        deletedAt: null,
+        OR: [
+          {
+            effectiveDueDate: {
+              gte: new Date(`${historyFilters.dateFrom}T00:00:00.000Z`),
+              lte: new Date(`${historyFilters.dateTo}T23:59:59.999Z`),
+            },
+          },
+          {
+            paymentDate: {
+              gte: new Date(`${historyFilters.dateFrom}T00:00:00.000Z`),
+              lte: new Date(`${historyFilters.dateTo}T23:59:59.999Z`),
+            },
+          },
+        ],
+      },
+      select: {
+        status: true,
+        effectiveDueDate: true,
+        paymentDate: true,
+      },
+    }),
   ])
 
   return {
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
+    history: buildOperationalHistoryBuckets(
+      historyContracts,
+      historyEntries,
+      historyFilters.dateFrom,
+      historyFilters.dateTo,
+    ),
     cards: [
       {
         key: 'active-contracts',

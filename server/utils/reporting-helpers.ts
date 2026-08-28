@@ -4,6 +4,7 @@ import type {
   DreCategoryRow,
   DreGroupKey,
   DreGroupRow,
+  OperationalHistoryBucket,
 } from '~~/app/types/reporting'
 
 const cashFlowDateFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -98,6 +99,51 @@ export function buildCashFlowBuckets(
   }
 
   return Array.from(buckets.values())
+}
+
+export function buildOperationalHistoryBuckets(
+  contracts: Array<{
+    status: string
+    startDate: Date
+    expectedEndDate: Date | null
+  }>,
+  entries: Array<{
+    status: string
+    effectiveDueDate: Date
+    paymentDate: Date | null
+  }>,
+  dateFrom: string,
+  dateTo: string,
+): OperationalHistoryBucket[] {
+  return listMonthBuckets(
+    new Date(`${dateFrom}T00:00:00.000Z`),
+    new Date(`${dateTo}T00:00:00.000Z`),
+  ).map(({ periodKey, label }) => {
+    const monthStart = new Date(`${periodKey}-01T00:00:00.000Z`)
+    const monthEnd = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 0))
+
+    return {
+      periodKey,
+      label,
+      activeContracts: contracts.filter(contract => (
+        contract.startDate <= monthEnd
+        && (!contract.expectedEndDate || contract.expectedEndDate >= monthStart)
+      )).length,
+      renewedContracts: contracts.filter(contract => (
+        contract.status === 'RENEWED'
+        && getPeriodKey(getMonthStart(contract.startDate)) === periodKey
+      )).length,
+      openEntries: entries.filter(entry => (
+        entry.status === 'OPEN'
+        && getPeriodKey(getMonthStart(entry.effectiveDueDate)) === periodKey
+      )).length,
+      paidEntries: entries.filter(entry => (
+        entry.status === 'PAID'
+        && entry.paymentDate
+        && getPeriodKey(getMonthStart(entry.paymentDate)) === periodKey
+      )).length,
+    }
+  })
 }
 
 export function calculateOverdueDays(effectiveDueDate: string, referenceDate: string) {

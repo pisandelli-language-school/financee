@@ -187,23 +187,11 @@ dd-stack
 
   dd-card
     dd-stack
-      dd-cluster(between :class="fin.toolbar")
-        dd-cluster(compact :class="fin.periodNav")
-          dd-button(
-            outline
-            icon="lucide:chevron-left"
-            icon-only
-            aria-label="Mês anterior"
-            @click="goToPreviousMonth"
-          )
-          dd-button(outline :class="fin.periodButton") {{ periodLabel }}
-          dd-button(
-            outline
-            icon="lucide:chevron-right"
-            icon-only
-            aria-label="Próximo mês"
-            @click="goToNextMonth"
-          )
+      reporting-period-toolbar(
+        :label="periodLabel"
+        @previous="goToPreviousMonth"
+        @next="goToNextMonth"
+      )
 
       dd-grid(:class="fin.summaryGrid")
         button(
@@ -256,18 +244,6 @@ dd-stack
 </template>
 
 <style module="fin">
-.toolbar {
-  gap: v('space.md');
-}
-
-.periodNav {
-  gap: v('space.xs');
-}
-
-.periodButton {
-  min-inline-size: 12rem;
-}
-
 .summaryGrid {
   --dd-grid-column-min-width: 16rem;
   --dd-grid-gap: v('space.md');
