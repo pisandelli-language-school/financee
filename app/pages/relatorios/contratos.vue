@@ -6,13 +6,16 @@ import { useReportsStore } from '~~/stores/useReportsStore'
 import { useUserPreferencesStore } from '~~/stores/useUserPreferencesStore'
 import {
   endOfMonth,
+  formatDateRangeLabel,
   formatMonthLabel,
+  getMonthDateRange,
   parseMonthKey,
   shiftMonth,
   startOfMonth,
   toDateInput,
   toMonthKey,
 } from '~/utils/report-period'
+import type { DateRangeValue } from '~/utils/report-period'
 
 const reportsStore = useReportsStore()
 const preferencesStore = useUserPreferencesStore()
@@ -61,14 +64,18 @@ function getVisibleMonth() {
   return parseMonthKey(reportsStore.filters.period) ?? startOfMonth(new Date())
 }
 
-const periodLabel = computed(() => formatMonthLabel(getVisibleMonth()))
+const selectedRange = computed(() => ({
+  start: reportsStore.filters.dateFrom || getMonthDateRange(getVisibleMonth()).start,
+  end: reportsStore.filters.dateTo || getMonthDateRange(getVisibleMonth()).end,
+}))
+const periodLabel = computed(() => formatDateRangeLabel(selectedRange.value))
 const items = computed(() => reportsStore.contracts?.items ?? [])
 const isEmpty = computed(() => !reportsStore.loading && !items.value.length)
 
 await loadContracts()
 
-watch(() => reportsStore.filters.period, async (current, previous) => {
-  if (current === previous) {
+watch(() => [reportsStore.filters.dateFrom, reportsStore.filters.dateTo] as const, async (current, previous) => {
+  if (current[0] === previous?.[0] && current[1] === previous?.[1]) {
     return
   }
 
@@ -118,8 +125,8 @@ async function loadContracts() {
 
   try {
     await reportsStore.fetchContracts({
-      dateFrom: toDateInput(startOfMonth(getVisibleMonth())),
-      dateTo: toDateInput(endOfMonth(getVisibleMonth())),
+      dateFrom: selectedRange.value.start,
+      dateTo: selectedRange.value.end,
     })
   } catch (error) {
     requestError.value = error instanceof Error ? error.message : 'Não foi possível carregar o relatório de contratos.'
@@ -149,15 +156,24 @@ async function persistPreferences() {
 }
 
 function goToPreviousMonth() {
-  reportsStore.setFilters({
-    period: toMonthKey(shiftMonth(getVisibleMonth(), -1)),
-  })
+  setMonthRange(shiftMonth(getVisibleMonth(), -1))
 }
 
 function goToNextMonth() {
-  reportsStore.setFilters({
-    period: toMonthKey(shiftMonth(getVisibleMonth(), 1)),
-  })
+  setMonthRange(shiftMonth(getVisibleMonth(), 1))
+}
+
+function setMonthRange(month: Date) {
+  const range = getMonthDateRange(month)
+  reportsStore.setFilters({ period: toMonthKey(month), dateFrom: range.start, dateTo: range.end })
+}
+
+function applyDateRange(range: DateRangeValue) {
+  reportsStore.setFilters({ period: range.start.slice(0, 7), dateFrom: range.start, dateTo: range.end })
+}
+
+function resetDateRange() {
+  setMonthRange(startOfMonth(new Date()))
 }
 
 function formatCurrency(value: number) {
@@ -187,10 +203,13 @@ dd-stack
 
   dd-card
     dd-stack
-      reporting-period-toolbar(
+      reporting-date-range-toolbar(
         :label="periodLabel"
+        :model-value="selectedRange"
         @previous="goToPreviousMonth"
         @next="goToNextMonth"
+        @confirm="applyDateRange"
+        @reset="resetDateRange"
       )
 
       dd-grid(:class="fin.summaryGrid")

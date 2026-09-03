@@ -4,6 +4,18 @@ const monthLabelFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'UTC',
 })
 
+const dateLabelFormatter = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+export interface DateRangeValue {
+  start: string
+  end: string
+}
+
 export function startOfMonth(value: Date) {
   return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), 1))
 }
@@ -36,4 +48,22 @@ export function parseMonthKey(value: string | null | undefined) {
 export function formatMonthLabel(value: Date) {
   const label = monthLabelFormatter.format(value)
   return `${label.charAt(0).toUpperCase()}${label.slice(1)}`
+}
+
+export function getMonthDateRange(value: Date): DateRangeValue {
+  return {
+    start: toDateInput(startOfMonth(value)),
+    end: toDateInput(endOfMonth(value)),
+  }
+}
+
+export function formatDateRangeLabel(range: DateRangeValue) {
+  const start = new Date(`${range.start}T00:00:00.000Z`)
+  const end = new Date(`${range.end}T00:00:00.000Z`)
+
+  if (start.getUTCFullYear() === end.getUTCFullYear() && start.getUTCMonth() === end.getUTCMonth()) {
+    return formatMonthLabel(start)
+  }
+
+  return `${dateLabelFormatter.format(start)} – ${dateLabelFormatter.format(end)}`
 }
