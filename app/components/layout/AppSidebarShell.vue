@@ -32,7 +32,7 @@ function toggleSidebar() {
 <template lang="pug">
 dd-sidebar(fill subtle :class="[fin.layout, collapsed && fin.layoutCollapsed]")
   aside(:class="fin.aside")
-    dd-card(:class="fin.menuShell" elevated)
+    dd-card(:scroll="!collapsed" :class="fin.menuShell")
       dd-stack(split-after="1" :class="fin.flow")
         dd-stack(compact)
           dd-menu(
@@ -72,17 +72,12 @@ dd-sidebar(fill subtle :class="[fin.layout, collapsed && fin.layoutCollapsed]")
 
 <style module="fin">
 .menuToggle {
-  position: sticky;
-  bottom: 0;
-  margin-block-start: auto;
   padding-block: v('space.sm');
 }
 .menuShell {
   --dd-card-body-padding: v('space.xs');
   flex: 1;
   min-block-size: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .layout {

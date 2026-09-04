@@ -65,7 +65,7 @@ dd-stack(:class="fin.panel")
 
 <style module="fin">
 .panel {
-  inline-size: min(26rem, 85vw);
+  inline-size: min(28rem, 85vw);
 }
 
 .header {

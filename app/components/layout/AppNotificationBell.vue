@@ -10,34 +10,32 @@ const notificationsStore = useNotificationsStore()
 </script>
 
 <template lang="pug">
-ClientOnly
-  dd-popover(v-if="visible" trigger="click" placement="bottom-end")
-    dd-notification-trigger(
-      ghost
-      small
-      icon="lucide:bell"
-      label="Notificações"
-      :count="notificationsStore.unreadCount"
-      :class="fin.trigger"
-    )
-    template(#content)
+dd-popover(v-if="visible" trigger="click" placement="bottom-end")
+  dd-notification-trigger(
+    ghost
+    small
+    icon="lucide:bell"
+    label="Notificações"
+    :count="notificationsStore.unreadCount"
+    :class="fin.trigger"
+  )
+  template(#content)
+    ClientOnly
       NotificationCenterDropdown
 
-  template(#fallback)
-    dd-button(
-      v-if="visible"
-      ghost
-      small
-      icon-only
-      disabled
-      aria-label="Carregando notificações"
-      icon="lucide:bell"
-      :class="fin.trigger"
-    )
+      template(#fallback)
+        dd-stack(:class="fin.panelFallback" aria-busy="true")
+          dd-skeleton(height="2.5rem" width="100%")
+          dd-skeleton(height="5rem" width="100%")
+          dd-skeleton(height="2rem" width="9rem")
 </template>
 
 <style module="fin">
 .trigger {
   color: v('color.text.muted');
+}
+
+.panelFallback {
+  inline-size: min(26rem, 85vw);
 }
 </style>
