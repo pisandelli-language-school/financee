@@ -188,6 +188,7 @@ dd-stack
       )
         template(#end)
           dd-select(
+            small
             :model-value="reportsStore.filters.regime"
             :options="regimeOptions"
             placeholder="Selecione o regime"

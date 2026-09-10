@@ -235,18 +235,21 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar job..."
         @update:model-value="handleSearch"
+        small
       )
       dd-select(
         :model-value="jobsStore.filters.mode"
         :options="modeOptions"
         placeholder="Todos os modos"
         @update:model-value="handleModeFilter"
+        small
       )
       dd-select(
         :model-value="jobsStore.filters.status"
         :options="statusOptions"
         placeholder="Todos os status"
         @update:model-value="handleStatusFilter"
+        small
       )
 
     template(#cell-title="{ row }")

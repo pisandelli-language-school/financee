@@ -139,6 +139,7 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar usuário"
         @update:model-value="handleSearch"
+        small
       )
 
     template(#cell-name="{ row }")

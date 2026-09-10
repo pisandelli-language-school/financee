@@ -209,6 +209,7 @@ dd-stack
             :options="regimeOptions"
             placeholder="Selecione o regime"
             no-message
+            small
             @update:model-value="setRegime"
           )
 

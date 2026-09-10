@@ -149,20 +149,20 @@ dd-stack
 
     template(#toolbar)
       dd-input(
-
         :model-value="store.filters.search"
         icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
+        small
       )
       dd-select(
-
         :model-value="store.filters.type"
         :options="typeFilterOptions"
         placeholder="Todos os tipos"
         @update:model-value="handleTypeFilter"
+        small
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateModal") Novo dia não útil
+      dd-button(small primary icon="lucide:plus" @click="openCreateModal") Novo dia não útil
 
     template(#cell-type="{ row }")
       dd-badge(v-if="row.type === 'FIXED'" success) Fixo anual

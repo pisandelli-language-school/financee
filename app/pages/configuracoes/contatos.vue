@@ -150,6 +150,7 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
+        small
       )
       dd-select(
         :class="fin.field"
@@ -157,6 +158,7 @@ dd-stack
         :options="roleFilterOptions"
         placeholder="Todos os papéis"
         @update:model-value="handleRoleFilter"
+        small
       )
       dd-select(
         :class="fin.field"
@@ -164,8 +166,9 @@ dd-stack
         :options="natureFilterOptions"
         placeholder="Todas as naturezas"
         @update:model-value="handleNatureFilter"
+        small
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateModal") Novo contato
+      dd-button(small primary icon="lucide:plus" @click="openCreateModal") Novo contato
 
     template(#cell-roles="{ row }")
       dd-cluster(compact)

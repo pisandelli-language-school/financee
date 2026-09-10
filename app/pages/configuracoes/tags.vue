@@ -126,8 +126,9 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
+        small
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateModal") Nova tag
+      dd-button(small primary icon="lucide:plus" @click="openCreateModal") Nova tag
 
     template(#cell-tag="{ row }")
       dd-badge(:color="row.bgColor || '#F1F5F9'")

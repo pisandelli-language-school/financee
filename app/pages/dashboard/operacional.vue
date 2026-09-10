@@ -382,6 +382,7 @@ dd-stack
             dd-button(
               v-for="view in viewOptions"
               :key="view.to"
+              small
               :primary="view.active"
               :outline="!view.active"
               :to="view.to"

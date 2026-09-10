@@ -124,6 +124,7 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar papel"
         @update:model-value="handleSearch"
+        small
       )
 
     template(#cell-name="{ row }")

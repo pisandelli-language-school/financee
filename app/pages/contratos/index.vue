@@ -444,6 +444,7 @@ dd-stack
   )
     template(#toolbar)
       dd-input(
+        small
         :model-value="contractsStore.filters.search"
         icon="lucide:search"
         placeholder="Buscar contrato..."
@@ -454,8 +455,9 @@ dd-stack
         :options="statusFilterOptions"
         placeholder="Todos os status"
         @update:model-value="handleStatusFilter"
+        small
       )
-      dd-button(v-if="canCreateContracts" primary icon="lucide:plus" @click="openCreateModal") Novo contrato
+      dd-button(v-if="canCreateContracts" small primary icon="lucide:plus" @click="openCreateModal") Novo contrato
 
     template(#cell-title="{ row }")
       dd-stack(compact nogap)

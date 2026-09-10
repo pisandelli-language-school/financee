@@ -193,14 +193,16 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
+        small
       )
       dd-select(
         :model-value="categoriesStore.filters.type"
         :options="typeFilterOptions"
         placeholder="Todos os tipos"
         @update:model-value="handleTypeFilter"
+        small
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateModal") Nova categoria
+      dd-button(small primary icon="lucide:plus" @click="openCreateModal") Nova categoria
 
     template(#cell-type="{ row }")
       dd-badge(

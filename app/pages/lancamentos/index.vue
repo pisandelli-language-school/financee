@@ -915,6 +915,7 @@ dd-stack
               dd-button(
                 v-if="canCreateEntries"
                 primary
+                small
                 icon="lucide:plus"
                 type="button"
                 @click="openCreateEntry"

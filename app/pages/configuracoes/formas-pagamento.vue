@@ -126,8 +126,9 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
+        small
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateModal") Nova forma
+      dd-button(small primary icon="lucide:plus" @click="openCreateModal") Nova forma
 
     template(#cell-status="{ row }")
       dd-badge(:success="row.isActive" :warning="!row.isActive") {{ row.isActive ? 'Ativa' : 'Inativa' }}

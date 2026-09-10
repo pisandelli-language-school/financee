@@ -34,9 +34,9 @@ dd-stack
   backoffice-page-header(:breadcrumb="getBreadcrumb('integracoes')" :title="meta.title" :description="meta.description")
   backoffice-list-panel(:columns="columns" :data="filteredData" :loading="store.loading" :is-invalid="Boolean(store.error)" :error-message="store.error?.message ?? ''" :page="1" :total="filteredData.length" :page-size="50")
     template(#toolbar)
-      dd-input(:model-value="search" icon="lucide:search" placeholder="Buscar cliente..." @update:model-value="search = String($event)")
-      dd-button(outline icon="lucide:scroll-text" to="/configuracoes/integracoes/logs") Ver logs
-      dd-button(primary icon="lucide:plus" @click="openCreate") Novo cliente
+      dd-input(small :model-value="search" icon="lucide:search" placeholder="Buscar cliente..." @update:model-value="search = String($event)")
+      dd-button(small outline icon="lucide:scroll-text" to="/configuracoes/integracoes/logs") Ver logs
+      dd-button(small primary icon="lucide:plus" @click="openCreate") Novo cliente
     template(#cell-name="{ row }")
       dd-stack(compact nogap)
         strong {{ row.name }}

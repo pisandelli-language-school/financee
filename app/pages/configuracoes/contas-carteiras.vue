@@ -130,8 +130,9 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
+        small
       )
-      dd-button(primary icon="lucide:plus" @click="openCreateModal") Nova conta
+      dd-button(small primary icon="lucide:plus" @click="openCreateModal") Nova conta
 
     template(#content)
       dd-grid(v-if="isLoading" :class="fin.grid")

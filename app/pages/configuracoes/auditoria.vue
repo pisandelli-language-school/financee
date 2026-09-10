@@ -129,24 +129,28 @@ dd-stack
         icon="lucide:search"
         placeholder="Buscar evento"
         @update:model-value="handleSearch"
+        small
       )
       dd-select(
         :model-value="auditStore.filters.severity"
         placeholder="Todas as severidades"
         :options="severityOptions"
         @update:model-value="handleSeverity(String($event ?? ''))"
+        small
       )
       dd-input(
         :model-value="auditStore.filters.dateFrom"
         type="date"
         placeholder="Data inicial"
         @update:model-value="handleDateFrom(String($event ?? ''))"
+        small
       )
       dd-input(
         :model-value="auditStore.filters.dateTo"
         type="date"
         placeholder="Data final"
         @update:model-value="handleDateTo(String($event ?? ''))"
+        small
       )
 
     template(#cell-createdAt="{ row }")
