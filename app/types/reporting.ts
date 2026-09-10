@@ -24,6 +24,15 @@ export interface DashboardSummaryRecord {
   tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'info'
 }
 
+export interface DashboardAccountBalance {
+  id: string
+  name: string
+  type: string
+  institutionName: string | null
+  institutionLogoKey: string | null
+  balance: number
+}
+
 export interface FinancialDashboardData {
   regime: ReportRegime
   dateFrom: string
@@ -32,6 +41,7 @@ export interface FinancialDashboardData {
   cashFlowTotals: CashFlowReport['totals']
   cashFlowHistory: CashFlowBucket[]
   delinquencyTotals: DelinquencyReport['totals']
+  accountBalances: DashboardAccountBalance[]
 }
 
 export interface OperationalDashboardData {

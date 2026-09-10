@@ -8,14 +8,14 @@
     },
     "chart": {
       "financial": {
-        "income": { "$value": "#2e7d32" },
-        "expense": { "$value": "#db0000" },
-        "net": { "$value": "#0a51cf" }
+        "income": { "$value": "#26B86A" },
+        "expense": { "$value": "#EF5B62" },
+        "net": { "$value": "#2F6FED" }
       },
       "delinquency": {
-        "high": { "$value": "#db0000" },
-        "medium": { "$value": "#b25e00" },
-        "low": { "$value": "#0277bd" }
+        "high": { "$value": "#EF5B62" },
+        "medium": { "$value": "#F0B654" },
+        "low": { "$value": "#94A3B8" }
       },
       "text": { "$value": "#171717" },
       "muted": { "$value": "#737373" },

@@ -9,6 +9,9 @@ const prisma = {
     findMany: vi.fn(),
     count: vi.fn(),
   },
+  account: {
+    findMany: vi.fn(),
+  },
 }
 
 vi.mock('~~/server/utils/prisma', () => ({
@@ -37,8 +40,48 @@ describe('reporting dashboards', () => {
   })
 
   it('combines cash flow and delinquency into the financial dashboard cards', async () => {
-    prisma.financialEntry.findMany
-      .mockResolvedValueOnce([
+    prisma.account.findMany.mockResolvedValue([
+      {
+        id: 'account_1',
+        name: 'Conta Escola',
+        type: 'Conta corrente',
+        initialValue: 100,
+        institution: { name: 'PagBank', logoKey: 'pagbank' },
+      },
+    ])
+    prisma.financialEntry.findMany.mockImplementation((args) => {
+      if (args.where.paymentDate?.lte && !args.where.paymentDate?.gte) {
+        return Promise.resolve([
+          { accountId: 'account_1', paymentAccountId: 'account_1', direction: 'INCOME', amount: 1200 },
+          { accountId: 'account_1', paymentAccountId: 'account_1', direction: 'EXPENSE', amount: 200 },
+        ])
+      }
+
+      if ('id' in args.select) {
+        return Promise.resolve([
+          {
+            id: 'entry_1',
+            description: 'Mensalidade Pedro',
+            amount: 400,
+            scheduledDueDate: new Date('2026-07-01T00:00:00.000Z'),
+            effectiveDueDate: new Date('2026-07-10T00:00:00.000Z'),
+            contact: { name: 'Pedro Pisandelli' },
+            account: { name: 'Conta Escola' },
+          },
+          {
+            id: 'entry_2',
+            description: 'Mensalidade Hatus',
+            amount: 150,
+            scheduledDueDate: new Date('2026-07-05T00:00:00.000Z'),
+            effectiveDueDate: new Date('2026-07-20T00:00:00.000Z'),
+            contact: { name: 'Hatus Rodrigues' },
+            account: { name: 'Conta Escola' },
+          },
+        ])
+      }
+
+      if (args.where.status === 'PAID') {
+        return Promise.resolve([
         {
           direction: 'INCOME',
           amount: 1200,
@@ -53,8 +96,10 @@ describe('reporting dashboards', () => {
           effectiveDueDate: new Date('2026-07-10T00:00:00.000Z'),
           paymentDate: new Date('2026-07-11T00:00:00.000Z'),
         },
-      ])
-      .mockResolvedValueOnce([
+        ])
+      }
+
+      return Promise.resolve([
         {
           direction: 'INCOME',
           amount: 300,
@@ -70,28 +115,7 @@ describe('reporting dashboards', () => {
           paymentDate: null,
         },
       ])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          id: 'entry_1',
-          description: 'Mensalidade Pedro',
-          amount: 400,
-          scheduledDueDate: new Date('2026-07-01T00:00:00.000Z'),
-          effectiveDueDate: new Date('2026-07-10T00:00:00.000Z'),
-          contact: { name: 'Pedro Pisandelli' },
-          account: { name: 'Conta Escola' },
-        },
-        {
-          id: 'entry_2',
-          description: 'Mensalidade Hatus',
-          amount: 150,
-          scheduledDueDate: new Date('2026-07-05T00:00:00.000Z'),
-          effectiveDueDate: new Date('2026-07-20T00:00:00.000Z'),
-          contact: { name: 'Hatus Rodrigues' },
-          account: { name: 'Conta Escola' },
-        },
-      ])
+    })
 
     const dashboard = await generateFinancialDashboard({
       regime: 'CASH',
@@ -99,7 +123,7 @@ describe('reporting dashboards', () => {
       dateTo: '2026-07-31',
     })
 
-    expect(prisma.financialEntry.findMany).toHaveBeenCalledTimes(5)
+    expect(prisma.financialEntry.findMany).toHaveBeenCalledTimes(4)
     expect(dashboard.cashFlowTotals).toEqual({
       realizedIncome: 1200,
       realizedExpense: 200,
@@ -115,14 +139,19 @@ describe('reporting dashboards', () => {
       medium: 2,
       high: 0,
     })
-    expect(dashboard.cashFlowHistory).toHaveLength(6)
+    expect(dashboard.cashFlowHistory).toHaveLength(1)
     expect(dashboard.cashFlowHistory.map(bucket => bucket.periodKey)).toEqual([
-      '2026-02',
-      '2026-03',
-      '2026-04',
-      '2026-05',
-      '2026-06',
       '2026-07',
+    ])
+    expect(dashboard.accountBalances).toEqual([
+      {
+        id: 'account_1',
+        name: 'Conta Escola',
+        type: 'Conta corrente',
+        institutionName: 'PagBank',
+        institutionLogoKey: 'pagbank',
+        balance: 1100,
+      },
     ])
     expect(dashboard.cards).toEqual([
       {
@@ -150,6 +179,49 @@ describe('reporting dashboards', () => {
         tone: 'warning',
       },
     ])
+  })
+
+  it('attributes dashboard amounts to the selected cash or competence date', async () => {
+    prisma.account.findMany.mockResolvedValue([])
+    prisma.financialEntry.findMany.mockImplementation((args) => {
+      if (args.where.paymentDate?.lte && !args.where.paymentDate?.gte) {
+        return Promise.resolve([])
+      }
+
+      if ('id' in args.select) {
+        return Promise.resolve([])
+      }
+
+      if (args.where.status === 'PAID') {
+        return Promise.resolve(args.where.paymentDate
+          ? []
+          : [{ direction: 'INCOME', amount: 100, competenceDate: new Date('2026-08-01T00:00:00.000Z'), effectiveDueDate: new Date('2026-09-01T00:00:00.000Z'), paymentDate: new Date('2026-09-01T00:00:00.000Z') }])
+      }
+
+      return Promise.resolve(args.where.effectiveDueDate
+        ? []
+        : [{ direction: 'EXPENSE', amount: 30, competenceDate: new Date('2026-08-01T00:00:00.000Z'), effectiveDueDate: new Date('2026-09-01T00:00:00.000Z'), paymentDate: null }])
+    })
+
+    const cash = await generateFinancialDashboard({
+      regime: 'CASH',
+      dateFrom: '2026-08-01',
+      dateTo: '2026-08-31',
+    })
+    const competence = await generateFinancialDashboard({
+      regime: 'COMPETENCE',
+      dateFrom: '2026-08-01',
+      dateTo: '2026-08-31',
+    })
+
+    expect(cash.cashFlowTotals).toMatchObject({
+      realizedIncome: 0,
+      projectedExpense: 0,
+    })
+    expect(competence.cashFlowTotals).toMatchObject({
+      realizedIncome: 100,
+      projectedExpense: 30,
+    })
   })
 
   it('builds the operational dashboard with volume cards and neutral/warning states', async () => {

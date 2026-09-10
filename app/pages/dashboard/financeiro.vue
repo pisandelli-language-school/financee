@@ -3,6 +3,7 @@ import type { EChartsOption } from 'echarts'
 import { useDashboardStore } from '~~/stores/useDashboardStore'
 import { useUserPreferencesStore } from '~~/stores/useUserPreferencesStore'
 import { useDashboardChartColors } from '~/composables/useDashboardChartColors'
+import { getAccountInitials, getInstitutionLogoByKey } from '~/utils/account-institutions'
 import {
   endOfMonth,
   formatMonthLabel,
@@ -37,6 +38,7 @@ const regimeOptions = [
 ]
 
 const isPersisting = ref(false)
+const hasPendingPreferences = ref(false)
 const requestError = ref('')
 
 dashboardStore.setView('FINANCIAL')
@@ -62,6 +64,55 @@ const cashFlowTotals = computed(() => dashboardStore.financial?.cashFlowTotals ?
   projectedExpense: 0,
   projectedNet: 0,
 })
+const accountBalances = computed(() => dashboardStore.financial?.accountBalances ?? [])
+const currentBalance = computed(() => accountBalances.value.reduce((total, account) => total + account.balance, 0))
+const hasCashFlowTotals = computed(() => (
+  cashFlowTotals.value.realizedIncome !== 0
+  || cashFlowTotals.value.realizedExpense !== 0
+  || cashFlowTotals.value.projectedIncome !== 0
+  || cashFlowTotals.value.projectedExpense !== 0
+))
+const weeklyBillsChartOption = computed<EChartsOption | undefined>(() => {
+  if (!hasCashFlowTotals.value) {
+    return undefined
+  }
+
+  return {
+    color: [chartColors.value.financialIncome, chartColors.value.financialExpense],
+    tooltip: {
+      trigger: 'item',
+      show: !dashboardStore.isValueHidden,
+      valueFormatter: value => formatCurrency(Number(value)),
+    },
+    legend: {
+      bottom: 0,
+      textStyle: { color: chartColors.value.muted },
+    },
+    series: [
+      {
+        name: 'Contas do período',
+        type: 'pie',
+        radius: ['48%', '72%'],
+        center: ['50%', '44%'],
+        label: { show: false },
+        data: [
+          { name: 'Entradas', value: cashFlowTotals.value.realizedIncome + cashFlowTotals.value.projectedIncome },
+          { name: 'Saídas', value: cashFlowTotals.value.realizedExpense + cashFlowTotals.value.projectedExpense },
+        ],
+      },
+    ],
+  }
+})
+const weeklyBillsSummary = computed(() => {
+  if (!hasCashFlowTotals.value) {
+    return ''
+  }
+
+  const income = cashFlowTotals.value.realizedIncome + cashFlowTotals.value.projectedIncome
+  const expense = cashFlowTotals.value.realizedExpense + cashFlowTotals.value.projectedExpense
+
+  return `No período selecionado, foram ${formatCurrency(income)} em entradas e ${formatCurrency(expense)} em saídas, considerando valores realizados e previstos firmes.`
+})
 const delinquencyTotals = computed(() => dashboardStore.financial?.delinquencyTotals ?? {
   count: 0,
   amount: 0,
@@ -69,57 +120,12 @@ const delinquencyTotals = computed(() => dashboardStore.financial?.delinquencyTo
   medium: 0,
   high: 0,
 })
-const hasDelinquency = computed(() => delinquencyTotals.value.count > 0)
-const delinquencyChartOption = computed<EChartsOption | undefined>(() => {
-  if (!hasDelinquency.value) {
-    return undefined
-  }
-
-  return {
-    color: [
-      chartColors.value.delinquencyHigh,
-      chartColors.value.delinquencyMedium,
-      chartColors.value.delinquencyLow,
-    ],
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} título(s) em atraso ({d}%)',
-    },
-    legend: {
-      bottom: 0,
-      textStyle: {
-        color: chartColors.value.muted,
-      },
-    },
-    series: [
-      {
-        name: 'Temperatura da inadimplência',
-        type: 'pie',
-        radius: ['48%', '72%'],
-        center: ['50%', '44%'],
-        label: { show: false },
-        data: [
-          { name: 'Alta', value: delinquencyTotals.value.high },
-          { name: 'Média', value: delinquencyTotals.value.medium },
-          { name: 'Baixa', value: delinquencyTotals.value.low },
-        ],
-      },
-    ],
-  }
-})
-const delinquencySummary = computed(() => {
-  if (!hasDelinquency.value) {
-    return ''
-  }
-
-  const { count, amount, high, medium, low } = delinquencyTotals.value
-  const titleLabel = count === 1 ? 'título em atraso' : 'títulos em atraso'
-
-  return `Há ${count} ${titleLabel}, com exposição de ${formatCurrency(amount)}: ${high} em temperatura alta, ${medium} em temperatura média e ${low} em temperatura baixa.`
-})
 const cashFlowHistory = computed(() => dashboardStore.financial?.cashFlowHistory ?? [])
 const hasCashFlowHistory = computed(() => cashFlowHistory.value.some(bucket => (
-  bucket.realizedIncome !== 0 || bucket.realizedExpense !== 0 || bucket.realizedNet !== 0
+  bucket.realizedIncome !== 0
+  || bucket.realizedExpense !== 0
+  || bucket.projectedIncome !== 0
+  || bucket.projectedExpense !== 0
 )))
 const cashFlowChartOption = computed<EChartsOption | undefined>(() => {
   if (!hasCashFlowHistory.value) {
@@ -134,6 +140,7 @@ const cashFlowChartOption = computed<EChartsOption | undefined>(() => {
     ],
     tooltip: {
       trigger: 'axis',
+      show: !dashboardStore.isValueHidden,
       valueFormatter: value => formatCurrency(Number(value)),
     },
     legend: {
@@ -177,20 +184,20 @@ const cashFlowChartOption = computed<EChartsOption | undefined>(() => {
     },
     series: [
       {
-        name: 'Entradas realizadas',
+        name: 'Entradas',
         type: 'bar',
-        data: cashFlowHistory.value.map(bucket => bucket.realizedIncome),
+        data: cashFlowHistory.value.map(bucket => bucket.realizedIncome + bucket.projectedIncome),
       },
       {
-        name: 'Saídas realizadas',
+        name: 'Saídas',
         type: 'bar',
-        data: cashFlowHistory.value.map(bucket => bucket.realizedExpense),
+        data: cashFlowHistory.value.map(bucket => bucket.realizedExpense + bucket.projectedExpense),
       },
       {
         name: 'Resultado líquido',
         type: 'line',
         smooth: true,
-        data: cashFlowHistory.value.map(bucket => bucket.realizedNet),
+        data: cashFlowHistory.value.map(bucket => bucket.realizedNet + bucket.projectedNet),
       },
     ],
   }
@@ -203,7 +210,11 @@ const cashFlowHistorySummary = computed(() => {
     return ''
   }
 
-  return `De ${firstBucket.label} a ${lastBucket.label}, as entradas realizadas somaram ${formatCurrency(cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedIncome, 0))}, as saídas realizadas somaram ${formatCurrency(cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedExpense, 0))} e o resultado líquido foi de ${formatCurrency(cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedNet, 0))}.`
+  const income = cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedIncome + bucket.projectedIncome, 0)
+  const expense = cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedExpense + bucket.projectedExpense, 0)
+  const net = cashFlowHistory.value.reduce((total, bucket) => total + bucket.realizedNet + bucket.projectedNet, 0)
+
+  return `De ${firstBucket.label} a ${lastBucket.label}, as entradas somaram ${formatCurrency(income)}, as saídas somaram ${formatCurrency(expense)} e o resultado líquido foi de ${formatCurrency(net)}.`
 })
 
 await loadDashboard()
@@ -232,7 +243,12 @@ async function loadDashboard() {
 }
 
 async function persistPreferences() {
-  if (!import.meta.client || !preferencesStore.hydrated || isPersisting.value) {
+  if (!import.meta.client || !preferencesStore.hydrated) {
+    return
+  }
+
+  if (isPersisting.value) {
+    hasPendingPreferences.value = true
     return
   }
 
@@ -241,6 +257,7 @@ async function persistPreferences() {
   try {
     await preferencesStore.updatePreferences({
       dashboardDefaultView: 'FINANCIAL',
+      lastReportRegime: dashboardStore.filters.regime,
     })
   } catch {
     showToast('Não foi possível salvar sua visão padrão do dashboard.', {
@@ -249,6 +266,11 @@ async function persistPreferences() {
     })
   } finally {
     isPersisting.value = false
+
+    if (hasPendingPreferences.value) {
+      hasPendingPreferences.value = false
+      await persistPreferences()
+    }
   }
 }
 
@@ -256,6 +278,18 @@ function setRegime(value: unknown) {
   dashboardStore.setFilters({
     regime: String(value) as 'CASH' | 'COMPETENCE',
   })
+}
+
+function toggleValueVisibility() {
+  dashboardStore.toggleValueVisibility()
+}
+
+function accountLogo(logoKey: string | null) {
+  return getInstitutionLogoByKey(logoKey)
+}
+
+function accountSubtitle(account: { institutionName: string | null, type: string }) {
+  return account.institutionName ?? account.type
 }
 
 function goToPreviousMonth() {
@@ -299,7 +333,15 @@ function formatPeriodLabel(range: { start: string, end: string }) {
 }
 
 function formatCurrency(value: number) {
+  if (dashboardStore.isValueHidden) {
+    return '••••'
+  }
+
   return finCurrency.format(value)
+}
+
+function formatNumber(value: number) {
+  return dashboardStore.isValueHidden ? '••••' : String(value)
 }
 </script>
 
@@ -331,6 +373,17 @@ dd-stack
               :outline="!view.active"
               :to="view.to"
             ) {{ view.label }}
+            dd-button(
+              small
+              icon-only
+              :primary="dashboardStore.isValueHidden"
+              :ghost="!dashboardStore.isValueHidden"
+              :icon="dashboardStore.isValueHidden ? 'lucide:eye-off' : 'lucide:eye'"
+              :aria-label="dashboardStore.isValueHidden ? 'Mostrar valores do dashboard' : 'Ocultar valores do dashboard'"
+              :aria-pressed="dashboardStore.isValueHidden"
+              type="button"
+              @click="toggleValueVisibility"
+            )
 
         template(#end)
           dd-select(
@@ -342,6 +395,43 @@ dd-stack
       )
 
       dd-grid(:class="fin.cardsGrid")
+        dd-card(:class="fin.balanceCard")
+          dd-stack(compact)
+            dd-cluster(between :class="fin.balanceHeader")
+              strong Saldo de hoje
+              dd-popover(trigger="click" placement="bottom-end")
+                span(:class="fin.popoverTrigger")
+                  dd-button(
+                    ghost
+                    tiny
+                    icon-only
+                    icon="lucide:ellipsis-vertical"
+                    type="button"
+                    aria-label="Ver composição do saldo"
+                  )
+                template(#content)
+                  dd-stack(v-if="accountBalances.length" compact :class="fin.balancePopover")
+                    dd-cluster(
+                      v-for="account in accountBalances"
+                      :key="account.id"
+                      between
+                      :class="fin.balanceAccount"
+                    )
+                      dd-cluster(compact :class="fin.balanceAccountIdentity")
+                        dd-avatar(
+                          v-if="accountLogo(account.institutionLogoKey)"
+                          :src="accountLogo(account.institutionLogoKey)"
+                          :alt="accountSubtitle(account)"
+                          :class="fin.accountAvatar"
+                        )
+                        span(v-else :class="fin.accountInitials") {{ getAccountInitials(account.institutionName || account.name) }}
+                        dd-stack(compact nogap)
+                          strong {{ account.name }}
+                          span(:class="fin.supportLabel") {{ accountSubtitle(account) }}
+                      strong {{ formatCurrency(account.balance) }}
+                  span(v-else :class="fin.supportLabel") Nenhuma conta ativa cadastrada.
+            strong(:class="fin.balanceValue") {{ formatCurrency(currentBalance) }}
+
         button(
           v-for="card in cards"
           :key="card.key ?? card.title"
@@ -359,7 +449,7 @@ dd-stack
       dd-grid(:class="fin.chartsGrid")
         dashboard-chart-panel(
           title="Entradas, saídas e resultado líquido"
-          description="Valores realizados nos últimos seis meses."
+          description="Valores realizados e previstos firmes no período selecionado."
           :option="cashFlowChartOption"
           :loading="dashboardStore.loading"
           :empty="!hasCashFlowHistory"
@@ -369,15 +459,15 @@ dd-stack
             p(v-if="cashFlowHistorySummary" :class="fin.chartSummary") {{ cashFlowHistorySummary }}
 
         dashboard-chart-panel(
-          title="Temperatura da inadimplência"
-          description="Distribuição dos títulos em atraso no período selecionado."
-          :option="delinquencyChartOption"
+          title="Contas do período"
+          description="Distribuição das entradas e saídas no período selecionado."
+          :option="weeklyBillsChartOption"
           :loading="dashboardStore.loading"
-          :empty="!hasDelinquency"
+          :empty="!hasCashFlowTotals"
           :error-message="requestError"
         )
           template(#summary)
-            p(v-if="delinquencySummary" :class="fin.chartSummary") {{ delinquencySummary }}
+            p(v-if="weeklyBillsSummary" :class="fin.chartSummary") {{ weeklyBillsSummary }}
 
       dd-grid(:class="fin.panelsGrid")
         dd-card(:class="fin.panel")
@@ -401,19 +491,19 @@ dd-stack
             strong Inadimplência do período
             dd-cluster(between)
               span(:class="fin.supportLabel") Títulos em atraso
-              strong {{ delinquencyTotals.count }}
+              strong {{ formatNumber(delinquencyTotals.count) }}
             dd-cluster(between)
               span(:class="fin.supportLabel") Valor exposto
               strong(:class="fin.amountNegative") {{ formatCurrency(delinquencyTotals.amount) }}
             dd-cluster(between)
               span(:class="fin.supportLabel") Temperatura alta
-              dd-badge(danger) {{ delinquencyTotals.high }}
+              dd-badge(danger) {{ formatNumber(delinquencyTotals.high) }}
             dd-cluster(between)
               span(:class="fin.supportLabel") Temperatura média
-              dd-badge(warning) {{ delinquencyTotals.medium }}
+              dd-badge(warning) {{ formatNumber(delinquencyTotals.medium) }}
             dd-cluster(between)
               span(:class="fin.supportLabel") Temperatura baixa
-              dd-badge(info) {{ delinquencyTotals.low }}
+              dd-badge(info) {{ formatNumber(delinquencyTotals.low) }}
 </template>
 
 <style module="fin">
@@ -427,7 +517,7 @@ dd-stack
 }
 
 .cardsGrid {
-  --dd-grid-column-min-width: 10rem;
+  --dd-grid-column-min-width: 12rem;
   --dd-grid-gap: v('space.md');
 }
 
@@ -443,6 +533,63 @@ dd-stack
   border-radius: v('border-radius.lg');
   padding: v('space.md');
   text-align: center;
+}
+
+.balanceCard {
+  --dd-card-border-radius: v('border-radius.lg');
+  --dd-card-body-padding: v('space.md');
+}
+
+.balanceHeader {
+  align-items: center;
+}
+
+.balanceValue {
+  font-size: v('font-size.lg');
+  line-height: v('line-height.tight');
+}
+
+.balanceAccount,
+.balanceAccountIdentity {
+  align-items: center;
+}
+
+.balanceAccountIdentity {
+  min-inline-size: 0;
+}
+
+.accountAvatar {
+  --dd-avatar-background-color: transparent;
+
+  flex: 0 0 1.75rem;
+}
+
+.accountInitials {
+  align-items: center;
+  background: v('color.primary');
+  border-radius: 999px;
+  color: v('color.text.inverted');
+  display: inline-flex;
+  flex: 0 0 1.75rem;
+  font-size: v('font-size.xs');
+  font-weight: v('font-weight.semi-bold');
+  inline-size: 1.75rem;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.balancePopover {
+  --dd-stack-gap: v('space.xs');
+
+  min-inline-size: 16rem;
+}
+
+.balancePopover .balanceAccount {
+  gap: v('space.lg');
+}
+
+.balancePopover .balanceAccount strong {
+  font-size: v('font-size.sm');
 }
 
 .metricSuccess {
@@ -461,14 +608,18 @@ dd-stack
   --dd-card-border-color: v('color.border.default');
 }
 
-.metricLabel,
 .supportLabel {
   color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
+.metricLabel {
+  color: v('color.text.muted');
+  font-size: v('font-size.xs');
+}
+
 .metricValue {
-  font-size: v('font-size.lg');
+  font-size: v('font-size.md');
   line-height: v('line-height.tight');
 }
 

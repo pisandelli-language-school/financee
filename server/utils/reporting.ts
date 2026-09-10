@@ -2,6 +2,7 @@ import type {
   CashFlowReport,
   ContractsReport,
   ContractsReportItem,
+  DashboardAccountBalance,
   DelinquencyFilters,
   DelinquencyRecord,
   DelinquencyReport,
@@ -51,16 +52,60 @@ function formatDateOnly(value: Date) {
   return value.toISOString().slice(0, 10)
 }
 
-function getDashboardHistoryFilters(filters: ReportingFilters): ReportingFilters {
-  const referenceDate = parseDateOnly(filters.dateTo, 'Data final')
-  const dateFrom = new Date(Date.UTC(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth() - 5, 1))
-  const dateTo = new Date(Date.UTC(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth() + 1, 0))
+async function generateAccountBalances(): Promise<DashboardAccountBalance[]> {
+  const today = formatDateOnly(new Date())
+  const [accounts, paidEntries] = await Promise.all([
+    prisma.account.findMany({
+      where: {
+        deletedAt: null,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        initialValue: true,
+        institution: {
+          select: {
+            name: true,
+            logoKey: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.financialEntry.findMany({
+      where: {
+        deletedAt: null,
+        status: 'PAID',
+        paymentDate: {
+          lte: new Date(`${today}T23:59:59.999Z`),
+        },
+      },
+      select: {
+        accountId: true,
+        paymentAccountId: true,
+        direction: true,
+        amount: true,
+      },
+    }),
+  ])
+  const movementByAccount = new Map<string, number>()
 
-  return {
-    regime: filters.regime,
-    dateFrom: formatDateOnly(dateFrom),
-    dateTo: formatDateOnly(dateTo),
+  for (const entry of paidEntries) {
+    const accountId = entry.paymentAccountId ?? entry.accountId
+    const signedAmount = entry.direction === 'INCOME' ? Number(entry.amount) : -Number(entry.amount)
+    movementByAccount.set(accountId, (movementByAccount.get(accountId) ?? 0) + signedAmount)
   }
+
+  return accounts.map(account => ({
+    id: account.id,
+    name: account.name,
+    type: account.type,
+    institutionName: account.institution?.name ?? null,
+    institutionLogoKey: account.institution?.logoKey ?? null,
+    balance: Number(account.initialValue ?? 0) + (movementByAccount.get(account.id) ?? 0),
+  }))
 }
 
 function getDashboardHistoryDateRange(filters: ReportingDateRangeFilters): ReportingDateRangeFilters {
@@ -359,14 +404,14 @@ export async function generateDre(filters: ReportingFilters): Promise<DreReport>
 }
 
 export async function generateFinancialDashboard(filters: ReportingFilters): Promise<FinancialDashboardData> {
-  const [cashFlow, cashFlowHistory, delinquency] = await Promise.all([
+  const [cashFlow, delinquency, accountBalances] = await Promise.all([
     generateCashFlow(filters),
-    generateCashFlow(getDashboardHistoryFilters(filters)),
     generateDelinquencyReport({
       dateFrom: filters.dateFrom,
       dateTo: filters.dateTo,
       referenceDate: filters.dateTo,
     }),
+    generateAccountBalances(),
   ])
 
   return {
@@ -374,8 +419,9 @@ export async function generateFinancialDashboard(filters: ReportingFilters): Pro
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
     cashFlowTotals: cashFlow.totals,
-    cashFlowHistory: cashFlowHistory.buckets,
+    cashFlowHistory: cashFlow.buckets,
     delinquencyTotals: delinquency.totals,
+    accountBalances,
     cards: [
       {
         key: 'realized-net',

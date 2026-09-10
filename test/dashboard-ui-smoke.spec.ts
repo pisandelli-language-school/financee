@@ -59,6 +59,16 @@ function createDashboardStore() {
         medium: 1,
         high: 0,
       },
+      accountBalances: [
+        {
+          id: 'account_1',
+          name: 'Conta Escola',
+          type: 'Conta corrente',
+          institutionName: 'PagBank',
+          institutionLogoKey: null,
+          balance: 1500,
+        },
+      ],
     },
     operational: {
       cards: [
@@ -85,6 +95,7 @@ function createDashboardStore() {
     },
     loading: false,
     error: null,
+    isValueHidden: false,
     setView(nextView: 'FINANCIAL' | 'OPERATIONAL') {
       this.currentView = nextView
     },
@@ -96,6 +107,9 @@ function createDashboardStore() {
         period: '',
         regime: 'CASH',
       }
+    },
+    toggleValueVisibility() {
+      this.isValueHidden = !this.isValueHidden
     },
     async fetchFinancial(payload: { dateFrom: string, dateTo: string }) {
       fetchFinancial(payload)
@@ -139,7 +153,12 @@ const globalStubs = {
   'dd-cluster': { template: '<div><slot /></div>' },
   'dd-grid': { template: '<div><slot /></div>' },
   'dd-alert': { template: '<div><slot /></div>' },
+  'dd-popover': { template: '<div><slot /></div>' },
+  'reporting-date-range-toolbar': {
+    template: '<div><slot name="start" /><slot name="end" /></div>',
+  },
   'dd-badge': { template: '<span><slot /></span>' },
+  'dd-avatar': { template: '<span><slot /></span>' },
   'dd-accordion-group': { template: '<div><slot /></div>' },
   'dd-accordion': {
     props: ['title'],
@@ -151,9 +170,9 @@ const globalStubs = {
     template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><option v-if="placeholder" value="">{{ placeholder }}</option><option v-for="item in options" :key="item.value" :value="item.value">{{ item.label }}</option></select>',
   },
   'dd-button': {
-    props: ['to', 'primary', 'outline', 'icon', 'iconOnly', 'ariaLabel'],
+    props: ['to', 'primary', 'outline', 'ghost', 'icon', 'iconOnly', 'ariaLabel', 'ariaPressed'],
     emits: ['click'],
-    template: '<button :aria-label="ariaLabel" @click="$emit(\'click\', $event)"><slot /></button>',
+    template: '<button :aria-label="ariaLabel" :aria-pressed="ariaPressed" @click="$emit(\'click\', $event)"><slot /></button>',
   },
   'dashboard-chart-panel': {
     name: 'DashboardChartPanel',
@@ -198,35 +217,91 @@ describe('dashboard pages smoke', () => {
     expect(wrapper.text()).toContain('Dashboard financeiro')
     expect(wrapper.text()).toContain('Agosto de 2026')
     expect(wrapper.text()).toContain('Entradas, saídas e resultado líquido')
-    expect(wrapper.text()).toContain('De Março de 2026 a Agosto de 2026')
-    expect(wrapper.text()).toContain('Temperatura da inadimplência')
-    expect(wrapper.text()).toContain('Há 2 títulos em atraso, com exposição de R$ 500,00')
+    expect(wrapper.text()).toContain('Saldo de hoje')
+    expect(wrapper.text()).toContain('R$ 1.500,00')
+    expect(wrapper.text()).toContain('Contas do período')
     expect(fetchFinancial).toHaveBeenCalledWith({
       dateFrom: '2026-08-01',
       dateTo: '2026-08-31',
     })
 
-    const [cashFlowChart, delinquencyChart] = wrapper.findAllComponents({ name: 'DashboardChartPanel' })
+    const [cashFlowChart, billsChart] = wrapper.findAllComponents({ name: 'DashboardChartPanel' })
     expect(cashFlowChart.props('option')).toMatchObject({
       series: [
-        { name: 'Entradas realizadas', type: 'bar', data: [800, 1000] },
-        { name: 'Saídas realizadas', type: 'bar', data: [300, 200] },
+        { name: 'Entradas', type: 'bar', data: [800, 1000] },
+        { name: 'Saídas', type: 'bar', data: [300, 200] },
         { name: 'Resultado líquido', type: 'line', data: [500, 800] },
       ],
     })
-    expect(delinquencyChart.props('option')).toMatchObject({
+    expect(billsChart.props('option')).toMatchObject({
       series: [
         {
-          name: 'Temperatura da inadimplência',
+          name: 'Contas do período',
           type: 'pie',
           data: [
-            { name: 'Alta', value: 0 },
-            { name: 'Média', value: 1 },
-            { name: 'Baixa', value: 1 },
+            { name: 'Entradas', value: 1300 },
+            { name: 'Saídas', value: 300 },
           ],
         },
       ],
     })
+  })
+
+  it('reloads the financial dashboard when the regime changes', async () => {
+    const wrapper = await mountPage(FinanceiroPage)
+
+    await wrapper.find('select').setValue('COMPETENCE')
+    await flushPromises()
+
+    expect(dashboardStore.filters.regime).toBe('COMPETENCE')
+    expect(fetchFinancial).toHaveBeenCalledTimes(2)
+  })
+
+  it('hides dashboard values when privacy mode is enabled', async () => {
+    const wrapper = await mountPage(FinanceiroPage)
+
+    await wrapper.find('[aria-label="Ocultar valores do dashboard"]').trigger('click')
+
+    expect(dashboardStore.isValueHidden).toBe(true)
+    expect(wrapper.find('[aria-label="Mostrar valores do dashboard"]').attributes('aria-pressed')).toBe('true')
+    expect(wrapper.text()).toContain('••••')
+    expect(wrapper.text()).not.toContain('R$ 1.500,00')
+  })
+
+  it('renders the financial charts when the period has only projected entries', async () => {
+    dashboardStore.financial.cashFlowTotals = {
+      realizedIncome: 0,
+      realizedExpense: 0,
+      realizedNet: 0,
+      projectedIncome: 1200,
+      projectedExpense: 300,
+      projectedNet: 900,
+    }
+    dashboardStore.financial.cashFlowHistory = [
+      {
+        periodKey: '2026-08',
+        label: 'Agosto de 2026',
+        realizedIncome: 0,
+        realizedExpense: 0,
+        realizedNet: 0,
+        projectedIncome: 1200,
+        projectedExpense: 300,
+        projectedNet: 900,
+      },
+    ]
+
+    const wrapper = await mountPage(FinanceiroPage)
+    const [cashFlowChart, billsChart] = wrapper.findAllComponents({ name: 'DashboardChartPanel' })
+
+    expect(cashFlowChart.props('empty')).toBe(false)
+    expect(cashFlowChart.props('option')).toMatchObject({
+      series: [
+        { name: 'Entradas', data: [1200] },
+        { name: 'Saídas', data: [300] },
+        { name: 'Resultado líquido', data: [900] },
+      ],
+    })
+    expect(billsChart.props('empty')).toBe(false)
   })
 
   it('renders the operational dashboard and loads its KPI cards', async () => {
@@ -255,7 +330,7 @@ describe('dashboard pages smoke', () => {
           data: [
             {
               value: '4',
-              itemStyle: { color: '#0277bd' },
+              itemStyle: { color: '#94A3B8' },
             },
           ],
         },

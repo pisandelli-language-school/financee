@@ -39,14 +39,6 @@ header(:class="fin.topbar")
 
           template(#content)
             dd-stack(compact :class="fin.profileMenu")
-              div(:class="fin.themeToggle")
-                dd-toggle(
-                  small
-                  :model-value="isDarkerTheme"
-                  label="Tema escuro"
-                  @update:model-value="$emit('update:is-darker-theme', Boolean($event))"
-                )
-              hr(:class="fin.divider")
               dd-button(
                 ghost
                 small
@@ -75,14 +67,4 @@ header(:class="fin.topbar")
   min-inline-size: 12rem;
 }
 
-.divider {
-  border: 0;
-  border-top: v('border-width.sm') solid v('color.border.default');
-  inline-size: 100%;
-  margin: 0;
-}
-
-.themeToggle {
-  padding-inline-start: v('space.xs');
-}
 </style>

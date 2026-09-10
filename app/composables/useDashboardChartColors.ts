@@ -1,12 +1,12 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const fallbackColors = {
-  financialIncome: '#2e7d32',
-  financialExpense: '#db0000',
-  financialNet: '#0a51cf',
-  delinquencyHigh: '#db0000',
-  delinquencyMedium: '#b25e00',
-  delinquencyLow: '#0277bd',
+  financialIncome: '#26B86A',
+  financialExpense: '#EF5B62',
+  financialNet: '#2F6FED',
+  delinquencyHigh: '#EF5B62',
+  delinquencyMedium: '#F0B654',
+  delinquencyLow: '#94A3B8',
   text: '#171717',
   muted: '#737373',
   grid: '#e5e5e5',

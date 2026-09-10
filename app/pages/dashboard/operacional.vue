@@ -62,6 +62,7 @@ const operationalChartOption = computed<EChartsOption | undefined>(() => {
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
+      show: !dashboardStore.isValueHidden,
     },
     grid: {
       top: 16,
@@ -74,6 +75,7 @@ const operationalChartOption = computed<EChartsOption | undefined>(() => {
       minInterval: 1,
       axisLabel: {
         color: chartColors.value.muted,
+        formatter: value => formatNumber(Number(value)),
       },
       splitLine: {
         lineStyle: {
@@ -103,6 +105,7 @@ const operationalChartOption = computed<EChartsOption | undefined>(() => {
           show: true,
           position: 'right',
           color: chartColors.value.text,
+          formatter: params => formatNumber(params.value as number | string),
         },
         data: cards.value.map(card => ({
           value: card.value,
@@ -117,6 +120,10 @@ const operationalChartOption = computed<EChartsOption | undefined>(() => {
 const operationalSummary = computed(() => {
   if (!hasOperationalData.value) {
     return ''
+  }
+
+  if (dashboardStore.isValueHidden) {
+    return 'Valores ocultos.'
   }
 
   return `No período selecionado: ${cards.value.map(card => `${card.title}: ${card.value}`).join('; ')}.`
@@ -148,6 +155,10 @@ const entriesChartOption = computed(() => createMonthlyLineChartOption([
 const contractsHistorySummary = computed(() => {
   const latest = operationalHistory.value.at(-1)
 
+  if (dashboardStore.isValueHidden) {
+    return latest ? 'Valores ocultos.' : ''
+  }
+
   return latest
     ? `Em ${latest.label}, havia ${latest.activeContracts} contratos ativos e ${latest.renewedContracts} renovações.`
     : ''
@@ -157,6 +168,10 @@ const entriesHistorySummary = computed(() => {
 
   if (!latest) {
     return ''
+  }
+
+  if (dashboardStore.isValueHidden) {
+    return 'Valores ocultos.'
   }
 
   const openLabel = latest.openEntries === 1 ? 'lançamento em aberto' : 'lançamentos em aberto'
@@ -271,6 +286,14 @@ function getCardColor(tone: string | undefined) {
   return chartColors.value.financialNet
 }
 
+function toggleValueVisibility() {
+  dashboardStore.toggleValueVisibility()
+}
+
+function formatNumber(value: number | string) {
+  return dashboardStore.isValueHidden ? '••••' : String(value)
+}
+
 function createMonthlyLineChartOption(series: Array<{
   name: string
   color: string
@@ -284,6 +307,7 @@ function createMonthlyLineChartOption(series: Array<{
     color: series.map(item => item.color),
     tooltip: {
       trigger: 'axis',
+      show: !dashboardStore.isValueHidden,
     },
     legend: {
       bottom: 0,
@@ -316,6 +340,7 @@ function createMonthlyLineChartOption(series: Array<{
       minInterval: 1,
       axisLabel: {
         color: chartColors.value.muted,
+        formatter: value => formatNumber(Number(value)),
       },
       splitLine: {
         lineStyle: {
@@ -361,6 +386,17 @@ dd-stack
               :outline="!view.active"
               :to="view.to"
             ) {{ view.label }}
+            dd-button(
+              small
+              icon-only
+              :primary="dashboardStore.isValueHidden"
+              :ghost="!dashboardStore.isValueHidden"
+              :icon="dashboardStore.isValueHidden ? 'lucide:eye-off' : 'lucide:eye'"
+              :aria-label="dashboardStore.isValueHidden ? 'Mostrar valores do dashboard' : 'Ocultar valores do dashboard'"
+              :aria-pressed="dashboardStore.isValueHidden"
+              type="button"
+              @click="toggleValueVisibility"
+            )
 
       dd-alert(v-if="requestError" danger title="Dashboard") {{ requestError }}
 
@@ -372,7 +408,7 @@ dd-stack
           :class="[fin.metricCard, { [fin.metricSuccess]: card.tone === 'success', [fin.metricDanger]: card.tone === 'danger', [fin.metricWarning]: card.tone === 'warning', [fin.metricInfo]: card.tone === 'info' }]"
         )
           dd-stack(compact nogap)
-            strong(:class="fin.metricValue") {{ card.value }}
+            strong(:class="fin.metricValue") {{ formatNumber(card.value) }}
             span(:class="fin.metricLabel") {{ card.title }}
 
       dashboard-chart-panel(

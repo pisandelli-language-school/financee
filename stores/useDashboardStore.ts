@@ -6,6 +6,7 @@ import type {
   DashboardView,
   FinancialDashboardData,
   OperationalDashboardData,
+  ReportRegime,
   ReportingDateRangeFilters,
 } from '~/types/reporting'
 
@@ -23,6 +24,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const operational = ref<OperationalDashboardData | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const isValueHidden = ref(false)
 
   function setView(nextView: DashboardView) {
     currentView.value = nextView
@@ -37,6 +39,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   function resetFilters() {
     filters.value = defaultFilters()
+  }
+
+  function toggleValueVisibility() {
+    isValueHidden.value = !isValueHidden.value
   }
 
   async function fetchFinancial(payload: ReportingDateRangeFilters) {
@@ -78,8 +84,13 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   function hydratePreferences(preferences: {
     dashboardDefaultView?: DashboardView | null
+    lastReportRegime?: ReportRegime | null
   } | null | undefined) {
     currentView.value = preferences?.dashboardDefaultView ?? 'FINANCIAL'
+
+    if (preferences?.lastReportRegime) {
+      filters.value.regime = preferences.lastReportRegime
+    }
   }
 
   return {
@@ -89,9 +100,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     operational,
     loading,
     error,
+    isValueHidden,
     setView,
     setFilters,
     resetFilters,
+    toggleValueVisibility,
     fetchFinancial,
     fetchOperational,
     hydratePreferences,
