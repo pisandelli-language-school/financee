@@ -680,13 +680,6 @@ function statusIcon(entry: FinancialEntryRecord) {
   return 'lucide:thumbs-down'
 }
 
-function getStatusIconClass(entry: FinancialEntryRecord) {
-  return [
-    fin.statusToggle,
-    entry.status === 'OPEN' && fin.statusOpenButton,
-  ]
-}
-
 function statusTooltip(entry: FinancialEntryRecord) {
   if (entry.status === 'PAID') {
     return canPayEntries.value
@@ -1008,8 +1001,9 @@ dd-stack
           icon-only
           type="button"
           :success="row.status === 'PAID'"
+          :warning="row.status === 'OPEN'"
           :danger="row.status === 'CANCELED'"
-          :class="getStatusIconClass(row)"
+          :class="fin.statusToggle"
           :icon="statusIcon(row)"
           :title="statusTooltip(row)"
           :aria-label="statusTooltip(row)"
@@ -1306,7 +1300,4 @@ dd-stack
   color: v('color.danger.700');
 }
 
-.statusOpenButton {
-  --dd-button-base-color: v('color.gray.200');
-}
 </style>

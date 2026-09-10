@@ -22,6 +22,24 @@
       "grid": { "$value": "#e5e5e5" }
     }
   },
+  "primitives": {
+    "state": {
+      "warning": {
+        "surface": {
+          "$value": "#ffffdc"
+        },
+        "surface-hover": {
+          "$value": "#ffffdc"
+        },
+        "border": {
+          "$value": "{color.border.default}"
+        },
+        "on-surface": {
+          "$value": "{color.text.default}"
+        }
+      }
+    }
+  },
   "themes": {
     "dark": {
       "logo": {
