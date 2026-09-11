@@ -22,7 +22,7 @@
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.9",
     "@pinia/nuxt": "^0.11.3",
-    "@pisandelli/daredash": "0.0.51-beta",
+    "@pisandelli/daredash": "0.0.52-beta",
     "@prisma/adapter-mariadb": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@supabase/supabase-js": "^2.112.1",

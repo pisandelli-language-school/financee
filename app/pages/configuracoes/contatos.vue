@@ -144,10 +144,11 @@ dd-stack
     @update:page-size="handlePageSizeChange"
   )
     template(#toolbar)
-      dd-input(
+      dd-input-search(
         :class="fin.field"
+        small
+        no-button
         :model-value="store.filters.search"
-        icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
         small

@@ -203,13 +203,12 @@ backoffice-modal-form-shell(
     dd-card(flat :class="fin.previewCard")
       dd-cluster(compact :class="fin.previewHeader")
         dd-avatar(
-          v-if="selectedInstitutionLogo"
           large
+          random
           :class="fin.logoAvatar"
           :src="selectedInstitutionLogo"
           :alt="previewTitle"
         )
-        dd-avatar(v-else large random :class="fin.logoAvatar" :alt="previewTitle")
         dd-stack(compact nogap :class="fin.previewText")
           strong(:class="fin.previewTitle") {{ previewTitle }}
           span(:class="fin.previewMeta") {{ isManualMode ? 'Conta manual' : 'Instituição selecionada' }}

@@ -443,10 +443,10 @@ dd-stack
     @update:page-size="handlePageSizeChange"
   )
     template(#toolbar)
-      dd-input(
+      dd-input-search(
         small
+        no-button
         :model-value="contractsStore.filters.search"
-        icon="lucide:search"
         placeholder="Buscar contrato..."
         @update:model-value="handleSearch"
       )

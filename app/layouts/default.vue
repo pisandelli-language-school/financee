@@ -299,6 +299,7 @@ dd-layout(
   nuxt-loading-indicator(:height="3" color="var(--dd-color-primary)" :throttle="0")
   AppTopbar(
     :user-name="userName"
+    :avatar-url="currentAuth?.user.avatarUrl"
     role-label="Administrador"
     :can-view-notifications="canViewNotifications"
     :is-darker-theme="isDarkerTheme"

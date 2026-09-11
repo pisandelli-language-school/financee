@@ -134,9 +134,10 @@ dd-stack
     @update:page-size="usersStore.setFilters({ pageSize: $event, page: 1 })"
   )
     template(#toolbar)
-      dd-input(
+      dd-input-search(
+        small
+        no-button
         :model-value="usersStore.filters.search"
-        icon="lucide:search"
         placeholder="Buscar usuário"
         @update:model-value="handleSearch"
         small

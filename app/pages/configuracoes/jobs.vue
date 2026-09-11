@@ -230,9 +230,10 @@ dd-stack
     :page-size="50"
   )
     template(#toolbar)
-      dd-input(
+      dd-input-search(
+        small
+        no-button
         :model-value="jobsStore.filters.search"
-        icon="lucide:search"
         placeholder="Buscar job..."
         @update:model-value="handleSearch"
         small
@@ -296,6 +297,7 @@ dd-stack
         :id="`job-enabled-${row.id}`"
         :model-value="row.isEnabled"
         aria-label="Ativar ou desativar job"
+        small
         @update:model-value="handleToggle(row, Boolean($event))"
       )
 

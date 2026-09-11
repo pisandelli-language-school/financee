@@ -44,7 +44,7 @@ async function handleGoogleSignIn() {
 <template lang="pug">
 main(:class="fin.page")
   //- Brand panel
-  section(v-once :class="fin.brand")
+  section(v-once data-theme="darker" :class="fin.brand")
     div(:class="fin.brandInner")
       AppBrandLogo(inverted block-size="36px")
       div
@@ -104,7 +104,7 @@ main(:class="fin.page")
   display: flex;
   align-items: center;
   padding: v('space.xl');
-  color: v('color.text.inverted');
+  color: v('color.text.default');
   background:
     radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, v('color.primary') 35%, transparent) 0%, transparent 55%),
     radial-gradient(120% 120% at 100% 100%, color-mix(in srgb, v('color.info') 28%, transparent) 0%, transparent 50%),
@@ -128,14 +128,12 @@ main(:class="fin.page")
   font-size: 2.5rem;
   line-height: 1.08;
   letter-spacing: -0.02em;
-  /* color: v('color.text.inverted'); */
 }
 
 .subhead {
   margin: v('space.sm') 0 0;
   font-size: var(--dd-font-size-base);
   line-height: 1.6;
-  /* color: color-mix(in srgb, v('color.text.inverted') 78%, transparent); */
 }
 
 .highlights {
@@ -161,7 +159,6 @@ main(:class="fin.page")
   place-items: center;
   background: color-mix(in srgb, v('color.primary.200') 16%, transparent);
   border: v('border-width.sm') solid color-mix(in srgb, v('color.info.200') 22%, transparent);
-  color: v('color.text.inverted');
   font-size: v('font-size.md');
 }
 
@@ -171,7 +168,6 @@ main(:class="fin.page")
 }
 
 .highlightText strong {
-  color: v('color.text.inverted');
   font-size: v('font-size.sm');
   font-weight: v('font-weight.semi-bold');
 }
@@ -179,7 +175,6 @@ main(:class="fin.page")
 .highlightText span {
   font-size: v('font-size.xs');
   line-height: 1.5;
-  color: color-mix(in srgb, v('color.text.inverted') 68%, transparent);
 }
 
 .brandGlow {
@@ -216,20 +211,17 @@ main(:class="fin.page")
 
 .title {
   margin: v('space.xxs') 0 0;
-  color: v('color.text.default');
   font-size: v('font-size.xl');
   line-height: v('line-height.tight');
 }
 
 .hint {
   margin: v('space.xxs') 0 0;
-  color: v('color.text.muted');
   font-size: v('font-size.sm');
 }
 
 .legal {
   margin: 0;
-  color: v('color.text.muted');
   font-size: v('font-size.xs');
   line-height: 1.5;
 }

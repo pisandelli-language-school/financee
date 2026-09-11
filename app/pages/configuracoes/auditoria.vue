@@ -124,9 +124,10 @@ dd-stack
     @update:page-size="auditStore.setFilters({ pageSize: $event, page: 1 })"
   )
     template(#toolbar)
-      dd-input(
+      dd-input-search(
+        small
+        no-button
         :model-value="auditStore.filters.search"
-        icon="lucide:search"
         placeholder="Buscar evento"
         @update:model-value="handleSearch"
         small

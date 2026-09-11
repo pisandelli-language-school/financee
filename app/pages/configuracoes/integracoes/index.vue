@@ -34,7 +34,7 @@ dd-stack
   backoffice-page-header(:breadcrumb="getBreadcrumb('integracoes')" :title="meta.title" :description="meta.description")
   backoffice-list-panel(:columns="columns" :data="filteredData" :loading="store.loading" :is-invalid="Boolean(store.error)" :error-message="store.error?.message ?? ''" :page="1" :total="filteredData.length" :page-size="50")
     template(#toolbar)
-      dd-input(small :model-value="search" icon="lucide:search" placeholder="Buscar cliente..." @update:model-value="search = String($event)")
+      dd-input-search(small no-button :model-value="search" placeholder="Buscar cliente..." @update:model-value="search = String($event)")
       dd-button(small outline icon="lucide:scroll-text" to="/configuracoes/integracoes/logs") Ver logs
       dd-button(small primary icon="lucide:plus" @click="openCreate") Novo cliente
     template(#cell-name="{ row }")
@@ -60,7 +60,7 @@ dd-stack
       dd-input(v-model="form.name" label="Nome" required)
       dd-input(v-model="form.clientId" label="Client ID" required :disabled="Boolean(editing)")
       dd-checkbox(v-for="scope in integrationScopeOptions" :key="scope.value" :model-value="form.scopes.includes(scope.value)" @update:model-value="toggleScope(scope.value, Boolean($event))") {{ scope.label }}
-      dd-toggle(:model-value="form.isActive" @update:model-value="form.isActive = Boolean($event)") Cliente ativo
+      dd-toggle(:model-value="form.isActive" small @update:model-value="form.isActive = Boolean($event)") Cliente ativo
   dd-modal(:open="tokenOpen" title="Token emitido" @update:open="tokenOpen = $event")
     dd-alert(warning icon :closable="false") Copie este token agora. Ele não será exibido novamente.
     code {{ token }}

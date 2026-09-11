@@ -148,9 +148,10 @@ dd-stack
       ) Domingos são considerados automaticamente. Cadastre feriados fixos anuais, calculados e exceções específicas, incluindo sábados quando necessário.
 
     template(#toolbar)
-      dd-input(
+      dd-input-search(
+        small
+        no-button
         :model-value="store.filters.search"
-        icon="lucide:search"
         placeholder="Buscar..."
         @update:model-value="handleSearch"
         small

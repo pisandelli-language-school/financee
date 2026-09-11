@@ -1,13 +1,14 @@
 <script setup lang="ts">
 defineProps<{
   userName: string
+  avatarUrl?: string | null
   roleLabel?: string
 }>()
 </script>
 
 <template lang="pug">
 dd-cluster(narrow :class="fin.root")
-  dd-avatar(:alt="userName" small)
+  dd-avatar(:src="avatarUrl ?? undefined" :alt="userName" small)
   dd-stack(nogap :class="fin.meta")
     strong {{ userName }}
     span {{ roleLabel ?? 'Administrador' }}

@@ -2,7 +2,7 @@
 import { AccountModule, CategoryModule, ContactModule, PaymentMethodModule, TagModule } from '~/api/backoffice'
 import { FinancialEntriesModule } from '~/api/financial'
 import type { AppTableColumn, AppTableRowAttrs } from '~/types/backoffice'
-import { getAccountInitials, getInstitutionLogoByKey } from '~/utils/account-institutions'
+import { getInstitutionLogoByKey } from '~/utils/account-institutions'
 import {
   entryDirectionOptions,
   entryStatusOptions,
@@ -771,9 +771,6 @@ function accountAvatarSrc(entry: FinancialEntryRecord) {
   return getInstitutionLogoByKey(entry.accountInstitutionLogoKey)
 }
 
-function accountAvatarInitials(entry: FinancialEntryRecord) {
-  return getAccountInitials(entry.accountInstitutionName || entry.accountName)
-}
 </script>
 
 <template lang="pug">
@@ -894,11 +891,11 @@ dd-stack
                       @click="clearSecondaryFilters($event)"
                     ) Limpar filtros
 
-            dd-input(
+            dd-input-search(
               :class="fin.searchField"
-              no-message
+              small
+              no-button
               :model-value="entriesStore.filters.search"
-              icon="lucide:search"
               placeholder="Buscar lançamento"
               @update:model-value="handleSearch"
             )
@@ -978,12 +975,10 @@ dd-stack
       dd-popover(trigger="hover" placement="top" :offset="6")
         template(#default)
           dd-avatar(
-            v-if="accountAvatarSrc(row)"
             small
             :src="accountAvatarSrc(row)"
-            :alt="row.accountName"
+            :alt="row.accountInstitutionName || row.accountName"
           )
-          span(v-else :class="fin.accountInitials") {{ accountAvatarInitials(row) }}
         template(#content)
           span {{ row.accountName }}
 
@@ -1111,6 +1106,10 @@ dd-stack
 </template>
 
 <style module="fin">
+.statusToggle {
+  --dd-button-warning-base-color: v('color.gray.500');
+  --dd-button-success-base-color: v('color.success.400');
+}
 .toolbarEnd {
   align-items: center;
   justify-self: end;
@@ -1190,11 +1189,11 @@ dd-stack
   --summary-card-bg: v('color.success.50');
   --summary-card-border: v('color.success.300');
 
-  color: v('color.success.700');
+  color: v('color.success.400');
 }
 
 .summaryValueIncome {
-  color: v('color.success.700');
+  color: v('color.success.400');
 }
 
 .summaryExpense {
@@ -1260,20 +1259,6 @@ dd-stack
 
 .recurrenceIcon {
   color: v('color.info.700');
-}
-
-.accountInitials {
-  align-items: center;
-  background: v('color.secondary.200');
-  border-radius: 999px;
-  color: v('color.secondary.700');
-  display: inline-flex;
-  font-size: .6875rem;
-  font-weight: v('font-weight.semi-bold');
-  justify-content: center;
-  block-size: 1.75rem;
-  inline-size: 1.75rem;
-  text-transform: uppercase;
 }
 
 .amountIncome {

@@ -5,6 +5,7 @@ import AppUserSummary from '~/components/layout/AppUserSummary.vue'
 
 defineProps<{
   userName: string
+  avatarUrl?: string | null
   roleLabel?: string
   canViewNotifications: boolean
   isDarkerTheme: boolean
@@ -26,6 +27,7 @@ header(:class="fin.topbar")
         AppNotificationBell(:visible="canViewNotifications")
         AppUserSummary(
           :user-name="userName"
+          :avatar-url="avatarUrl"
           :role-label="roleLabel"
         )
         dd-popover(trigger="click" placement="bottom-end")

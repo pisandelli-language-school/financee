@@ -35,6 +35,7 @@ This skill holds the conventions that apply across Financee, not only to backoff
 22. During async or gated rendering, prefer keeping the information architecture stable instead of reflowing the whole screen after hydration.
 23. Before substantial Daredash-specific work, read `https://raw.githubusercontent.com/pisandelli/daredash/refs/heads/main/llms.txt`.
 24. When a real limitation or deferred improvement is accepted, register it as a GitHub issue in the repo that owns the fix instead of leaving it only in prose.
+25. For `DdAvatar`, pass `src` and a meaningful `alt` directly: the primitive renders initials from `alt` when no source is available or the image fails. Use `random` on that same avatar when the fallback should use the random palette; do not duplicate it with a `v-if`/`v-else` fallback solely for initials.
 
 ## Workflow
 

@@ -204,6 +204,7 @@ dd-stack
         :id="`automation-enabled-${row.id}`"
         :model-value="row.isEnabled"
         aria-label="Ativar ou desativar regra"
+        small
         @update:model-value="handleToggle(row, Boolean($event))"
       )
 
